@@ -1,149 +1,123 @@
 (** Clerical typing judgments *)
 
 Require Import Clerical.
+Require Import List.
 
 (* A typing context. *)
-Structure ctx := {
+Definition ro_ctx := list datatype.
+Structure rw_ctx := {
   ctx_rw : list datatype ;
-  ctx_ro : list (list datatype)
+  ctx_ro : list datatype
 }.
 
-Definition empty_ctx := {| ctx_rw := nil; ctx_ro := nil |}.
+Definition mk_rw_ctx Γ Δ := {| ctx_ro := Γ ; ctx_rw := Δ|}.
 
-Definition extend t Γ :=
-  {| ctx_rw := cons t (ctx_rw Γ) ;
-     ctx_ro := ctx_ro Γ
-  |}.
+Inductive assignable : list datatype -> datatype -> nat -> Type :=
+  assignable_0 : forall Δ τ, assignable (τ :: Δ) τ 0
+| assignable_S : forall Δ τ σ k, assignable Δ τ k -> assignable (σ :: Δ) τ (S k). 
 
-Definition readonly Γ :=
-  {|
-    ctx_rw := nil ;
-    ctx_ro := cons (ctx_rw Γ) (ctx_ro Γ)
-  |}.
+Reserved Notation " Γ |- t : T " (at level 50, t, T at next level). 
+Reserved Notation " Γ ; Δ ||- t : T " (at level 50, Δ, t, T at next level). 
 
-Open Scope clerical_scope.
 
-Inductive is_writable : list datatype -> nat -> datatype -> Type :=
-  | is_writable_0 :
-      forall Γ τ,
-        is_writable (cons τ Γ) 0 τ
+Inductive has_type_ro : ro_ctx -> comp -> datatype -> Type :=
+(* from readwrite *)
+| has_type_ro_rw : forall Γ e τ, Γ ; nil ||- e : τ -> Γ |- e : τ 
 
-  | is_writable_S :
-      forall Γ τ σ k,
-        is_writable Γ k τ ->
-        is_writable (cons σ Γ) (S k) τ
-.
+(* variables *)
+| has_type_ro_Var_0 : forall Γ τ,  ((τ :: Γ) |- (Var 0) : τ)
+| has_type_ro_Var_S : forall Γ σ τ k, Γ |- Var k : τ -> (σ :: Γ) |- Var (S k) : τ
 
-Inductive has_type : ctx -> comp -> result_type -> Type :=
-  | has_type_Var_0 :
-      forall Γ τ,
-        has_type (extend τ Γ) (VAR 0) (RData τ)
+(* constants *)
+| has_type_ro_True : forall Γ, Γ |- TRUE : DBoolean
+| has_type_ro_False : forall Γ, Γ |- FALSE : DBoolean
+| has_type_ro_Skip : forall Γ, Γ |- SKIP : DUnit
+| has_type_ro_Int : forall Γ k, Γ |- INT k : DInteger
 
-  | has_type_Var_S :
-      forall Γ σ τ k,
-        has_type Γ (VAR k) (RData τ) ->
-        has_type (extend σ Γ) (VAR (S k)) (RData τ)
+(* unary ops *)
+| has_type_ro_OpRrecip : forall Γ e, Γ |- e : DReal -> Γ |- (UniOp OpRrecip e) : DReal
+| has_type_ro_OpZRcoerce : forall Γ e, Γ |- e : DInteger -> Γ |- (UniOp OpZRcoerce e) : DReal
+| has_type_ro_OpZRexp : forall Γ e, Γ |- e : DInteger -> Γ |- (UniOp OpZRexp e) : DReal
 
-  | has_type_Var_empty_rw :
-      forall Γ τ k,
-        has_type Γ (VAR k) (RData τ) ->
-        has_type (readonly Γ) (VAR k) (RData τ)
+(* binary ops *)
+| has_type_ro_OpZplus : forall Γ e1 e2, Γ |- e1 : DInteger -> Γ |- e2 : DInteger -> Γ |- (BinOp OpZplus e1 e2) : DInteger
+| has_type_ro_OpZminus : forall Γ e1 e2, Γ |- e1 : DInteger -> Γ |- e2 : DInteger -> Γ |- (BinOp OpZminus e1 e2) : DInteger
+| has_type_ro_OpZmult : forall Γ e1 e2, Γ |- e1 : DInteger -> Γ |- e2 : DInteger -> Γ |- (BinOp OpZmult e1 e2) : DInteger
+| has_type_ro_OpZlt : forall Γ e1 e2, Γ |- e1 : DInteger -> Γ |- e2 : DInteger -> Γ |- (BinOp OpZlt e1 e2) : DBoolean
+| has_type_ro_OpZeq : forall Γ e1 e2, Γ |- e1 : DInteger -> Γ |- e2 : DInteger -> Γ |- (BinOp OpZeq e1 e2) : DBoolean 
+| has_type_ro_OpRplus : forall Γ e1 e2, Γ |- e1 : DReal -> Γ |- e2 : DReal -> Γ |- (BinOp OpRplus e1 e2) : DReal
+| has_type_ro_OpRminus : forall Γ e1 e2, Γ |- e1 : DReal -> Γ |- e2 : DReal -> Γ |- (BinOp OpRminus e1 e2) : DReal
+| has_type_ro_OpRmult : forall Γ e1 e2, Γ |- e1 : DReal -> Γ |- e2 : DReal -> Γ |- (BinOp OpRmult e1 e2) : DReal
+| has_type_ro_OpRlt : forall Γ e1 e2, Γ |- e1 : DReal -> Γ |- e2 : DReal -> Γ |- (BinOp OpRlt e1 e2) : DBoolean
 
-  | has_type_True :
-      forall Γ,
-        has_type Γ TRUE RBoolean
+(* limit *)
+| has_type_ro_Lim : forall Γ e, (DReal :: Γ) |- e : DReal -> Γ |- Lim e : DReal
+                                                                                                         
+with has_type_rw : rw_ctx -> comp -> datatype -> Type :=
+(* from readonly *)
+| has_type_rw_ro : forall Γ Δ e τ, (Δ ++ Γ) |- e : τ -> Γ ; Δ ||- e : τ
 
-  | has_type_False :
-      forall Γ,
-        has_type Γ FALSE RBoolean
+(* sequential *)
+| has_type_rw_Seq : forall Γ Δ c1 c2 τ, Γ ; Δ ||- c1 : DUnit -> Γ; Δ ||- c2 : τ -> Γ ; Δ ||- (Seq c1 c2) : τ 
+                                                                        
+(* assignment *)
+| has_type_rw_Assign : forall Γ Δ e τ k, assignable Δ τ k -> (Δ ++ Γ) |- e : τ -> Γ ; Δ ||- Assign k e : DUnit
+(* | has_type_rw_Assign_0 : forall Γ Δ e τ, ((τ :: Δ) ++ Γ) |- e : τ -> Γ ; τ :: Δ  ||- Assign 0 e : DUnit *)
+(* | has_type_rw_Assign_S : forall Γ Δ e σ k, Γ ; Δ ||- Assign k e : DUnit -> Γ ; σ :: Δ ||- Assign (S k) e : DUnit  *)
 
-  | has_type_Integer :
-      forall Γ k,
-        has_type Γ (INT k) RInteger
+(* newvar *)
+| has_type_rw_Newvar : forall Γ Δ e c σ τ, (Δ ++ Γ) |- e : σ -> Γ ; σ :: Δ ||- c : τ -> Γ ; Δ ||- Newvar e c : τ
 
-  | has_type_Skip :
-      forall Γ,
-        has_type Γ SKIP RCommand
+(* cond *)
+| has_type_rw_Cond : forall Γ Δ e c1 c2 τ, (Δ ++ Γ) |- e : DBoolean -> Γ ; Δ ||- c1 : τ -> Γ ; Δ ||- c2 : τ -> Γ ; Δ ||- Cond e c1 c2 : τ
 
-  | has_type_Sequence :
-      forall Γ c1 c2 ρ,
-        has_type Γ c1 RCommand ->
-        has_type Γ c2 ρ ->
-        has_type Γ (c1 ;; c2)  ρ
+(* case *)
+| has_type_rw_Case : forall Γ Δ e1 c1 e2 c2 τ, (Δ ++ Γ) |- e1 : DBoolean -> Γ ; Δ ||- c1 : τ -> (Δ ++ Γ) |- e2 : DBoolean -> Γ ; Δ ||- c2 : τ -> Γ ; Δ ||- Case e1 c1 e2 c2 : τ
 
-  | has_type_while :
-      forall Γ b c,
-        has_type (readonly Γ) b RBoolean ->
-        has_type Γ c RCommand ->
-        has_type Γ (WHILE b DO c END) RCommand
+(* while *)
+| has_type_rw_While : forall Γ Δ e c, (Δ ++ Γ) |- e : DBoolean -> Γ ; Δ ||- c : DUnit -> Γ ; Δ ||- While e c : DUnit
+                                                                                                                                                                 
+                                                                                                             
+where " Γ |- c : τ " := (has_type_ro Γ c τ) and " Γ ; Δ ||- c : τ " := (has_type_rw (mk_rw_ctx Γ Δ) c τ).
 
-  | has_type_Case :
-      forall Γ b1 c1 b2 c2 ρ,
-        has_type (readonly Γ) b1 RBoolean ->
-        has_type Γ c1 ρ ->
-        has_type (readonly Γ) b2 RBoolean ->
-        has_type Γ c2 ρ ->
-        has_type Γ (MCASE b1 ==> c1 OR b2 ==> c2 END) ρ
 
-  | has_type_newvar :
-      forall Γ ρ τ e c,
-        has_type (readonly Γ) e (RData τ) ->
-        has_type (extend τ Γ) c ρ ->
-        has_type Γ (NEWVAR e IN c) ρ
 
-  | has_type_assign :
-      forall Γ τ k e,
-        is_writable (ctx_rw Γ) k τ ->
-        has_type (readonly Γ) e (RData τ) ->
-        has_type Γ (SET k := e) RCommand
-.
+Notation " !R " := DReal (at level 80).
+Notation " !B " := DBoolean (at level 80).
+Notation " !U " := DUnit (at level 80).
+Notation " !Z " := DInteger (at level 80).
 
-Section TypeInference.
 
-Fixpoint get {A : Type} (lst : list A) (k : nat) : option A :=
-  match k, lst with
-  | 0, nil => None
-  | 0, cons x _ => Some x
-  | S k, lst => get lst k
-  end.
 
-Fixpoint infer_type Γ c : option { ρ : result_type & has_type Γ c ρ }.
+Definition test1 := !Z :: !U :: !B :: !R :: nil.
+Definition test2 := !R :: !B :: !U :: !Z :: nil.
+
+Goal test1 |- Var 0 : !Z.
 Proof.
-  induction c.
+  apply has_type_ro_Var_0.
+Qed.
 
-  (* Var *)
-  { destruct (get Γ n) as [| τ].
-  }
+Goal test1 |- Var 2 : !B.
+Proof.
+  apply has_type_ro_Var_S.
+  apply has_type_ro_Var_S.
+  apply has_type_ro_Var_0.
+Qed.
 
-  (* Boolean *)
-  { unfinished. }
+Goal test1 ; test2 ||- Var 0 : !R.
+Proof.
+  apply has_type_rw_ro.
+  apply has_type_ro_Var_0.
+Qed.
 
-  (* Integer *)
-  { unfinished. }
-
-  (* BinOp *)
-  { unfinished. }
-
-  (* UniOp *)
-  { unfinished. }
-
-  (* Skip *)
-  { unfinished. }
-
-  (* Sequence *)
-  { unfinished. }
-
-  (* Case *)
-  { unfinished. }
-
-  (* While *)
-  { unfinished. }
-
-  (* Newvar *)
-  { unfinished. }
-
-  (* Assign *)
-  { unfinished. }
-
-
-End TypeInference.
+Goal test1 ; test2 ||- Assign 2 (Var 2) : !U.
+Proof.
+  apply (has_type_rw_Assign _ _ _ DUnit).
+  apply assignable_S.
+  apply assignable_S.
+  apply assignable_0.
+  apply has_type_ro_Var_S.
+  apply has_type_ro_Var_S.
+  apply has_type_ro_Var_0.
+Qed.
+ 
