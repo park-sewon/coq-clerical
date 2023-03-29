@@ -1,18 +1,16 @@
 Require Import ZArith.
+Require Import Reals.
 Require Import Clerical.
 Require Import Typing.
 Require Import Nondeterminism.
+Require Import List.
 
 Definition sem_datatype (τ : datatype) : Type :=
   match τ with
+  | DUnit => unit
   | DInteger => Z
   | DBoolean => bool
-  end.
-
-Definition sem_result_type (ρ : result_type) :=
-  match ρ with
-  | RData τ => sem_datatype τ
-  | RCommand => unit
+  | DReal => R
   end.
 
 Fixpoint sem_list_datatype (lst : list datatype) : Type :=
@@ -21,9 +19,48 @@ Fixpoint sem_list_datatype (lst : list datatype) : Type :=
   | cons t lst => sem_datatype t * sem_list_datatype lst
   end.
 
+Definition sem_ro_ctx := sem_list_datatype.
+
+Definition tedious_sem_concat Γ Δ : sem_ro_ctx (Γ ++ Δ) -> (sem_ro_ctx Γ) * sem_ro_ctx Δ.
+Proof.
+  intro.
+  induction Γ.
+  simpl.
+  simpl in X.
+  exact (tt, X).
+  simpl.
+  simpl in X.
+  destruct X.
+  destruct (IHΓ s0).
+  exact ((s, s1), s2).
+Defined.
+
+Definition tedious_prod_sem Γ Δ : (sem_ro_ctx Γ) * sem_ro_ctx Δ -> sem_ro_ctx (Γ ++ Δ).
+Proof.
+  intros.
+  induction Γ.
+  simpl.
+  simpl in X.
+  destruct X as [_ X]; exact X.
+  simpl.
+  destruct X.
+  simpl in s.
+  destruct s.
+  split.
+  exact s.
+  exact (IHΓ (s1, s0)).
+Defined.
+  
+                                    
+Definition sem_rw_ctx : rw_ctx -> Type.
+Proof.
+  intros [Γ Δ].
+  exact (sem_list_datatype Γ * sem_list_datatype Δ)%type.
+Defined.
+  
 Fixpoint update
   {τ : datatype} {Θ : list datatype} (k : nat) (v : sem_datatype τ) (γ : sem_list_datatype Θ)
-  (i : is_writable Θ k τ) {struct i} : sem_list_datatype Θ.
+  (i : assignable Θ τ k) {struct i} : sem_list_datatype Θ.
 Proof.
   induction i.
 
@@ -40,149 +77,218 @@ Proof.
   }
 Defined.
 
-Fixpoint sem_list_list_datatype (lst : list (list datatype)) : Type :=
-  match lst with
-  | nil => unit
-  | cons l lst => sem_list_datatype l * sem_list_list_datatype lst
-  end.
-
-Definition sem_ctx (Γ : ctx) : Type :=
-  (sem_list_datatype (ctx_rw Γ)) * (sem_list_list_datatype (ctx_ro Γ)).
-
-Definition sem_rw (Γ : ctx) := sem_list_datatype (ctx_rw Γ).
-
-Definition mk_readonly {Γ} (γ : sem_ctx Γ) : sem_ctx (readonly Γ) := (tt, γ).
-
-(* Cheap trick to get the a large inductive proof organized. Eventually
-   we want to remove this. *)
-Axiom magic_axiom : forall A : Type, A. (* every type is inhabited, use with care *)
-Ltac unfinished := now apply magic_axiom.
-
-(* The meaning of a well-typed program in relational form. *)
-Fixpoint sem_comp (Γ : ctx) (c : comp) (ρ : result_type) (D : has_type Γ c ρ):
-  sem_ctx Γ -> G (sem_rw Γ * sem_result_type ρ).
-
+Definition Rrecip' : R -> flat R.
 Proof.
-  intro γ.
-  induction D.
+  intro x.
+  destruct (total_order_T x 0).
+  destruct s.
+  exact (total (/x))%R.
+  exact (bot R).
+  exact (total (/x))%R.
+Defined.
 
-  (* has_type_Var_0 *)
-  {
-    apply Stop.
-    split.
-    - exact (fst γ).
-    - exact (fst (fst γ)).
-  }
 
-  (* has_type_Var_S *)
-  {
-    pose (u := IHD ((snd (fst γ)), snd γ)).
-    apply (bindG u).
-    intros [δ s].
-    apply Stop.
-    split.
-    - split.
-      + exact (fst (fst γ)).
-      + exact (snd (fst γ)).
-    - exact s.
-  }
+Definition Rltb' : R -> R -> flat bool.
+Proof.
+  intros x y.
+  destruct (total_order_T x y).
+  destruct s.
+  exact (total true)%R.
+  exact (bot bool).
+  exact (total false)%R.
+Defined.
 
-  (* has_type_Var_empty_rw *)
-  {
-    unfold sem_rw, readonly ; simpl.
-    unfold sem_rw, readonly in IHD ; simpl in IHD.
-    apply (bindG (IHD (snd γ))).
-    intros [γ1 t].
-    apply Stop.
-    exact (tt, t).
-  }
+Definition Rrecip : R -> pdom R := fun x => flat_to_pdom (Rrecip' x).
+  
+Definition Rltb : R -> R -> pdom bool := fun x y => flat_to_pdom (Rltb' x y).
 
-  (* has_type_True *)
-  {
-    apply Stop.
-    exact (fst γ, true).
-  }
+Definition Rlim : (Z -> pdom R) -> pdom R.
+Proof.
+  intro f.
+  exists (fun y : flat R =>
+            exists y' : R, y = total y' /\                            
+                             forall x : Z,
+                             forall z : flat R,
+                               pdom_char (f x) z ->
+                               exists z' : R, z = total z' /\ Rabs (y' - z') < powerRZ 2 x)%R.
+Admitted.
 
-  (* has_type_False *)
-  {
-    apply Stop.
-    exact (fst γ, false).
-  }
 
-  (* has_type_Integer *)
-  {
-    apply Stop.
-    exact (fst γ, k).
-  }
 
-  (* has_type_Skip *)
-  {
-    apply Stop.
-    exact (fst γ, tt).
-  }
+  
+Definition Case2' {X : Type} : flat bool -> flat bool -> pdom X -> pdom X -> pdom X.
+Proof.
+  intros b1 b2 c1 c2.
+  destruct b1.
+  (* when b1 = bot *)
+  destruct b2.
+  (* when b2 = bot *)
+  exact (pdom_flat_unit (bot X)).
+  destruct b.
+  (* when b2 = true *)
+  exact c2.
+  (* when b2 = false *)
+  exact (pdom_flat_unit (bot X)).
+  destruct b.
+  (* when b1 = true *)
+  destruct b2.
+  (* when b2 = bot *)
+  exact c1.
+  destruct b.
+  (* when b2 = true *)
+  exact (strict_union c1 c2).
+  (* when b2 = false *)
+  exact c1.
+  (* when b1 = false *)
+  destruct b2.
+  (* when b2 = bot *)
+  exact (pdom_flat_unit (bot X)).
+  destruct b.
+  (* when b2 = true *)
+  exact c2.
+  (* when b2 = false *)
+  exact (pdom_flat_unit (bot X)).
+Defined.
 
-  (* has_type_Sequence *)
-  {
-    simple refine (bindG _ IHD2).
-    apply (bindG (IHD1 γ)).
-    intros [γ1 []].
-    apply Stop.
-    exact (γ1, snd γ).
-  }
+Definition Case2 {X : Type} : pdom bool -> pdom bool -> pdom X -> pdom X -> pdom X.
+Proof.
+  intros b1 b2 c1 c2.
+  exact (pdom_flat_bind2 (fun x y => Case2' x y c1 c2) b1 b2). 
+Defined.
+  
+Fixpoint sem_ro_comp (Γ : ro_ctx) (e : comp) (τ : datatype) (D : Γ |- e : τ) {struct D} :
+  sem_ro_ctx Γ -> pdom (sem_datatype τ)
+with sem_rw_comp (Γ Δ : ro_ctx) (c : comp) (τ : datatype) (D : Γ ;;; Δ ||- c : τ) {struct D} :
+  sem_ro_ctx Γ -> sem_ro_ctx Δ -> pdom (sem_ro_ctx Δ * sem_datatype τ).
+Proof.
+  - (* read only expressions *)
+    induction D; intro γ.
 
-  (* has_type_while *)
-  {
-    apply (@bindG (sem_rw Γ)).
-    - apply (@iterate (sem_ctx Γ) (sem_rw Γ)).
-      + intro δ.
-        apply (bindG (sem_comp (readonly Γ) b RBoolean D1 (mk_readonly δ))).
-        intros [[] [|]].
-        * (* condition was true *)
-          exact (Stop (inl δ)).
-        * (* condition was false *)
-          exact (Stop (inr (fst δ))).
-      + exact (Stop (inl γ)).
-    - intro γ1.
-      exact (Stop (γ1, tt)).
-  }
+    (* | has_type_ro_rw *)
+    pose proof (sem_rw_comp _ _ _ _ h γ tt) as X.
+    exact (pdom_lift snd X).
 
-  (* has_type_Case *)
-  {
-    (* Beware: this semantics of cases is not what we want.
-       it assigns to [case true => c1 | ⊥ => c2 end] the meaning
-       "⊥ or c1", and we would like to avoid ⊥. *)
-    apply Join.
-    - apply check.
-      + apply (bindG (IHD1 (tt, γ))).
-        intros [_ b].
-        exact (Stop b).
-      + apply (bindG (IHD2 γ)).
-        apply Stop.
-    - apply check.
-      + apply (bindG (IHD3 (tt, γ))).
-        intros [_ b].
-        exact (Stop b).
-      + apply (bindG (IHD4 γ)).
-        apply Stop.
-  }
+    (* | has_type_ro_Var_0 *)
+    simpl in γ.
+    exact (pdom_unit (fst γ)).
 
-  (* has_type_newvar *)
-  {
-    apply (bindG (IHD1 (mk_readonly γ))).
-    intros [[] x].
-    apply (bindG (IHD2 ((x, fst γ), snd γ))).
-    intros [[_ γ1] y].
-    apply Stop.
-    exact (γ1, y).
-  }
+    (* | has_type_ro_Var_S *)
+    simpl in γ.
+    exact (IHD (snd γ)).
 
-  (* has_type_assign *)
-  {
-    apply (bindG (sem_comp _ _ _ D (mk_readonly γ))).
-    intros [[] val_e].
-    apply Stop.
-    simple refine (_, tt).
-    apply (update k val_e (fst γ) i).
-  }
+    (* | has_type_ro_True *)
+    exact (pdom_unit true).
 
+    (* | has_type_ro_False *)
+    exact (pdom_unit false).
+
+    (* | has_type_ro_Skip *)
+    exact (pdom_unit tt).
+    
+    (* | has_type_ro_Int *)
+    exact (pdom_unit k).
+
+    (* | has_type_ro_OpRrecip *)
+    pose proof (sem_ro_comp _ _ _ D γ).
+    exact (pdom_bind Rrecip X). 
+    
+    (* | has_type_ro_OpZRcoerce *)
+    pose proof (sem_ro_comp _ _ _ D γ).
+    exact (pdom_lift IZR X).
+    
+    (* | has_type_ro_OpZRexp *)
+    pose proof (sem_ro_comp _ _ _ D γ).
+    exact (pdom_lift (powerRZ 2) X).
+
+    (* | has_type_ro_OpZplus *)
+    pose proof (sem_ro_comp _ _ _ D1 γ) as x.
+    pose proof (sem_ro_comp _ _ _ D2 γ) as y.
+    exact (pdom_lift2 Zplus x y).
+    
+    (* | has_type_ro_OpZminus *)
+    pose proof (sem_ro_comp _ _ _ D1 γ) as x.
+    pose proof (sem_ro_comp _ _ _ D2 γ) as y.
+    exact (pdom_lift2 Zminus x y).
+    
+    (* | has_type_ro_OpZmult *)
+    pose proof (sem_ro_comp _ _ _ D1 γ) as x.
+    pose proof (sem_ro_comp _ _ _ D2 γ) as y.
+    exact (pdom_lift2 Zmult x y).
+    
+    (* | has_type_ro_OpZlt *)
+    pose proof (sem_ro_comp _ _ _ D1 γ) as x.
+    pose proof (sem_ro_comp _ _ _ D2 γ) as y.
+    exact (pdom_lift2 Z.ltb x y).
+
+    (* | has_type_ro_OpZeq *)
+    pose proof (sem_ro_comp _ _ _ D1 γ) as x.
+    pose proof (sem_ro_comp _ _ _ D2 γ) as y.
+    exact (pdom_lift2 Z.eqb x y).
+
+    (* | has_type_ro_OpRplus *)
+    pose proof (sem_ro_comp _ _ _ D1 γ) as x.
+    pose proof (sem_ro_comp _ _ _ D2 γ) as y.
+    exact (pdom_lift2 Rplus x y).
+
+    (* | has_type_ro_OpRminus *)
+    pose proof (sem_ro_comp _ _ _ D1 γ) as x.
+    pose proof (sem_ro_comp _ _ _ D2 γ) as y.
+    exact (pdom_lift2 Rminus x y).
+
+    (* | has_type_ro_OpRmult *)
+    pose proof (sem_ro_comp _ _ _ D1 γ) as x.
+    pose proof (sem_ro_comp _ _ _ D2 γ) as y.
+    exact (pdom_lift2 Rmult x y).
+
+    (* | has_type_ro_OpRlt *)
+    pose proof (sem_ro_comp _ _ _ D1 γ) as x.
+    pose proof (sem_ro_comp _ _ _ D2 γ) as y.
+    exact (pdom_bind2 Rltb x y).
+
+    (* | has_type_ro_Lim *)
+    exact (Rlim (fun x : Z => sem_ro_comp _ _ _ D (x, γ))). 
+
+
+  - (* read write commands*)
+    Require Import Coq.Program.Equality.
+    dependent destruction D; intros γ δ.
+
+    (* has_type_rw_ro *)
+    exact (pdom_lift (fun x => (δ, x)) (sem_ro_comp _ _ _ h (tedious_prod_sem _ _ (δ, γ)))).
+  
+    (* has_type_rw_Seq *)
+    pose proof (sem_rw_comp _ _ _ _ D1 γ) as C1.
+    pose proof (sem_rw_comp _ _ _ _ D2 γ) as C2.
+    apply (pdom_bind C2).
+    apply (pdom_lift (@fst _ (sem_datatype DUnit))).
+    apply C1.
+    exact δ.
+
+    (* has_type_rw_Assign *)
+    pose proof (pdom_lift (fun v => update k v δ a) (sem_ro_comp _ _ _ h (tedious_prod_sem _ _ (δ, γ)))) as V.
+    exact (pdom_lift (fun x => (x, tt)) V).
+    
+    (* has_type_rw_Newvar *)
+    pose proof (sem_ro_comp _ _ _ h (tedious_prod_sem _ _ (δ, γ))) as V.
+    pose proof (sem_rw_comp _ _ _ _ D γ) as f.
+    pose proof (pdom_bind f (pdom_lift (fun v => (v, δ)) V)) as res.
+    exact (pdom_lift (fun x => (snd (fst x), snd x)) res).
+
+    (* has_type_rw_Cond *)
+    pose proof (sem_ro_comp _ _ _ h (tedious_prod_sem _ _ (δ, γ))) as B.
+    pose proof (sem_rw_comp _ _ _ _ D1 γ δ) as X.
+    pose proof (sem_rw_comp _ _ _ _ D2 γ δ) as Y.
+    exact (pdom_bind (fun b : bool => if b then X else Y) B).
+    
+    (* has_type_rw_Case *)
+    pose proof (sem_ro_comp _ _ _ h (tedious_prod_sem _ _ (δ, γ))) as B1.
+    pose proof (sem_ro_comp _ _ _ h0 (tedious_prod_sem _ _ (δ, γ))) as B2.
+    pose proof (sem_rw_comp _ _ _ _ D1 γ δ) as X.
+    pose proof (sem_rw_comp _ _ _ _ D2 γ δ) as Y.
+    exact (Case2 B1 B2 X Y).
+    
+    (* has_type_rw_While *)
+    pose proof (fun d => sem_ro_comp _ _ _ h (tedious_prod_sem _ _ (d, γ))) as B.
+    pose proof (fun d => pdom_lift fst (sem_rw_comp _ _ _ _ D γ d)) as C.
+    exact (pdom_lift (fun x => (x, tt)) (pdom_while B C δ)).
 Defined.

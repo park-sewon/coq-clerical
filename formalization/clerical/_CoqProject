@@ -1,10 +1,12 @@
--R . 
+-R . Lib
 
 Nondeterminism.v
-Delay.v
+# Delay.v
 Clerical.v
 # OperationalSemantics.v
 Typing.v
 Semantics.v
-Examples.v
+# Examples.v
 
+Specification.v
+Reasoning.v

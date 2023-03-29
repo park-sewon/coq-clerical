@@ -17,12 +17,12 @@ Inductive assignable : list datatype -> datatype -> nat -> Type :=
 | assignable_S : forall Δ τ σ k, assignable Δ τ k -> assignable (σ :: Δ) τ (S k). 
 
 Reserved Notation " Γ |- t : T " (at level 50, t, T at next level). 
-Reserved Notation " Γ ; Δ ||- t : T " (at level 50, Δ, t, T at next level). 
+Reserved Notation " Γ ;;; Δ ||- t : T " (at level 50, Δ, t, T at next level). 
 
 
 Inductive has_type_ro : ro_ctx -> comp -> datatype -> Type :=
 (* from readwrite *)
-| has_type_ro_rw : forall Γ e τ, Γ ; nil ||- e : τ -> Γ |- e : τ 
+| has_type_ro_rw : forall Γ e τ, Γ ;;; nil ||- e : τ -> Γ |- e : τ 
 
 (* variables *)
 | has_type_ro_Var_0 : forall Γ τ,  ((τ :: Γ) |- (Var 0) : τ)
@@ -51,34 +51,32 @@ Inductive has_type_ro : ro_ctx -> comp -> datatype -> Type :=
 | has_type_ro_OpRlt : forall Γ e1 e2, Γ |- e1 : DReal -> Γ |- e2 : DReal -> Γ |- (BinOp OpRlt e1 e2) : DBoolean
 
 (* limit *)
-| has_type_ro_Lim : forall Γ e, (DReal :: Γ) |- e : DReal -> Γ |- Lim e : DReal
+| has_type_ro_Lim : forall Γ e, (DInteger :: Γ) |- e : DReal -> Γ |- Lim e : DReal
                                                                                                          
 with has_type_rw : rw_ctx -> comp -> datatype -> Type :=
 (* from readonly *)
-| has_type_rw_ro : forall Γ Δ e τ, (Δ ++ Γ) |- e : τ -> Γ ; Δ ||- e : τ
+| has_type_rw_ro : forall Γ Δ e τ, (Δ ++ Γ) |- e : τ -> Γ ;;; Δ ||- e : τ
 
 (* sequential *)
-| has_type_rw_Seq : forall Γ Δ c1 c2 τ, Γ ; Δ ||- c1 : DUnit -> Γ; Δ ||- c2 : τ -> Γ ; Δ ||- (Seq c1 c2) : τ 
+| has_type_rw_Seq : forall Γ Δ c1 c2 τ, Γ ;;; Δ ||- c1 : DUnit -> Γ;;; Δ ||- c2 : τ -> Γ ;;; Δ ||- (Seq c1 c2) : τ 
                                                                         
 (* assignment *)
-| has_type_rw_Assign : forall Γ Δ e τ k, assignable Δ τ k -> (Δ ++ Γ) |- e : τ -> Γ ; Δ ||- Assign k e : DUnit
-(* | has_type_rw_Assign_0 : forall Γ Δ e τ, ((τ :: Δ) ++ Γ) |- e : τ -> Γ ; τ :: Δ  ||- Assign 0 e : DUnit *)
-(* | has_type_rw_Assign_S : forall Γ Δ e σ k, Γ ; Δ ||- Assign k e : DUnit -> Γ ; σ :: Δ ||- Assign (S k) e : DUnit  *)
+| has_type_rw_Assign : forall Γ Δ e τ k, assignable Δ τ k -> (Δ ++ Γ) |- e : τ -> Γ ;;; Δ ||- Assign k e : DUnit
 
 (* newvar *)
-| has_type_rw_Newvar : forall Γ Δ e c σ τ, (Δ ++ Γ) |- e : σ -> Γ ; σ :: Δ ||- c : τ -> Γ ; Δ ||- Newvar e c : τ
+| has_type_rw_Newvar : forall Γ Δ e c σ τ, (Δ ++ Γ) |- e : σ -> Γ ;;; σ :: Δ ||- c : τ -> Γ ;;; Δ ||- Newvar e c : τ
 
 (* cond *)
-| has_type_rw_Cond : forall Γ Δ e c1 c2 τ, (Δ ++ Γ) |- e : DBoolean -> Γ ; Δ ||- c1 : τ -> Γ ; Δ ||- c2 : τ -> Γ ; Δ ||- Cond e c1 c2 : τ
+| has_type_rw_Cond : forall Γ Δ e c1 c2 τ, (Δ ++ Γ) |- e : DBoolean -> Γ ;;; Δ ||- c1 : τ -> Γ ;;; Δ ||- c2 : τ -> Γ ;;; Δ ||- Cond e c1 c2 : τ
 
 (* case *)
-| has_type_rw_Case : forall Γ Δ e1 c1 e2 c2 τ, (Δ ++ Γ) |- e1 : DBoolean -> Γ ; Δ ||- c1 : τ -> (Δ ++ Γ) |- e2 : DBoolean -> Γ ; Δ ||- c2 : τ -> Γ ; Δ ||- Case e1 c1 e2 c2 : τ
+| has_type_rw_Case : forall Γ Δ e1 c1 e2 c2 τ, (Δ ++ Γ) |- e1 : DBoolean -> Γ ;;; Δ ||- c1 : τ -> (Δ ++ Γ) |- e2 : DBoolean -> Γ ;;; Δ ||- c2 : τ -> Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ
 
 (* while *)
-| has_type_rw_While : forall Γ Δ e c, (Δ ++ Γ) |- e : DBoolean -> Γ ; Δ ||- c : DUnit -> Γ ; Δ ||- While e c : DUnit
+| has_type_rw_While : forall Γ Δ e c, (Δ ++ Γ) |- e : DBoolean -> Γ ;;; Δ ||- c : DUnit -> Γ ;;; Δ ||- While e c : DUnit
                                                                                                                                                                  
                                                                                                              
-where " Γ |- c : τ " := (has_type_ro Γ c τ) and " Γ ; Δ ||- c : τ " := (has_type_rw (mk_rw_ctx Γ Δ) c τ).
+where " Γ |- c : τ " := (has_type_ro Γ c τ) and " Γ ;;; Δ ||- c : τ " := (has_type_rw (mk_rw_ctx Γ Δ) c τ).
 
 
 
@@ -104,13 +102,13 @@ Proof.
   apply has_type_ro_Var_0.
 Qed.
 
-Goal test1 ; test2 ||- Var 0 : !R.
+Goal test1 ;;; test2 ||- Var 0 : !R.
 Proof.
   apply has_type_rw_ro.
   apply has_type_ro_Var_0.
 Qed.
 
-Goal test1 ; test2 ||- Assign 2 (Var 2) : !U.
+Goal test1 ;;; test2 ||- Assign 2 (Var 2) : !U.
 Proof.
   apply (has_type_rw_Assign _ _ _ DUnit).
   apply assignable_S.
