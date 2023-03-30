@@ -37,7 +37,6 @@ Inductive datatype :=
 | DInteger
 | DReal.
 
-
 (* Notations for writing clerical programs. *)
 Declare Scope clerical_scope.
               
@@ -51,10 +50,32 @@ Notation "'INT' k" := (Integer k) (at level 30) : clerical_scope.
 
 Notation "e1 ':+:' e2" := (BinOp OpZplus e1 e2) (at level 60, right associativity) : clerical_scope.
 
+Notation "e1 ':*:' e2" := (BinOp OpZmult e1 e2) (at level 60, right associativity) : clerical_scope.
+
+Notation "e1 ':-:' e2" := (BinOp OpZminus e1 e2) (at level 60, right associativity) : clerical_scope.
+
+Notation "e1 ':<:' e2" := (BinOp OpZlt e1 e2) (at level 60, right associativity) : clerical_scope.
+
+Notation "e1 ':=:' e2" := (BinOp OpZeq e1 e2) (at level 60, right associativity) : clerical_scope.
+
+
+Notation "e1 ';+;' e2" := (BinOp OpRplus e1 e2) (at level 60, right associativity) : clerical_scope.
+
+Notation "e1 ';-;' e2" := (BinOp OpRminus e1 e2) (at level 60, right associativity) : clerical_scope.
+
+Notation "e1 ';*;' e2" := (BinOp OpRmult e1 e2) (at level 60, right associativity) : clerical_scope.
+
+Notation "e1 ';<;' e2" := (BinOp OpRlt e1 e2) (at level 60, right associativity) : clerical_scope.
+
+Notation "'RE' e " := (UniOp OpZRcoerce e) (at level 30) : clerical_scope.
+
+Notation "'EXP' e " := (UniOp OpZRexp e) (at level 30) : clerical_scope.
+
+Notation "';/;' e " := (UniOp OpRrecip e) (at level 30) : clerical_scope.
+
 Notation "'SKIP'" := (Skip) : clerical_scope.
 
 Notation "c1 ;; c2" := (Seq c1 c2) (at level 80, right associativity) : clerical_scope.
-
 
 Notation "'CASE' b1 '==>' c1 'OR' b2 '==>' c2 'END'" := (Case b1 c1 b2 c2) (at level 89)  : clerical_scope.
 
@@ -64,7 +85,15 @@ Notation "'WHILE' b 'DO' c 'END'" := (While b c) (at level 85) : clerical_scope.
 
 Notation "'NEWVAR' e 'IN' c" := (Newvar e c) (at level 85) : clerical_scope.
 
-Notation "'ASSIGN' n ':=' e" := (Assign n e) (at level 78) : clerical_scope.
+Notation "'LET' n ':=' e" := (Assign n e) (at level 78) : clerical_scope.
+
+Notation "'REAL'" := DReal : clerical_scope.
+
+Notation "'BOOL'" := DBoolean : clerical_scope.
+
+Notation "'UNIT'" := DUnit : clerical_scope.
+
+Notation "'INTEGER'" := DInteger : clerical_scope.
 
 Open Scope clerical_scope.
 

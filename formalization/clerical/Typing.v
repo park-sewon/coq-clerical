@@ -25,8 +25,8 @@ Inductive has_type_ro : ro_ctx -> comp -> datatype -> Type :=
 | has_type_ro_rw : forall Γ e τ, Γ ;;; nil ||- e : τ -> Γ |- e : τ 
 
 (* variables *)
-| has_type_ro_Var_0 : forall Γ τ,  ((τ :: Γ) |- (Var 0) : τ)
-| has_type_ro_Var_S : forall Γ σ τ k, Γ |- Var k : τ -> (σ :: Γ) |- Var (S k) : τ
+| has_type_ro_Var_0 : forall Γ τ,  ((τ :: Γ) |- (VAR 0) : τ)
+| has_type_ro_Var_S : forall Γ σ τ k, Γ |- Var k : τ -> (σ :: Γ) |- VAR (S k) : τ
 
 (* constants *)
 | has_type_ro_True : forall Γ, Γ |- TRUE : DBoolean
@@ -77,45 +77,3 @@ with has_type_rw : rw_ctx -> comp -> datatype -> Type :=
                                                                                                                                                                  
                                                                                                              
 where " Γ |- c : τ " := (has_type_ro Γ c τ) and " Γ ;;; Δ ||- c : τ " := (has_type_rw (mk_rw_ctx Γ Δ) c τ).
-
-
-
-Notation " !R " := DReal (at level 80).
-Notation " !B " := DBoolean (at level 80).
-Notation " !U " := DUnit (at level 80).
-Notation " !Z " := DInteger (at level 80).
-
-
-
-Definition test1 := !Z :: !U :: !B :: !R :: nil.
-Definition test2 := !R :: !B :: !U :: !Z :: nil.
-
-Goal test1 |- Var 0 : !Z.
-Proof.
-  apply has_type_ro_Var_0.
-Qed.
-
-Goal test1 |- Var 2 : !B.
-Proof.
-  apply has_type_ro_Var_S.
-  apply has_type_ro_Var_S.
-  apply has_type_ro_Var_0.
-Qed.
-
-Goal test1 ;;; test2 ||- Var 0 : !R.
-Proof.
-  apply has_type_rw_ro.
-  apply has_type_ro_Var_0.
-Qed.
-
-Goal test1 ;;; test2 ||- Assign 2 (Var 2) : !U.
-Proof.
-  apply (has_type_rw_Assign _ _ _ DUnit).
-  apply assignable_S.
-  apply assignable_S.
-  apply assignable_0.
-  apply has_type_ro_Var_S.
-  apply has_type_ro_Var_S.
-  apply has_type_ro_Var_0.
-Qed.
- 
