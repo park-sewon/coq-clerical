@@ -2,6 +2,7 @@ Require Import ZArith.
 Require Import Reals.
 Require Import Clerical.
 Require Import Typing.
+Require Import TypingProperties.
 Require Import Nondeterminism.
 Require Import List.
 
@@ -77,6 +78,22 @@ Proof.
   }
 Defined.
 
+Definition assign_wty_assignable  Γ Δ k e τ (w : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit) : assignable Δ τ k.
+Proof.
+  intros.
+  inversion w'.
+  contradiction (ro_assign_absurd _ _ _ H3).
+  assert (τ0 = τ) by apply (has_type_ro_unambiguous _ _ _ _ H4 w).
+  induction H5.
+  exact H2.
+Defined.
+
+Definition update' {Γ Δ} {k} {e} {τ} (w : (Δ ++ Γ) |- e : τ) (w' : Γ;;;Δ ||- Assign k e : DUnit) : sem_ro_ctx Δ -> sem_datatype τ -> sem_ro_ctx Δ.
+Proof.
+  intros δ v.
+  exact (update _ v δ (assign_wty_assignable _ _ _ _ _ w w')).
+Defined.
+
 Definition Rrecip' : R -> flat R.
 Proof.
   intro x.
@@ -85,6 +102,17 @@ Proof.
   exact (total (/x))%R.
   exact (bot R).
   exact (total (/x))%R.
+Defined.
+
+
+Definition Rltb'' : R -> R -> bool.
+Proof.
+  intros x y.
+  destruct (total_order_T x y).
+  destruct s.
+  exact (true)%R.
+  exact (false).
+  exact (false).
 Defined.
 
 

@@ -5,8 +5,9 @@ Nondeterminism.v
 Clerical.v
 # OperationalSemantics.v
 Typing.v
+TypingProperties.v
 Semantics.v
 # Examples.v
 
 Specification.v
-Reasoning.v
+Reasoning.v			
