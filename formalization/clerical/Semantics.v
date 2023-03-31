@@ -144,44 +144,45 @@ Admitted.
 
 
   
-Definition Case2' {X : Type} : flat bool -> flat bool -> pdom X -> pdom X -> pdom X.
-Proof.
-  intros b1 b2 c1 c2.
-  destruct b1.
-  (* when b1 = bot *)
-  destruct b2.
-  (* when b2 = bot *)
-  exact (pdom_flat_unit (bot X)).
-  destruct b.
-  (* when b2 = true *)
-  exact c2.
-  (* when b2 = false *)
-  exact (pdom_flat_unit (bot X)).
-  destruct b.
-  (* when b1 = true *)
-  destruct b2.
-  (* when b2 = bot *)
-  exact c1.
-  destruct b.
-  (* when b2 = true *)
-  exact (strict_union c1 c2).
-  (* when b2 = false *)
-  exact c1.
-  (* when b1 = false *)
-  destruct b2.
-  (* when b2 = bot *)
-  exact (pdom_flat_unit (bot X)).
-  destruct b.
-  (* when b2 = true *)
-  exact c2.
-  (* when b2 = false *)
-  exact (pdom_flat_unit (bot X)).
-Defined.
+(* Definition Case2' {X : Type} : flat bool -> flat bool -> pdom X -> pdom X -> pdom X. *)
+(* Proof. *)
+(*   intros b1 b2 c1 c2. *)
+(*   destruct b1. *)
+(*   (* when b1 = bot *) *)
+(*   destruct b2. *)
+(*   (* when b2 = bot *) *)
+(*   exact (pdom_flat_unit (bot X)). *)
+(*   destruct b. *)
+(*   (* when b2 = true *) *)
+(*   exact c2. *)
+(*   (* when b2 = false *) *)
+(*   exact (pdom_flat_unit (bot X)). *)
+(*   destruct b. *)
+(*   (* when b1 = true *) *)
+(*   destruct b2. *)
+(*   (* when b2 = bot *) *)
+(*   exact c1. *)
+(*   destruct b. *)
+(*   (* when b2 = true *) *)
+(*   exact (strict_union c1 c2). *)
+(*   (* when b2 = false *) *)
+(*   exact c1. *)
+(*   (* when b1 = false *) *)
+(*   destruct b2. *)
+(*   (* when b2 = bot *) *)
+(*   exact (pdom_flat_unit (bot X)). *)
+(*   destruct b. *)
+(*   (* when b2 = true *) *)
+(*   exact c2. *)
+(*   (* when b2 = false *) *)
+(*   exact (pdom_flat_unit (bot X)). *)
+(* Defined. *)
 
 Definition Case2 {X : Type} : pdom bool -> pdom bool -> pdom X -> pdom X -> pdom X.
 Proof.
-  intros b1 b2 c1 c2.
-  exact (pdom_flat_bind2 (fun x y => Case2' x y c1 c2) b1 b2). 
+  apply pdom_case2.
+  (* intros b1 b2 c1 c2. *)
+  (* exact (pdom_flat_bind2 (fun x y => Case2' x y c1 c2) b1 b2).  *)
 Defined.
   
 Fixpoint sem_ro_comp (Γ : ro_ctx) (e : comp) (τ : datatype) (D : Γ |- e : τ) {struct D} :

@@ -230,9 +230,79 @@ Defined.
 (*   exact H8. *)
 (*   exact H5. *)
 (* Defined. *)
+(* Fixpoint has_type_ro_unambiguous Γ e τ σ (w1 : Γ |- e : τ) (w2 : Γ |- e : σ) : τ = σ. *)
+(* Proof. *)
+(*   destruct e. *)
+(*   apply (unamb_Var _ _ _ _ w1 w2). *)
+(*   destruct b. *)
+(*   rewrite (unamb_True _ _ w1). *)
+(*   rewrite (unamb_True _ _ w2). *)
+(*   auto. *)
+(*   rewrite (unamb_False _ _ w1), (unamb_False _ _ w2); auto. *)
+(*   rewrite (unamb_Int _ _ _ w1), (unamb_Int _ _ _ w2); auto. *)
+(*   destruct b. *)
+(*   rewrite (unamb_OpZplus _ _ _ _ w1), (unamb_OpZplus _ _ _ _ w2); auto. *)
+(*   rewrite (unamb_OpZminus _ _ _ _ w1), (unamb_OpZminus _ _ _ _ w2); auto. *)
+(*   rewrite (unamb_OpZmult _ _ _ _ w1), (unamb_OpZmult _ _ _ _ w2); auto. *)
+(*   rewrite (unamb_OpZlt _ _ _ _ w1), (unamb_OpZlt _ _ _ _ w2); auto. *)
+(*   rewrite (unamb_OpZeq _ _ _ _ w1), (unamb_OpZeq _ _ _ _ w2); auto. *)
+(*   rewrite (unamb_OpRplus _ _ _ _ w1), (unamb_OpRplus _ _ _ _ w2); auto. *)
+(*   rewrite (unamb_OpRminus _ _ _ _ w1), (unamb_OpRminus _ _ _ _ w2); auto. *)
+(*   rewrite (unamb_OpRlt _ _ _ _ w1), (unamb_OpRlt _ _ _ _ w2); auto. *)
+(*   rewrite (unamb_OpRmult _ _ _ _ w1), (unamb_OpRmult _ _ _ _ w2); auto. *)
+(*   destruct u. *)
+(*   rewrite (unamb_OpRrecip _ _ _ w1), (unamb_OpRrecip _ _ _ w2); auto. *)
+(*   rewrite (unamb_OpZRcoerce _ _ _ w1), (unamb_OpZRcoerce _ _ _ w2); auto. *)
+(*   rewrite (unamb_OpZRexp _ _ _ w1), (unamb_OpZRexp _ _ _ w2); auto. *)
+(*   rewrite (unamb_Skip _ _ w1), (unamb_Skip _ _ w2); auto. *)
+(*   inversion w1. *)
+(*   inversion H. *)
+(*   apply (has_type_ro_unambiguous _ _ _ _ H7 w2). *)
+(*   inversion w2. *)
+(*   inversion H10. *)
+(*   contradict magic. *)
+
+(*   (* apply (has_type_ro_unambiguous _ _ _ _ w1 H18). *) *)
+
+(*   apply (has_type_ro_unambiguous _ _ _ _ (has_type_ro_rw _ _ _ H9) (has_type_ro_rw _ _ _ H20)). *)
+  
+(*   contradict magic. *)
+(*   contradict magic. *)
+(*   contradict magic. *)
+(*   contradict magic. *)
+(*   contradict magic. *)
+(*   contradict magic. *)
+(* Defined. *)
+
+
+(*   inversion w2. *)
+(*   inversion H. *)
+(*   inversion H3. *)
+(*   apply (has_type_ro_unambiguous _ _ _ _ H11 H16). *)
+
+(*   inversion w1. *)
+(*   inversion w2. *)
+(*   apply (has_type_rw_unambiguous _ _ _ _ _ H H3). *)
+(*   inversion w1. *)
+(*   inversion w2. *)
+(*   apply (has_type_rw_unambiguous _ _ _ _ _ H H3). *)
+(*   inversion w1. *)
+(*   inversion w2. *)
+(*   apply (has_type_rw_unambiguous _ _ _ _ _ H H3). *)
+(*   inversion w1. *)
+(*   inversion w2. *)
+(*   apply (has_type_rw_unambiguous _ _ _ _ _ H H3). *)
+(*   inversion w1. *)
+(*   inversion w2. *)
+(*   apply (has_type_rw_unambiguous _ _ _ _ _ H H3). *)
+(*   rewrite (unamb_Lim _ _ _ w1), (unamb_Lim _ _ _ w2); auto. *)
+
+
+(* intros. *)
+
 
 Fixpoint has_type_ro_unambiguous Γ e τ σ (w1 : Γ |- e : τ) (w2 : Γ |- e : σ) : τ = σ
-with has_type_rw_unambiguous Γ Δ e τ σ (w1 : Γ ;;; Δ ||- e : τ) (w2 : (Γ ;;; Δ ||- e  : σ  )) : τ = σ.
+with has_type_ro_unambiguous' Γ e τ σ (w1 : Γ ;;; nil ||- e : τ){struct w1} : ( Γ ;;; nil ||- e  : σ)  -> τ = σ.
   +
     destruct e.
     apply (unamb_Var _ _ _ _ w1 w2).
@@ -259,170 +329,65 @@ with has_type_rw_unambiguous Γ Δ e τ σ (w1 : Γ ;;; Δ ||- e : τ) (w2 : (Γ
     rewrite (unamb_Skip _ _ w1), (unamb_Skip _ _ w2); auto.
     inversion w1.
     inversion w2.
-    apply (has_type_rw_unambiguous _ _ _ _ _ H H3).
+    apply (has_type_ro_unambiguous' _ _ _ _ H H3).
     inversion w1.
     inversion w2.
-    apply (has_type_rw_unambiguous _ _ _ _ _ H H3).
+    apply (has_type_ro_unambiguous' _ _ _ _ H H3).
     inversion w1.
     inversion w2.
-    apply (has_type_rw_unambiguous _ _ _ _ _ H H3).
+    apply (has_type_ro_unambiguous' _ _ _ _ H H3).
     inversion w1.
     inversion w2.
-    apply (has_type_rw_unambiguous _ _ _ _ _ H H3).
+    apply (has_type_ro_unambiguous' _ _ _ _ H H3).
     inversion w1.
     inversion w2.
-    apply (has_type_rw_unambiguous _ _ _ _ _ H H3).
+    apply (has_type_ro_unambiguous' _ _ _ _ H H3).
     inversion w1.
     inversion w2.
-    apply (has_type_rw_unambiguous _ _ _ _ _ H H3).
+    apply (has_type_ro_unambiguous' _ _ _ _ H H3).
     rewrite (unamb_Lim _ _ _ w1), (unamb_Lim _ _ _ w2); auto.
-
   +
     destruct e.
-    inversion w1.
+    induction w1.
+    intro w2. 
     inversion w2.
-    apply (has_type_ro_unambiguous _ _ _ _ H3 H8).
-    inversion w1.
-    inversion w2.
-    apply (has_type_ro_unambiguous _ _ _ _ H3 H8).
-    inversion w1.
-    inversion w2.
-    apply (has_type_ro_unambiguous _ _ _ _ H3 H8).
-    inversion w1.
-    inversion w2.
-    apply (has_type_ro_unambiguous _ _ _ _ H3 H8).
-    inversion w1.
-    inversion w2.
-    apply (has_type_ro_unambiguous _ _ _ _ H3 H8).
-    inversion w1.
-    inversion w2.
-    apply (has_type_ro_unambiguous _ _ _ _ H3 H8).
-    (* apply (has_type_rw_unambiguous _ _ _ _ _ (has_type_rw_Seq_inv _ _ _ _ _ w1) (has_type_rw_Seq_inv _ _ _ _ _ w2)). *)
-    contradict magic.
-    contradict magic.
-    contradict magic.
-    contradict magic.
-    contradict magic.
-    contradict magic.
-    contradict magic.
-Defined.
+    apply (has_type_ro_unambiguous _ _ _ _ h H3).
+    induction H2.
+    inversion h.
 
-    
-(* Fixpoint has_type_ro_unambiguous Γ e τ σ (w1 : Γ |- e : τ) (w2 : Γ |- e : σ) : τ = σ *)
-(* with has_type_rw_unambiguous Γ Δ e τ σ (w1 : Γ ;;; Δ ||- e : τ) (w2 : (Γ ;;; Δ ||- e  : σ  )) {struct w1} : τ = σ. *)
-(* Proof. *)
-(*   intros. *)
-(*   induction w1. *)
-(*   inversion h. *)
-(*   simpl in H3. *)
-(*   apply (has_type_ro_unambiguous _ _ _ _ H3 w2). *)
-  
-(*   induction H2. *)
-(*   inversion w2. *)
-(*   apply (has_type_rw_unambiguous _ _ _ _ _ h H2). *)
-(*   induction H2. *)
-(*   inversion w2. *)
-(*   rewrite H3. *)
-(*   apply (has_type_rw_unambiguous _ _ _ _ _ h H2). *)
-(*   induction H2. *)
-(*   inversion w2. *)
-(*   apply (has_type_rw_unambiguous _ _ _ _ _ h H2). *)
-(*   induction H3. *)
-(*   inversion w2. *)
-(*   apply (has_type_rw_unambiguous _ _ _ _ _ h H3). *)
-(*   induction H4. *)
-(*   inversion w2. *)
-(*   apply (has_type_rw_unambiguous _ _ _ _ _ h H4). *)
-(*   induction H2. *)
-(*   inversion w2. *)
-(*   rewrite H3. *)
-(*   apply (has_type_rw_unambiguous _ _ _ _ _ h H2). *)
-(*   - *)
-(*     apply (unamb_Var_0 _ _ _ w2). *)
-(*   - *)
-(*     apply (IHw1 (has_type_ro_Var_S_inv _ _ _ _ w2)). *)
-(*   - *)
-(*     rewrite (unamb_True _ _ w2); auto. *)
-(*   - *)
-(*     rewrite (unamb_False _ _ w2); auto. *)
-(*   -     *)
-(*     rewrite (unamb_Skip _ _ w2); auto. *)
-(*   - *)
-(*     rewrite (unamb_Int _ _ _ w2); auto. *)
-(*   - *)
-(*     rewrite (unamb_OpRrecip _ _ _ w2); auto. *)
-(*   - *)
-(*     rewrite (unamb_OpZRcoerce _ _ _ w2); auto. *)
-(*   -   *)
-(*     rewrite (unamb_OpZRexp _ _ _ w2); auto. *)
-(*   -   *)
-(*     rewrite (unamb_OpZplus _ _ _ _ w2); auto. *)
-(*   -   *)
-(*     rewrite (unamb_OpZminus _ _ _ _ w2); auto. *)
-(*   -   *)
-(*     rewrite (unamb_OpZmult _ _ _ _ w2); auto. *)
-(*   -   *)
-(*     rewrite (unamb_OpZlt _ _ _ _ w2); auto. *)
-(*   -   *)
-(*     rewrite (unamb_OpZeq _ _ _ _ w2); auto. *)
-(*   -   *)
-(*     rewrite (unamb_OpRplus _ _ _ _ w2); auto. *)
-(*   -   *)
-(*     rewrite (unamb_OpRminus _ _ _ _ w2); auto. *)
-(*   -   *)
-(*     rewrite (unamb_OpRmult _ _ _ _ w2); auto. *)
-(*   -   *)
-(*     rewrite (unamb_OpRlt _ _ _ _ w2); auto. *)
-(*   -   *)
-(*     rewrite (unamb_Lim _ _ _ w2); auto. *)
-(*   - *)
-
+(* inversion w1. *)
+(*     inversion w2. *)
+(*     apply (has_type_ro_unambiguous _ _ _ _ H3 H8). *)
 (*     inversion w1. *)
-(*     inversion H3. *)
-(*     admit. *)
-(*     admit. *)
-    
-(*     a *)
-    
-(*     rewrite (unamb_OpZplus _ _ _ _ w2); auto. *)
-(*   -   *)
-(*     rewrite (unamb_OpZplus _ _ _ _ w2); auto. *)
-(*   -   *)
-(*     rewrite (unamb_OpZplus _ _ _ _ w2); auto. *)
-(* Defined. *)
-    
+(*     inversion w2. *)
+(*     apply (has_type_ro_unambiguous _ _ _ _ H3 H8). *)
+(*     inversion w1. *)
+(*     inversion w2. *)
+(*     apply (has_type_ro_unambiguous _ _ _ _ H3 H8). *)
+(*     inversion w1. *)
+(*     inversion w2. *)
+(*     apply (has_type_ro_unambiguous _ _ _ _ H3 H8). *)
+(*     inversion w1. *)
+(*     inversion w2. *)
+(*     apply (has_type_ro_unambiguous _ _ _ _ H3 H8). *)
+(*     inversion w1. *)
+(*     inversion w2. *)
+(*     apply (has_type_ro_unambiguous _ _ _ _ H3 H8). *)
+(*     inversion H3.  *)
+(*     apply (has_type_ro_unambiguous' _ _ _ _ H11 (has_type_rw_Seq _ _ _ _ _ H9 H10)). *)
+(*     inversion w2. *)
+(*     inversion H10. *)
 
-(*   -   *)
+ 
+(* contradict magic. *)
+(*     contradict magic. *)
+(*     contradict magic. *)
+(*     contradict magic. *)
+(*     contradict magic. *)
+(*     contradict magic. *)
 (*     contradict magic. *)
 (* Defined. *)
-
-(* contradict magic. *)
-(* Defined. *)
-
-(*   inversion w2. *)
-(*     inversion H. *)
-    
-(*     induction w2. *)
-(*     admit. *)
-(*     admit. *)
-    
-(*     inversion w2. *)
-(*     inversion H. *)
-    
-
-(*     admit. *)
-
-(*   - *)
-(*     admit. *)
-
-(*   - *)
-    
-  
-(*   Induction H0. *)
-(*   inversion w2. *)
-(*   inversion H0. *)
-
-(* Admitted. *)
+Admitted.
 
 
 Fixpoint ro_assign_absurd Γ k e (w : Γ |- Assign k e : DUnit) : False.
