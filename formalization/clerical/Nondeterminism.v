@@ -100,6 +100,8 @@ Definition infinite (A : Type) : Prop :=
 Definition ninfinite A := ~infinite A.
 
 Definition nat_upper_bound (P : nat -> Prop) n : Prop := forall x, P x -> x <= n.
+Definition nat_max (P : nat -> Prop) n : Prop :=
+  nat_upper_bound P n /\ P n.
 
 Require Import Coq.Arith.Compare_dec.
 Lemma step_monotone_monotone : forall (f : nat -> nat), (forall n, f n < f (S n)) -> forall n m, n < m -> f n < f m.
@@ -171,6 +173,52 @@ Proof.
   contradict (H H3).
 Defined.
 
+Require Import Coq.Arith.Wf_nat.
+Lemma nat_wf : forall (P : nat -> Prop), (exists n, P n) -> exists m, P m /\ forall n, P n -> m <= n.
+Proof.
+  intros.
+  pose proof (dec_inh_nat_subset_has_unique_least_element P (fun n => (lem (P n))) H).
+  unfold has_unique_least_element in H0.
+  destruct H0.
+  exists x.
+  destruct H0.
+  exact H0.
+Defined.
+
+
+Lemma finite_set_max : forall (P : nat -> Prop), ninfinite {n | P n} -> (exists n, P n) -> exists n, nat_max P n.
+Proof.
+  intros.
+  destruct (nat_wf (fun n => nat_upper_bound P n) (finite_set_upper_bounded P H)).
+  assert (P x).
+  destruct (lem (P x)); auto.
+  destruct x.
+  destruct H0.
+  destruct x.
+  contradict (H2 H0).
+  destruct H1.
+  pose proof (H1 _ H0).
+  contradict H4.
+  apply PeanoNat.Nat.nle_succ_0.
+  destruct H1.
+  assert (nat_upper_bound P x).
+  intros m p.
+  pose proof (H1 _ p).
+  assert (m = S x \/ S m <= S x).
+  destruct H4.
+  left; auto.
+  right; apply le_n_S; auto.
+  destruct H5.
+  rewrite H5 in p.
+  contradict (H2 p).
+  apply le_S_n; auto.
+  apply H3 in H4.
+  contradict (PeanoNat.Nat.nle_succ_diag_l _ H4).
+  exists x.
+  split; destruct H1; auto.
+Defined.
+
+  
 Lemma Pigeon2' : forall {A} {P Q : A -> Prop},
     infinite {a | P a \/ Q a} -> infinite {a | P a} \/ infinite {a | Q a}.
 Proof.
@@ -225,10 +273,111 @@ Proof.
   }
 Defined.
   
-Axiom Pigeon : forall {A : Type} (P : A -> Type),
-    infinite {a : A & P a} ->
-    infinite A \/ exists a : A, infinite (P a). 
+Lemma tr {A} (B : A -> Type) {x y : A} (p : x = y) : B x -> B y.
+Proof.
+  destruct p.
+  exact (fun x => x). 
+Defined.
 
+Definition apd {A} {B : A -> Type} (f : forall x, B x) {x y} (p : x = y) :
+  (tr B p (f x)) = (f y).
+Proof.
+  destruct p.
+  reflexivity.
+Defined.
+
+Lemma Pigeon : forall {A : Type} (P : A -> Type),
+    infinite {a : A & P a} ->
+    infinite A \/ exists a : A, infinite (P a).
+Proof.
+  intros.
+  destruct (lem (infinite A \/ exists a : A, infinite (P a))); auto.
+  apply neg_disj in H0.
+  destruct H0 as [p q']; pose proof (neg_exists_forall_neg _ _ q') as q; clear q'.
+  destruct H as [f inj].
+  pose (fun a : A => {n : nat | projT1 (f n) = a}) as fiber.
+  assert (forall a, ninfinite (fiber a)).
+  {
+    intro.
+    intro.
+    assert (infinite (P a)).
+    {
+      unfold fiber in H.
+      destruct H as [g h].
+      exists (fun n => tr P (proj2_sig (g n)) (projT2 (f (proj1_sig (g n))))).
+      intros i j e.
+      case_eq (g i); intros.
+      case_eq (g j); intros.
+      rewrite H in e.
+      rewrite H0 in e.
+      simpl in e.
+      destruct e0.
+      simpl in e.
+      assert (x = x0).
+      {
+        clear H H0.
+        apply inj.
+        destruct (f x).
+        destruct (f x0).
+        simpl in e1, e.
+        destruct e1.
+        simpl in e.
+        destruct e.
+        auto.
+      }
+      destruct H1.
+      apply h.
+      rewrite H, H0.
+      clear H H0 e.
+      rewrite (prop_irrl _ e1 eq_refl).
+      auto.
+    }
+    exact (q _ H0).
+  }
+  pose ({n : nat | exists a, nat_max (fun m => projT1 (f m) = a) n}) as S.
+  assert (ninfinite S).
+  intros [g h].
+  contradict p.
+  exists (fun n => projT1 (f (proj1_sig (g n)))).
+  intros i j e.
+  apply h.
+  destruct (g i), (g j); simpl in e.  
+  unfold nat_max in e0, e1.
+  assert (x = x0).
+  {
+    destruct e0 as [a [p pp]].
+    destruct e1 as [c [r rr]].
+    rewrite pp in e.
+    rewrite rr in e.
+    induction e.
+    pose proof (p _ rr).
+    pose proof (r _ pp).
+    apply PeanoNat.Nat.le_antisymm; auto.
+  }
+  induction H0.
+  rewrite (prop_irrl _ e0 e1); auto.
+  (* now the real proof *)
+  apply finite_set_upper_bounded in H0.
+  destruct H0.
+
+  assert (forall n, n <= x).
+  intro n.
+  case_eq (f n); intros.
+  destruct (finite_set_max (fun n => projT1 (f n) = x0) (H x0)).
+  exists n; rewrite  H1; simpl; auto.
+  assert (n <= x1).
+  apply H2.
+  rewrite H1; auto.
+  assert (x1 <= x).
+  apply H0.
+  exists x0.
+  exact H2.
+  apply (PeanoNat.Nat.le_trans _ _ _ H3 H4).
+  clear S.
+  pose proof (H1 (S x)).
+  contradict H2.
+  apply PeanoNat.Nat.nle_succ_diag_l.
+Defined.
 
 Lemma forall_or (A : Type) (P Q : A -> Prop) : (forall a, P a \/ Q a) -> (exists a, P a) \/ (forall a, Q a).
 Proof.
