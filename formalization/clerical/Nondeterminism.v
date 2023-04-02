@@ -1499,22 +1499,161 @@ Section Continuity.
 
   Definition pdom_fun_bot {X Y : Type} : X -> pdom Y := fun _ => pdom_bot.
 
+  Definition pdom_fun_bot_is_bot {X Y : Type} : forall (f :X -> pdom Y), pdom_fun_bot ≤ f.
+  Proof.
+    intros f e; apply pdom_bot_is_bot; auto.
+  Defined.
+ 
   Definition pdom_fun_is_chain {X Y : Type} (s : nat -> (X -> pdom Y)) := forall n m, n <= m -> s n ≤ s m.
-
-  Definition pdom_fun_bot_chain {X Y : Type} (s : (X -> pdom Y) -> (X -> pdom Y)) :=
-    nat_rect (fun _ => X -> pdom Y) (pdom_fun_bot) (fun _ k => s k).
-
-  Lemma pdom_fun_bot_chain_is_chain {X Y : Type} (s : (X -> pdom Y) -> (X -> pdom Y)) :
-    pdom_fun_is_monotone s ->
-    pdom_fun_is_chain (pdom_fun_bot_chain s).
-  Admitted.
   
+  Definition pdom_fun_chain_sup {X Y: Type} (f : nat -> (X -> pdom Y)) : pdom_fun_is_chain f -> X -> pdom Y.
+  Proof.
+    intro.
+    pose (fun x : X => fun n => f n x) as g. 
+    assert (forall x, pdom_is_chain (g x)).
+    intros x i j o.
+    exact (H i j o x).
+    intro x.
+    exact (pdom_chain_sup (g x) (H0 x)).
+  Defined.
 
+  Definition pdom_fun_indexed_subset_is_sup {X Y I: Type} (f : I -> (X -> pdom Y)) (T : X -> pdom Y) :=
+    (forall i, (f i) ≤ T) /\ forall T', (forall i, (f i) ≤ T') -> T ≤ T'.
+
+  Lemma pdom_fun_omega_complete {X Y : Type} (f : nat -> (X -> pdom Y)) (H : pdom_fun_is_chain f) :
+    pdom_fun_indexed_subset_is_sup f (pdom_fun_chain_sup f H).
+  Proof.
+    split.
+    intro.
+    intro x.
+    unfold pdom_fun_chain_sup.
+    apply (pdom_omega_complete (fun n => f n x)).
+    intros.
+    intro x.
+    apply (pdom_omega_complete (fun n => f n x)).
+    intro i.
+    exact (H0 i x).
+  Defined.    
+
+  Lemma pdom_fun_le_refl {X Y} (f : X -> pdom Y) : f ≤ f.
+  Proof.
+    intro x; apply pdom_le_refl; auto.
+  Defined.
+
+  Lemma pdom_fun_le_trans {X Y} (f g h: X -> pdom Y) : f ≤ g -> g ≤ h -> f ≤ h.
+  Proof.
+    intros h1 h2 x; apply (pdom_le_trans _ _ _ (h1 x) (h2 x)).
+  Defined.
+
+  Lemma pdom_fun_le_asym {X Y} (f g: X -> pdom Y) : f ≤ g -> g ≤ f -> f = g.
+  Admitted.
+    
+  Lemma pdom_fun_is_step_chain_is_chain {X Y: Type} (s : nat -> X -> pdom Y) :
+    (forall n, s n ≤ s (S n)) -> pdom_fun_is_chain s.
+  Proof.
+    intros sc i j o.
+    induction o.
+    apply pdom_fun_le_refl.
+    apply (pdom_fun_le_trans _ _ _ IHo (sc m)).
+  Defined.
+
+  Lemma pdom_fun_chain_monotone_chain {X Y : Type} (f : (X -> pdom Y) -> X -> pdom Y) :
+    forall (s : nat -> X -> pdom Y), pdom_fun_is_chain s -> pdom_fun_is_monotone f -> pdom_fun_is_chain (fun n => f (s n)).
+  Proof.
+    intros.
+    intros n m o.
+    apply H0.
+    apply H.
+    exact o.
+  Defined.
+
+  
+  Definition pdom_fun_is_continuous {X Y : Type} (f : (X -> pdom Y) -> X -> pdom Y) (m : pdom_fun_is_monotone f) :=
+      forall (s : nat -> X -> pdom Y) (c : pdom_fun_is_chain s),
+        f (pdom_fun_chain_sup s c) = pdom_fun_chain_sup (fun n => f (s n)) (pdom_fun_chain_monotone_chain f s c m).  
+
+  Definition pdom_fun_bot_chain {X Y : Type} (f : (X -> pdom Y) -> X -> pdom Y) (m : pdom_fun_is_monotone f) : nat -> X -> pdom Y.
+  Proof.
+    exact (fun n => nat_rect (fun _ => X -> pdom Y) (pdom_fun_bot) (fun _ k => f k) n).
+  Defined.
+
+  Lemma pdom_fun_bot_chain_is_chain {X Y : Type} (f : (X -> pdom Y) -> X -> pdom Y) (m : pdom_fun_is_monotone f) :
+    pdom_fun_is_chain (pdom_fun_bot_chain f m).
+  Proof.
+    apply pdom_fun_is_step_chain_is_chain.
+    intro.
+    simpl.
+    induction n.
+    simpl.
+    apply pdom_fun_bot_is_bot.
+    simpl.
+    apply m.
+    exact IHn.
+  Defined.
+  
+  Definition pdom_fun_lfp {X Y : Type} (f : (X -> pdom Y) -> X -> pdom Y) (m : pdom_fun_is_monotone f) : X -> pdom Y.
+  Proof.
+    exact (pdom_fun_chain_sup (pdom_fun_bot_chain f m) (pdom_fun_bot_chain_is_chain f m)).
+  Defined.
+
+  Lemma pdom_fun_index_surjective_sup {X Y: Type} {I J : Type} (f : I -> X -> pdom Y) (g : J -> X -> pdom Y) (supf supg : X -> pdom Y) :
+    pdom_fun_indexed_subset_is_sup f supf -> pdom_fun_indexed_subset_is_sup g supg -> (forall i, exists j, f i ≤ g j) -> supf ≤ supg.
+  Admitted.
+     
+  
+  Lemma pdom_fun_lfp_prop {X Y: Type} (f : (X -> pdom Y) -> (X -> pdom Y)) (m : pdom_fun_is_monotone f) :
+    pdom_fun_is_continuous f m ->
+    f (pdom_fun_lfp f m) = (pdom_fun_lfp f m) /\
+      forall x, f x = x -> (pdom_fun_lfp f m) ≤ x.
+  Proof.
+    intros.
+    split.
+    unfold pdom_fun_lfp.    
+    pose proof (H (pdom_fun_bot_chain f m) (pdom_fun_bot_chain_is_chain f m)).
+    rewrite H0.
+    apply pdom_fun_le_asym.
+    apply (pdom_fun_index_surjective_sup _ _ _ _ (pdom_fun_omega_complete _ _) (pdom_fun_omega_complete _ _)).
+    intro n; exists (S n).
+    simpl.
+    apply pdom_fun_le_refl.
+    apply (pdom_fun_index_surjective_sup _ _ _ _ (pdom_fun_omega_complete _ _) (pdom_fun_omega_complete _ _)).
+    intro n; exists n.
+    induction n.
+    simpl.
+    apply pdom_fun_bot_is_bot.
+    simpl.
+    apply m; auto.
+    (* least element *)
+    {
+    intros.
+    assert (forall n, (pdom_fun_bot_chain f m n) ≤ x).
+    {
+      intro.
+      induction n.
+      simpl.
+      apply pdom_fun_bot_is_bot.
+      simpl.
+      rewrite <- H0; apply m; auto.
+    }
+    pose proof (pdom_fun_omega_complete (pdom_fun_bot_chain f m) (pdom_fun_bot_chain_is_chain f m)).
+    destruct H2.
+    apply H3.
+    exact H1.
+    }
+  Defined.
+  
+  
   Definition pdom_W {X : Type} (b : X -> pdom bool) (c : X -> pdom X) : (X -> pdom X) -> X -> pdom X.
   Proof.
-  Admitted.
-
-
+    intros f.
+    intro x.
+    pose (fun (b : bool) => if b then (pdom_bind f) (c x) else pdom_unit x). 
+    exact (pdom_bind p (b x)).
+  Defined.
+  Print pdom_W.
+  
+  (* Lemma pdom_W_monotone *)
+        
   Definition pdom_while {X : Type} : (X -> pdom bool) -> (X -> pdom X) -> X -> pdom X.
   Proof.
     intros B C.
