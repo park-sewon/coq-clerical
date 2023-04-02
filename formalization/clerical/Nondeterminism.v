@@ -6,7 +6,18 @@ Require Import Coq.Program.Equality.
 Axiom lem : forall P : Prop, P \/ ~P.
 Axiom cchoice : forall (A : Type) (P : nat -> A -> Prop), (forall n : nat, exists a : A, P n a) -> exists f : nat -> A, forall n, P n (f n).
 Axiom prop_ext : forall (P Q : Prop), (P -> Q) -> (Q -> P) -> P = Q.
+Axiom dfun_ext : forall A (P : A-> Type) (f g : forall a, P a), (forall a, f a = g a) -> f = g.
+Lemma pred_ext : forall A (P Q : A -> Prop), (forall a, P a -> Q a) -> (forall a, Q a -> P a) -> P = Q.
+Proof.
+  intros.
+  apply dfun_ext.
+  intro.
+  apply prop_ext.
+  apply (H a).
+  apply (H0 a).
+Defined.
 
+  
 Lemma prop_irrl : forall (P : Prop) (p q : P), p = q.
 Proof.
   intros.
@@ -1007,13 +1018,506 @@ Proof.
   }
 Defined.
 
-Definition pdom_W {X : Type} (b : X -> pdom bool) (c : X -> pdom X) : (X -> pdom X) -> X -> pdom X.
-Proof.
-Admitted.
 
 
-Definition pdom_while {X : Type} : (X -> pdom bool) -> (X -> pdom X) -> X -> pdom X.
-Proof.
-  intros B C.
-Admitted.
+Section Continuity.
 
+  Definition pdom_add_tot {X : Type} (S : pdom X) (x : X) : pdom X.
+  Proof.
+    exists (fun y => pdom_char S y \/ total x = y).
+    intros.
+    apply pset_infinite_subset_infinite in H.
+    apply Pigeon2' in H.
+    destruct H.
+    left.
+    apply subset_infinite_pset_infinite in H.
+    apply (pdom_infinite_bot _ H).
+    contradict H.
+    apply hprop_ninfinite.
+    intros.
+    destruct x0, y.
+    rewrite <-  e, <- e0.
+    auto.
+  Defined.
+  
+  Definition pdom_add_elem {X : Type} (S : pdom X) (x : flat X) : pdom X.
+  Proof.
+    exists (fun y => pdom_char S y \/ x = y).
+    intros.
+    apply pset_infinite_subset_infinite in H.
+    apply Pigeon2' in H.
+    destruct H.
+    left.
+    apply subset_infinite_pset_infinite in H.
+    apply (pdom_infinite_bot _ H).
+    contradict H.
+    apply hprop_ninfinite.
+    intros.
+    destruct x0, y.
+    rewrite <-  e, <- e0.
+    auto.
+  Defined.
+
+  Definition pdom_incl {X : Type} (S T : pdom X) :=
+    forall x : flat X, pdom_char S x -> pdom_char T x.
+
+  Definition pdom_is_empty {X : Type} (S : pdom X) := forall x, ~ pdom_char S x.
+
+  Definition pdom_empty (X : Type) : pdom X.
+  Proof.
+    exists (fun _ => False).
+    intro x.
+    apply pset_infinite_subset_infinite in x.
+    apply hprop_ninfinite in x; auto.
+    intros.
+    destruct x0.
+    contradict f; auto.
+  Defined.
+
+  Lemma pdom_empty_is_empty {X : Type} : pdom_is_empty (pdom_empty X).
+  Proof.
+    intro x.
+    unfold pdom_empty.
+    simpl.
+    auto.
+  Defined.
+
+  Lemma pdom_is_empty_is_empty {X : Type} : forall S, pdom_is_empty S -> S = pdom_empty X.
+  Proof.
+    intros.
+  Admitted.
+  
+  Definition pdom_le {X : Type} (S T : pdom X) :=
+    S = T \/ (pdom_char S (bot X) /\ (pdom_is_empty T \/ pdom_incl S (pdom_add_elem T (bot X)))).
+
+
+  Infix "⊑" := (pdom_le) (at level 80).
+
+
+    
+  Lemma pdom_is_empty_le_is_empty {X : Type} : forall (S T : pdom X), S ⊑ T -> pdom_is_empty S -> pdom_is_empty T.
+  Proof.
+    intros.
+    destruct H.
+    rewrite <- H; auto.
+    destruct H.
+    contradict H.
+    intro.
+    exact (H0 _ H).
+  Defined.
+  
+  Definition pdom_bot {X : Type} : pdom X := pdom_flat_unit (bot X).
+  Lemma pdom_bot_is_bot {X : Type} : forall (S : pdom X), pdom_bot ⊑ S.
+  Proof.
+    intros.
+    right.
+    split.
+    unfold pdom_bot.
+    unfold pdom_char.
+    unfold pdom_flat_unit.
+    auto.
+    right.
+    intros x e.
+    unfold pdom_char in e.
+    simpl in e.
+    rewrite <- e.
+    unfold pdom_char.
+    unfold pdom_add_elem.
+    right; auto.
+  Defined.
+
+  Lemma pdom_le_refl {X : Type} : forall (S : pdom X), S ⊑ S.
+  Proof.
+    intros.
+    left; auto.
+  Defined.
+
+  Lemma flat_total_neq_bot {X : Type} : forall x, total x <> bot X.
+  Proof.
+    intros.
+    pose (fun (x : flat X) => match x with total _ => 0 | bot _ => 1 end). 
+    intro.
+    pose proof (lp _ _ n _ _ H).
+    simpl in H0.
+    contradict H0; auto.
+  Defined.
+
+  Lemma flat_bot_neq_total {X : Type} : forall x, bot X <> total x.
+  Proof.
+    intros x e.
+    apply (flat_total_neq_bot x).
+    rewrite e; auto.
+  Defined.
+      
+  Lemma pdom_le_trans {X : Type} : forall (S T R : pdom X), S ⊑ T -> T ⊑ R -> S ⊑ R.
+  Proof.
+    intros.
+    case_eq H; intros.
+    case_eq H0; intros.
+    left; rewrite e, e0; auto.
+    clear H1; induction e; right; auto.
+    case_eq H0; intros.
+    clear H2; induction e; right; auto.
+    clear H1 H2.
+    destruct a, a0.
+    right.
+    split; auto.
+    destruct H4.
+    left; auto.
+    destruct H2.
+    left.
+    apply (pdom_is_empty_le_is_empty _ _ H0 H2).
+    right.
+    intros n e.
+    pose proof (H2 n e).
+    destruct n.
+    auto.
+    apply H4.
+    destruct T.
+    simpl.
+    simpl in H5.
+    destruct H5; auto.
+    contradict H5.
+    apply flat_bot_neq_total.
+  Defined.
+
+  Lemma pdom_le_asym {X : Type} : forall (x y : pdom X), x ⊑ y -> y ⊑ x -> x = y.
+  Proof.
+    Admitted.
+  
+  Definition pdom_is_chain {X : Type} (f : nat -> pdom X) := forall n m, n <= m -> f n ⊑ f m.
+  Definition pdom_indexed_subset_is_sup {X I: Type} (f : I -> pdom X) (T : pdom X) :=
+    (forall i, (f i) ⊑ T) /\ forall T', (forall i, (f i) ⊑ T') -> T ⊑ T'.
+
+  Definition pdom_indexed_union_when_bot {X I : Type} (f : I -> pdom X) : (exists i, pdom_char (f i) (bot X)) -> pdom X.
+  Proof.
+    intros.
+    exists (fun x => exists i, pdom_char (f i) x).
+    intros.
+    exact H.
+  Defined
+  .
+
+  Definition pdom_chain_sup {X : Type} (f : nat -> pdom X) : pdom_is_chain f -> pdom X.
+  Proof.
+    intros H.
+    exists (fun x =>
+              (* when there is emptyset, it is emptyset *)
+              ((exists n, pdom_is_empty (f n)) -> False)
+              /\
+                ((forall n, pdom_char (f n) (bot X)) -> exists i, pdom_char (f i) x)
+              /\
+                ((exists n, ~ pdom_char (f n) (bot X)) -> (exists n, ~ pdom_char (f n) (bot X) /\ pdom_char (f n) x))).
+    intro.
+    destruct H0 as [g [h hh]].
+    split.
+    destruct (hh 0); auto.
+    split.
+    intro.
+    exists 0; apply H0; auto.
+    intro.
+    assert (forall n : nat,
+        exists n0 : nat, ~ pdom_char (f n0) (bot X) /\ pdom_char (f n0) (g n)).
+    intros.
+    destruct (hh n) as [a [b c]]; apply c; auto.
+    clear hh.
+    destruct H0.
+    assert (forall n, pdom_char (f x) (g n)).
+    intro n.
+    destruct (H1 n).
+    destruct H2.
+    destruct (PeanoNat.Nat.le_ge_cases x x0).
+    pose proof (H _ _ H4).
+    destruct H5.
+    rewrite H5; auto.
+    destruct H5.
+    contradict (H0 H5).
+    pose proof (H _ _ H4).
+    destruct H5.
+    rewrite <- H5; auto.
+    destruct H5.
+    contradict (H2 H5).
+    contradict H0.
+    apply pdom_infinite_bot.
+    exists g; auto.
+  Defined.
+
+  Lemma pdom_omega_complete {X : Type} (f : nat -> pdom X) (H : pdom_is_chain f) :
+    pdom_indexed_subset_is_sup f (pdom_chain_sup f H).
+  Proof.
+    destruct (lem (exists n, pdom_is_empty (f n))).
+    {
+      assert (pdom_chain_sup f H = pdom_empty X) as rw.
+      {
+        apply pdom_is_empty_is_empty.
+        unfold pdom_chain_sup, pdom_is_empty; simpl.
+        intros x [a [b c]].
+        apply a.
+        exact H0.
+      }
+      rewrite rw.
+      (* when there is emptyset *)
+      destruct H0 as [i h].
+      
+      split.
+      intro j.
+      destruct (le_ge_dec i j).
+      pose proof (H i j l).
+      pose proof (pdom_is_empty_le_is_empty _ _ H0 h).
+      rewrite  (pdom_is_empty_is_empty _ H1).
+      
+      apply pdom_le_refl.
+      assert (j <= i) by auto.
+      pose proof (H j i H0).
+      assert (f i ⊑ pdom_empty X).
+      rewrite  (pdom_is_empty_is_empty _ h).
+      apply pdom_le_refl.
+      apply (pdom_le_trans _ _ _ H1 H2).
+      intros.
+      pose proof (pdom_is_empty_le_is_empty _ _ (H0 i) h).
+      rewrite  (pdom_is_empty_is_empty _ H1).
+      apply pdom_le_refl.
+    }
+
+    destruct (lem (forall n, pdom_char (f n) (bot X))).
+    {
+      assert (pdom_chain_sup f H =  (pdom_indexed_union_when_bot f (ex_intro _ 0 (H1 0)))) as rw.
+      {
+        apply proj1_sig_injective.
+        simpl.
+        apply pred_ext.
+        intros x [a [b c]].
+        exact (b H1).
+        intros; repeat split.
+        exact H0.
+        intro.
+        exact H2.
+        intro.
+        destruct H3.
+        contradict (H3 (H1 x)).        
+      }
+      rewrite rw.
+      
+      (* when all chain contains bot *)
+      split.
+      intros.
+      right.
+      split.
+      exact (H1 i ).
+      right.
+      intros x e.
+      simpl.
+      left.
+      exists i; auto.
+      (* now proving least *)
+      intros.
+      destruct (lem (pdom_is_empty T')).
+      right.
+      split; simpl.
+      exists 0; auto.
+      left; auto.
+      
+      right.
+      split.
+      simpl.
+      exists 0; auto.
+      right.
+      intros x e.
+      simpl.
+      simpl in e.
+      destruct e.
+      destruct (H2 x0).
+      left; rewrite <- H5; auto.
+      destruct H5.
+      destruct H6.
+      contradict (H3 H6).
+      destruct x.
+      right; auto.
+      left.
+      apply H6 in H4.
+      simpl in H4.
+      destruct H4; auto.
+      contradict H4; apply flat_bot_neq_total.
+    }
+
+    {
+      
+      (* when bot disappear *)
+      apply (neg_forall_exists_neg) in H1.
+      
+      destruct H1.
+      assert ( (pdom_chain_sup f H) = f x) as rw.
+      {
+        apply proj1_sig_injective.
+        simpl.
+        apply pred_ext.
+        intros y [a [b c]].
+        pose proof (c (ex_intro _ x H1)).
+        clear a b c.
+        destruct H2.
+        assert (f x = f x0).
+        destruct (PeanoNat.Nat.le_ge_cases x x0).
+        apply H in H3.
+        destruct H3.
+        auto.
+        destruct H3.
+        contradict (H1 H3).
+        apply H in H3.
+        destruct H3.
+        auto.
+        destruct H3.
+        destruct H2.
+        contradict (H2 H3).
+        rewrite H3; destruct H2; auto.
+        intros; repeat split.
+        exact H0.
+        intro.
+        contradict (H1 (H3 x)).
+        intro.
+        exists x; auto.
+      }
+      rewrite rw.      
+      split.
+      intro.
+      destruct (PeanoNat.Nat.le_ge_cases i x).
+      apply (H _ _ H2).
+      pose proof (H _ _ H2).
+      destruct H3.
+      rewrite H3; apply pdom_le_refl.
+      destruct H3.
+      contradict (H1 H3).
+      (* minimality *)
+      intros.
+      pose proof (H2 x).
+      exact H3.
+    }
+  Defined.
+
+  
+  Definition pdom_is_monotone {X : Type} (f : pdom X -> pdom X) := forall S T, S ⊑ T -> f S ⊑ f T.
+
+  Lemma pdom_chain_monotone_chain {X : Type} (f : pdom X -> pdom X) :
+    forall (s : nat -> pdom X), pdom_is_chain s -> pdom_is_monotone f -> pdom_is_chain (fun n => f (s n)).
+  Proof.
+    intros.
+    intros n m o.
+    apply H0.
+    apply H.
+    exact o.
+  Defined.
+
+  Lemma pdom_is_step_chain_is_chain {X : Type} (s : nat -> pdom X) :
+    (forall n, s n ⊑ s (S n)) -> pdom_is_chain s.
+  Proof.
+    intros sc i j o.
+    induction o.
+    apply pdom_le_refl.
+    apply (pdom_le_trans _ _ _ IHo (sc m)).
+  Defined.
+  
+  Definition pdom_is_continuous {X : Type} (f : pdom X -> pdom X) (m : pdom_is_monotone f) :=
+      forall (s : nat -> pdom X) (c : pdom_is_chain s),
+        f (pdom_chain_sup s c) = pdom_chain_sup (fun n => f (s n)) (pdom_chain_monotone_chain f s c m).  
+
+
+  Definition pdom_bot_chain {X : Type} (f : pdom X -> pdom X) (m : pdom_is_monotone f) : nat -> pdom X.
+  Proof.
+    exact (fun n => nat_rect (fun _ => pdom X) (pdom_bot) (fun _ k => f k) n).
+  Defined.
+
+  Lemma pdom_bot_chain_is_chain {X : Type} (f : pdom X -> pdom X) (m : pdom_is_monotone f) :
+    pdom_is_chain (pdom_bot_chain f m).
+  Proof.
+    apply pdom_is_step_chain_is_chain.
+    intro.
+    simpl.
+    induction n.
+    simpl.
+    apply pdom_bot_is_bot.
+    simpl.
+    apply m.
+    exact IHn.
+  Defined.
+  
+  Definition pdom_lfp {X : Type} (f : pdom X -> pdom X) (m : pdom_is_monotone f) : pdom X.
+  Proof.
+    exact (pdom_chain_sup (pdom_bot_chain f m) (pdom_bot_chain_is_chain f m)).
+  Defined.
+
+  Lemma pdom_index_surjective_sup {X : Type} {I J : Type} (f : I -> pdom X) (g : J -> pdom X) (supf supg : pdom X) :
+    pdom_indexed_subset_is_sup f supf -> pdom_indexed_subset_is_sup g supg -> (forall i, exists j, f i ⊑ g j) -> supf ⊑ supg.
+  Admitted.
+     
+  
+  Lemma pdom_lfp_prop {X : Type} (f : pdom X -> pdom X) (m : pdom_is_monotone f) :
+    pdom_is_continuous f m ->
+    f (pdom_lfp f m) = (pdom_lfp f m) /\
+      forall x, f x = x -> (pdom_lfp f m) ⊑ x.
+  Proof.
+    intros.
+    split.
+    unfold pdom_lfp.    
+    pose proof (H (pdom_bot_chain f m) (pdom_bot_chain_is_chain f m)).
+    rewrite H0.
+    apply pdom_le_asym.
+    apply (pdom_index_surjective_sup _ _ _ _ (pdom_omega_complete _ _) (pdom_omega_complete _ _)).
+    intro n; exists (S n).
+    simpl.
+    apply pdom_le_refl.
+    apply (pdom_index_surjective_sup _ _ _ _ (pdom_omega_complete _ _) (pdom_omega_complete _ _)).
+    intro n; exists n.
+    induction n.
+    simpl.
+    apply pdom_bot_is_bot.
+    simpl.
+    apply m; auto.
+    (* least element *)
+    {
+    intros.
+    assert (forall n, (pdom_bot_chain f m n) ⊑ x).
+    {
+      intro.
+      induction n.
+      simpl.
+      apply pdom_bot_is_bot.
+      simpl.
+      rewrite <- H0; apply m; auto.
+    }
+    pose proof (pdom_omega_complete (pdom_bot_chain f m) (pdom_bot_chain_is_chain f m)).
+    destruct H2.
+    apply H3.
+    exact H1.
+    }
+  Defined.
+
+  Definition pdom_fun_le {X Y : Type} (f g : X -> pdom Y) := forall a, f a ⊑ g a.
+
+  Infix "≤" := (pdom_fun_le) (at level 80).
+  
+  Definition pdom_fun_is_monotone {X Y : Type} (f : (X -> pdom Y) -> (X -> pdom Y)) :=
+    forall x y, x ≤ y -> f x ≤ f y.
+
+  Definition pdom_fun_bot {X Y : Type} : X -> pdom Y := fun _ => pdom_bot.
+
+  Definition pdom_fun_is_chain {X Y : Type} (s : nat -> (X -> pdom Y)) := forall n m, n <= m -> s n ≤ s m.
+
+  Definition pdom_fun_bot_chain {X Y : Type} (s : (X -> pdom Y) -> (X -> pdom Y)) :=
+    nat_rect (fun _ => X -> pdom Y) (pdom_fun_bot) (fun _ k => s k).
+
+  Lemma pdom_fun_bot_chain_is_chain {X Y : Type} (s : (X -> pdom Y) -> (X -> pdom Y)) :
+    pdom_fun_is_monotone s ->
+    pdom_fun_is_chain (pdom_fun_bot_chain s).
+  Admitted.
+  
+
+  Definition pdom_W {X : Type} (b : X -> pdom bool) (c : X -> pdom X) : (X -> pdom X) -> X -> pdom X.
+  Proof.
+  Admitted.
+
+
+  Definition pdom_while {X : Type} : (X -> pdom bool) -> (X -> pdom X) -> X -> pdom X.
+  Proof.
+    intros B C.
+  Admitted.
+
+End Continuity.
