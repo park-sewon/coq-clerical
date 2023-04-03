@@ -137,7 +137,7 @@ Proof.
             exists y' : R, y = total y' /\                            
                              forall x : Z,
                              forall z : flat R,
-                               pdom_char (f x) z ->
+                               proj1_sig (f x) z ->
                                exists z' : R, z = total z' /\ Rabs (y' - z') < powerRZ 2 x)%R.
 Admitted.
 
