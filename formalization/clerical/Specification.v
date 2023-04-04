@@ -32,14 +32,14 @@ Definition sem_ro_prt {Γ} {e} {τ} {wty} (t : ro_prt wty) :=
   let Q := ro_prt_post _ t in
   forall γ, P γ ->
             let V := sem_ro_comp Γ e τ wty γ in
-            pdom_nempty V /\ forall v, proj1_sig V v -> forall v', v = total v' -> Q v' γ.
+            pdom_neg_is_empty V /\ forall v, proj1_sig V v -> forall v', v = total v' -> Q v' γ.
 
 Definition sem_ro_tot {Γ} {e} {τ} {wty} (t : ro_tot wty) :=
   let P := ro_tot_pre _ t in
   let Q := ro_tot_post _ t in
   forall γ, P γ ->
             let V := sem_ro_comp Γ e τ wty γ in
-            pdom_nempty V /\ forall v, proj1_sig V v -> exists v', v = total v' /\ Q v' γ.
+            pdom_neg_is_empty    V /\ forall v, proj1_sig V v -> exists v', v = total v' /\ Q v' γ.
 
 
 Definition sem_rw_prt {Γ Δ} {c} {τ} {wty} (t : rw_prt wty) :=
@@ -47,11 +47,11 @@ Definition sem_rw_prt {Γ Δ} {c} {τ} {wty} (t : rw_prt wty) :=
   let Q := rw_prt_post _ t in
   forall γ δ, P (δ, γ) ->
             let V := sem_rw_comp Γ Δ c τ wty γ δ in
-            pdom_nempty V /\ forall v, proj1_sig V (total v) -> Q (snd v) (fst v, γ).
+            pdom_neg_is_empty V /\ forall v, proj1_sig V (total v) -> Q (snd v) (fst v, γ).
 
 Definition sem_rw_tot {Γ Δ} {c} {τ} {wty} (t : rw_tot wty) :=
   let P := rw_tot_pre _ t in
   let Q := rw_tot_post _ t in
   forall γ δ, P (δ, γ) ->
               let V := sem_rw_comp Γ Δ c τ wty γ δ in
-              pdom_nempty V /\ exists v, proj1_sig V (total v) -> Q (snd v) (fst v, γ).
+              pdom_neg_is_empty V /\ exists v, proj1_sig V (total v) -> Q (snd v) (fst v, γ).

@@ -642,9 +642,11 @@ Section Powerdomain.
     destruct S; simpl; auto.
   Defined.
   
-  Definition pdom_nempty {A : Type} : pdom A -> Prop := fun S => exists a, proj1_sig S a.
+  Definition pdom_is_empty {X : Type} (S : pdom X) := forall x, ~ proj1_sig S x.
 
-  (* powerdomain is a monad *)
+  Definition pdom_neg_is_empty {A : Type} : pdom A -> Prop := fun S => ~ pdom_is_empty S.
+  
+  (* Powerdomain is a monad *)
   Definition pdom_unit {A : Type} : A -> pdom A.
   Proof.
     intro a.
@@ -693,9 +695,9 @@ Section Powerdomain.
     intros X.
     exists (fun a =>
               (* X is not empty *)
-              pdom_nempty X /\
+              pdom_neg_is_empty X /\
                 (* all subsets are not empty *)
-                (forall S : pdom A, proj1_sig X (total S) -> pdom_nempty S) /\
+                (forall S : pdom A, proj1_sig X (total S) -> pdom_neg_is_empty S) /\
                 (* a can be bot if X contains bot *)
                 (a = bot A /\ (proj1_sig X (bot (pdom A)))
                  (* otherwise, there exists S \in X such that a is in S *)
@@ -877,11 +879,11 @@ Section Powerdomain.
       (
         fun x =>
           (* empty condition *)
-          (pdom_nempty b1 /\ pdom_nempty b2)
+          (pdom_neg_is_empty b1 /\ pdom_neg_is_empty b2)
           /\
-            (proj1_sig b1 (total true) -> pdom_nempty c1)
+            (proj1_sig b1 (total true) -> pdom_neg_is_empty c1)
           /\
-            (proj1_sig b2 (total true) -> pdom_nempty c2)
+            (proj1_sig b2 (total true) -> pdom_neg_is_empty c2)
           /\
             (* values *)
             (
@@ -1006,7 +1008,6 @@ Section PowerdomainContinuity.
   Definition pdom_incl {X : Type} (S T : pdom X) :=
     forall x : flat X, proj1_sig S x -> proj1_sig T x.
 
-  Definition pdom_is_empty {X : Type} (S : pdom X) := forall x, ~ proj1_sig S x.
 
   Definition pdom_empty (X : Type) : pdom X.
   Proof.
@@ -1638,26 +1639,6 @@ Section PowerdomainContinuity.
     1 : forward reasoning: if membership in original, then membership in bind
     2 : backward reasoning: if membership in bind, then membership in original
    *)
-  
-  Lemma pdom_neg_is_empty_nempty {X : Type} : forall (x : pdom X), ~ pdom_is_empty x -> pdom_nempty x.
-  Proof.
-    intros.
-    unfold pdom_is_empty in H.
-    apply neg_forall_exists_neg in H.
-    destruct H.
-    exists (x0).
-    apply dn_elim; auto.
-  Defined.
-
-  Lemma pdom_nempty_neg_is_empty {X : Type} : forall (x : pdom X), pdom_nempty x -> ~ pdom_is_empty x.
-  Proof.
-    intros.
-    intro.
-    contradict H.
-    intros [y h].
-    apply (H0 y h).
-  Defined.
-      
   Lemma pdom_lift_non_empty_1 {X Y : Type} (f : X -> Y) (S : pdom X) :
     (~ pdom_is_empty S) -> ~ pdom_is_empty (pdom_lift f S).
   Proof.
@@ -1740,13 +1721,11 @@ Section PowerdomainContinuity.
   Proof.
     intros x [ne [s [t m]]].
     split.
-    apply pdom_neg_is_empty_nempty.
     apply pdom_lift_non_empty_1.
     intro.
     apply (H _ t).
     split.
     intros.
-    apply pdom_neg_is_empty_nempty.
     
     intro.
     
@@ -1754,8 +1733,7 @@ Section PowerdomainContinuity.
     intros y h.
     destruct h as [_ [h2 _]].
     pose proof (h2 _ H).
-    destruct H1 as [a b].
-    apply (H0 a b).
+    apply (H1 H0).
     right.
     exists (f s).
     split; auto.
@@ -1795,7 +1773,6 @@ Section PowerdomainContinuity.
     destruct H.
     intros x e.
     destruct e.
-    apply pdom_nempty_neg_is_empty in H0.
     apply H0, pdom_lift_empty_1, H.
     intros x e.
     destruct e as [a [b c]].
@@ -1805,10 +1782,18 @@ Section PowerdomainContinuity.
     simpl.
     exists (total x0); destruct H; split; auto.
     apply H0 in H1.
-    apply pdom_nempty_neg_is_empty in H1.
     destruct H; apply H1; auto.
   Defined.
-  
+
+  Lemma pdom_is_neg_empty_by_evidence {X : Type} (S : pdom X) :
+    forall x, x ∈ S -> pdom_neg_is_empty S.
+  Proof.
+    intros x i.
+    intro.
+    unfold pdom_is_empty in H.
+    apply (H x i).
+  Qed.
+    
   Lemma pdom_bind_empty_2 {X Y : Type} (f : X -> pdom Y) (S : pdom X) :
     pdom_is_empty (pdom_bind f S) ->
     pdom_is_empty S \/ (exists x, (total x) ∈ S /\ pdom_is_empty (f x)).
@@ -1817,19 +1802,18 @@ Section PowerdomainContinuity.
     destruct (lem (exists x : X, (total x ∈ S) /\ pdom_is_empty (f x))); auto.
     left.
     intros x e.
-    assert (pdom_nempty (pdom_bind f S)).
+    assert (pdom_neg_is_empty (pdom_bind f S)).
     destruct x.
-    exists (bot Y).
+    apply (pdom_is_neg_empty_by_evidence _ (bot Y)).
     simpl.
     split.
-    apply pdom_neg_is_empty_nempty.
     apply pdom_lift_non_empty_1.
     intro.
     apply (H1 _ e).
     split.
     intros.
     destruct H1.
-    destruct (lem (pdom_nempty S0)); auto.
+    destruct (lem (pdom_neg_is_empty S0)); auto.
     contradict H0.
     destruct x.
     destruct H1.
@@ -1841,7 +1825,7 @@ Section PowerdomainContinuity.
     rewrite H3.
     intros i j.
     contradict H2.
-    exists i; auto.
+    apply (pdom_is_neg_empty_by_evidence _ i j).
     left.
     split; auto.
     exists (bot X); auto.
@@ -1855,18 +1839,16 @@ Section PowerdomainContinuity.
       contradict H1.
       exists i; auto.
       destruct H1.
-      unfold pdom_nempty.
-      exists x0.
+      apply (pdom_is_neg_empty_by_evidence _ x0).
       simpl.
       split.
-      apply pdom_neg_is_empty_nempty.
       apply pdom_lift_non_empty_1.
       intro.
       apply (H2 _ e).
       split.
       intros.
       destruct H2.
-      destruct (lem (pdom_nempty S0)); auto.
+      destruct (lem (pdom_neg_is_empty S0)); auto.
       contradict H0.
       destruct H2.
       destruct x1.
@@ -1879,14 +1861,13 @@ Section PowerdomainContinuity.
       rewrite H4.
       intros i j.
       contradict H3.
-      exists i; auto.
+      apply (pdom_is_neg_empty_by_evidence _ i j); auto.
       right.
       exists (f x).
       split; auto.
       exists (total x); auto.
     }
     
-    apply pdom_nempty_neg_is_empty in H1.
     apply H1, H.
   Defined.
   
@@ -1899,7 +1880,6 @@ Section PowerdomainContinuity.
     intros.
     destruct H0.
     split.
-    apply pdom_neg_is_empty_nempty.
     apply pdom_lift_non_empty_1.
     intro.
     apply H.
@@ -1907,7 +1887,6 @@ Section PowerdomainContinuity.
     left; auto.
     split.
     intros.
-    apply pdom_neg_is_empty_nempty.
     intro.
     apply H.
     apply pdom_bind_empty_1.
@@ -1926,7 +1905,6 @@ Section PowerdomainContinuity.
     destruct H0.
     simpl.
     split.
-    apply pdom_neg_is_empty_nempty.
     apply pdom_lift_non_empty_1.
     intro.
     apply H.
@@ -1934,7 +1912,6 @@ Section PowerdomainContinuity.
     left; auto.
     split.
     intros.
-    apply pdom_neg_is_empty_nempty.
     intro.
     contradict H.
     apply pdom_bind_empty_1.
@@ -2005,7 +1982,6 @@ Section PowerdomainContinuity.
     destruct (lem (exists n : nat, pdom_is_empty (s n))); auto.
     pose proof (neg_exists_forall_neg _ _ H0); clear H0.
     contradict H.
-    apply pdom_nempty_neg_is_empty.
     destruct (lem (exists n, ~ ((bot _) ∈ s n))).
     destruct H as [i p].
     pose (H1 i).
@@ -2014,7 +1990,7 @@ Section PowerdomainContinuity.
     apply neg_forall_exists_neg in n.
     destruct n.
     apply dn_elim in H.
-    exists x.
+    apply (pdom_is_neg_empty_by_evidence _ x).
     simpl.
     split.
     intros [n k].
@@ -2024,7 +2000,7 @@ Section PowerdomainContinuity.
     exists i; auto.
     intros _. 
     exists i; split; auto.
-    exists (bot _).
+    apply (pdom_is_neg_empty_by_evidence _ (bot _)).
     split.
     intros [n k].
     apply (H1 n k).
