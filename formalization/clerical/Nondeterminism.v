@@ -3,6 +3,7 @@
 Require Import Coq.Program.Equality.
 Require Import Coq.Arith.Wf_nat.
 Require Import Coq.Arith.Compare_dec.
+Require Import Lia.
 
 (* about the base of our type theory allowing Prop to be classical and some other trivally derived stuffs *)
 Section Base.
@@ -1643,6 +1644,83 @@ Section PowerdomainContinuity.
     intros.
   Admitted.
 
+  Lemma pdom_is_in_add_element_is_in {X : Type} (p : pdom X) (x y : flat X) : x ∈ p -> x ∈ pdom_add_elem p y.
+  Proof.
+  Admitted.
+
+  Lemma pdom_chain_empty_1 {X : Type} (s : nat -> pdom X) (c : pdom_is_chain s) :
+    pdom_is_empty (pdom_chain_sup s c) -> exists n, pdom_is_empty (s n).
+
+  Proof.
+  Admitted.
+
+  Lemma pdom_chain_bot_1 {X : Type} (s : nat -> pdom X) (c : pdom_is_chain s) :
+    (bot X) ∈ (pdom_chain_sup s c) -> forall n, (bot X) ∈ s n.
+  Proof.
+  Admitted.
+
+  Lemma pdom_chain_bot_2 {X : Type} (s : nat -> pdom X) (c : pdom_is_chain s) :
+    (forall n, (bot X) ∈ s n) ->  (bot X) ∈ (pdom_chain_sup s c).
+  Proof.
+  Admitted.
+    
+  Lemma pdom_chain_empty_2 {X : Type} (s : nat -> pdom X) (c : pdom_is_chain s) :
+    (exists n, pdom_is_empty (s n)) -> pdom_is_empty (pdom_chain_sup s c).
+
+  Proof.
+  Admitted.
+  
+  Lemma pdom_fun_chain_empty_1 {X Y : Type} (s : nat -> X -> pdom Y) (c : pdom_fun_is_chain s) :
+    forall x, pdom_is_empty (pdom_fun_chain_sup s c x) -> exists n, pdom_is_empty (s n x).
+
+  Proof.
+  Admitted.
+
+  Lemma pdom_fun_chain_empty_2 {X Y : Type} (s : nat -> X -> pdom Y) (c : pdom_fun_is_chain s) :
+    forall x, (exists n, pdom_is_empty (s n x)) ->  pdom_is_empty (pdom_fun_chain_sup s c x).
+
+  Proof.
+  Admitted.
+
+  Lemma pdom_fun_chain_bot_1 {X Y : Type} (s : nat -> X -> pdom Y) (c : pdom_fun_is_chain s) :
+    forall x, (bot Y) ∈ (pdom_fun_chain_sup s c x) -> forall n, (bot Y) ∈ (s n x).
+
+  Proof.
+  Admitted.
+
+  Lemma pdom_fun_chain_bot_2 {X Y : Type} (s : nat -> X -> pdom Y) (c : pdom_fun_is_chain s) :
+    forall x, (forall n, (bot Y) ∈ (s n x)) -> (bot Y) ∈ (pdom_fun_chain_sup s c x) .
+
+  Proof.
+  Admitted.
+
+  Lemma pdom_chain_sup_membership_1 {X : Type} (s : nat -> pdom X) (c : pdom_is_chain s) :
+    forall x, x ∈ pdom_chain_sup s c -> exists n, x ∈ s n.
+  Proof.
+  Admitted.
+
+  Lemma pdom_chain_sup_membership_2 {X : Type} (s : nat -> pdom X) (c : pdom_is_chain s) :
+    forall x, (~ pdom_is_empty (pdom_chain_sup s c) /\ exists n, total x ∈ s n) -> total x ∈ pdom_chain_sup s c.
+  Proof.
+  Admitted.
+
+  Lemma pdom_chain_sup_flat {X : Type} (s : nat -> pdom X) (c : pdom_is_chain s) :
+    ~ (bot X ∈ pdom_chain_sup s c) -> exists n, forall m, n <= m -> s m = pdom_chain_sup s c.
+  Proof.
+  Admitted.
+
+  Lemma pdom_bind_bot_1 {X Y : Type} (f : X -> pdom Y) (S : pdom X) :
+    (bot Y) ∈ (pdom_bind f S) -> bot X ∈ S \/ exists x, total x ∈ S /\ bot Y ∈ f x.
+  Proof.
+  Admitted.
+
+  Lemma pdom_bind_bot_2 {X Y : Type} (f : X -> pdom Y) (S : pdom X) :
+    ~ pdom_is_empty (pdom_bind f S) -> (bot X ∈ S \/ exists x, total x ∈ S /\ bot Y ∈ f x) ->  
+    (bot Y) ∈ (pdom_bind f S).
+  Proof.
+  Admitted.
+
+  
   Lemma pdom_bind_agree {X Y : Type} (f g : X -> pdom Y) (S : pdom X) :
     (forall x, total x ∈ S -> f x = g x) -> pdom_bind f S = pdom_bind g S.
   Proof.
@@ -1771,57 +1849,59 @@ Section PowerdomainContinuity.
     exact o.
   Defined.
 
-  Lemma pdom_is_in_add_element_is_in {X : Type} (p : pdom X) (x y : flat X) : x ∈ p -> x ∈ pdom_add_elem p y.
+  
+  Lemma nat_injective_unbounded : forall n, forall (f : nat -> nat), injective f -> exists m, n <= f m.
   Proof.
-  Admitted.
+    intro n.
+    induction n.
+    intros.
+    exists 0.
+    apply le_0_n.
+    intros.
+    destruct (IHn f H).
+    destruct (Lt.le_lt_or_eq_stt _ _ H0).
+    exists x.
+    auto.
+    clear H0.
+    assert (injective (fun m => f (x + m + 1))).
+    intros i j e.
+    apply H in e.
+    lia.
+    destruct (IHn _ H0).
+    destruct (Lt.le_lt_or_eq_stt _ _ H2).
+    exists (x + x0 + 1).
+    auto.
+    rewrite H3 in H1.
+    apply H in H1.
+    contradict H1.
+    lia.
+  Defined.
+  
 
-  Lemma pdom_chain_empty_1 {X : Type} (s : nat -> pdom X) (c : pdom_is_chain s) :
-    pdom_is_empty (pdom_chain_sup s c) -> exists n, pdom_is_empty (s n).
 
+  Lemma pdom_chain_infinite_bot_bot {X : Type} (s : nat -> pdom X) (c : pdom_is_chain s) :
+    infinite {n | (bot X) ∈ s n} -> (bot X) ∈ pdom_chain_sup s c.
   Proof.
-  Admitted.
-
-  Lemma pdom_chain_bot_1 {X : Type} (s : nat -> pdom X) (c : pdom_is_chain s) :
-    (bot X) ∈ (pdom_chain_sup s c) -> forall n, (bot X) ∈ s n.
-  Proof.
-  Admitted.
-
-  Lemma pdom_chain_bot_2 {X : Type} (s : nat -> pdom X) (c : pdom_is_chain s) :
-    (forall n, (bot X) ∈ s n) ->  (bot X) ∈ (pdom_chain_sup s c).
-  Proof.
-  Admitted.
+    intro i.
+    apply pdom_chain_bot_2.
+    intro n.
+    destruct i.
+    pose proof (nat_injective_unbounded n (fun n => proj1_sig (x n))).  
+    assert ( injective (fun n : nat => proj1_sig (x n)) ).
+    intros i j e.
+    apply proj1_sig_injective, H in e; auto.
+    apply H0 in H1.
+    destruct H1.
+    clear H0.
+    destruct (x x0).
+    simpl in H1.
+    destruct (lem (bot X ∈ s n)); auto.
+    destruct (c _ _ H1); auto.
+    rewrite H2; auto.
+    destruct H2.
+    contradict (H0 H2).
+  Defined.
     
-  Lemma pdom_chain_empty_2 {X : Type} (s : nat -> pdom X) (c : pdom_is_chain s) :
-    (exists n, pdom_is_empty (s n)) -> pdom_is_empty (pdom_chain_sup s c).
-
-  Proof.
-  Admitted.
-  
-  Lemma pdom_fun_chain_empty_1 {X Y : Type} (s : nat -> X -> pdom Y) (c : pdom_fun_is_chain s) :
-    forall x, pdom_is_empty (pdom_fun_chain_sup s c x) -> exists n, pdom_is_empty (s n x).
-
-  Proof.
-  Admitted.
-
-  Lemma pdom_fun_chain_empty_2 {X Y : Type} (s : nat -> X -> pdom Y) (c : pdom_fun_is_chain s) :
-    forall x, (exists n, pdom_is_empty (s n x)) ->  pdom_is_empty (pdom_fun_chain_sup s c x).
-
-  Proof.
-  Admitted.
-
-  Lemma pdom_fun_chain_bot_1 {X Y : Type} (s : nat -> X -> pdom Y) (c : pdom_fun_is_chain s) :
-    forall x, (bot Y) ∈ (pdom_fun_chain_sup s c x) -> forall n, (bot Y) ∈ (s n x).
-
-  Proof.
-  Admitted.
-
-  Lemma pdom_fun_chain_bot_2 {X Y : Type} (s : nat -> X -> pdom Y) (c : pdom_fun_is_chain s) :
-    forall x, (forall n, (bot Y) ∈ (s n x)) -> (bot Y) ∈ (pdom_fun_chain_sup s c x) .
-
-  Proof.
-  Admitted.
-
-  
   Lemma pdom_bind_fst_continuous {X Y : Type} (S : pdom X) :
     forall (s : nat -> (X -> pdom Y)) (c : pdom_fun_is_chain s),
       pdom_bind (pdom_fun_chain_sup s c) S = pdom_chain_sup (fun n => pdom_bind (s n) S) (pdom_fun_chain_bind_chain S s c).
@@ -1829,11 +1909,41 @@ Section PowerdomainContinuity.
     intros.
     apply pdom_le_asym.
     {
-      destruct (lem ((bot Y) ∈ pdom_bind (pdom_fun_chain_sup s c) S)).
+
+      destruct (lem (pdom_is_empty (  pdom_bind (pdom_fun_chain_sup s c) S))).      
       {
-        (* when there is bot all the time *)
-        right; split; auto.
+        (* when lhs is empty *)
+        left.
+        rewrite (pdom_is_empty_is_empty _ H).
+        apply eq_sym.
+        apply pdom_is_empty_is_empty.
+        apply pdom_chain_empty_2.
+        apply pdom_bind_empty_2 in H.
+        destruct H.
+        exists 0.
+        apply pdom_bind_empty_1.
+        left; auto.
+        destruct H.
+        destruct H.
+        apply pdom_fun_chain_empty_1 in H0.
+        destruct H0.
+        exists x0.
+        apply pdom_bind_empty_1.
         right.
+        exists x; auto.
+      }
+
+      (* when lhs is not empty *)
+      {
+        assert (~ pdom_is_empty S) as nempty2.
+        {
+          intros.
+          intro.
+          assert (pdom_is_empty ( pdom_bind (pdom_fun_chain_sup s c) S)).
+          apply pdom_bind_empty_1.
+          left; auto.
+          apply (H H1).
+        }
         assert (forall n x, (total x ∈ S) -> ~ pdom_is_empty (s n x)) as nempty1.
         {
           intros.
@@ -1846,16 +1956,7 @@ Section PowerdomainContinuity.
           apply pdom_fun_chain_empty_2.
           exists n.
           auto.
-          apply (H2 _ H).
-        }
-        assert (~ pdom_is_empty S) as nempty2.
-        {
-          intros.
-          intro.
-          assert (pdom_is_empty ( pdom_bind (pdom_fun_chain_sup s c) S)).
-          apply pdom_bind_empty_1.
-          left; auto.
-          apply (H1 _ H).
+          apply (H H2).
         }
         assert (forall n, ~ pdom_is_empty (pdom_bind (s n) S)) as nempty3.
         {
@@ -1866,118 +1967,196 @@ Section PowerdomainContinuity.
           destruct H0 as [a [b d]].
           exact (nempty1 n a b d).
         }
-        
-        intros y h.
-        apply pdom_is_in_add_element_is_in.
-        split.
-        intros [n e]; exact (nempty3 n e).
-        split.
-        intro.
-        apply pdom_bind_membership_2 in h.
-        destruct h.
-        destruct H2.
-        destruct H2.
-        destruct H3.
-        destruct H4.
-        destruct (lem (exists n : nat, ~ (bot Y ∈ s n x))).
-        apply H5 in H6.
-        destruct H6.
-        exists x0.
-        destruct H6.
-        apply pdom_bind_membership.
-        split.
-        apply nempty3.
-        exists x; auto.
-        assert ((forall n : nat, bot Y ∈ s n x)).
-        destruct (lem ( forall n : nat, bot Y ∈ s n x)); auto.
-        contradict H6.
-        apply neg_forall_exists_neg in H7.
-        exact H7.
-        apply H4 in H7.
-        destruct H7.
-        exists x0.
-        apply pdom_bind_membership.
-        split.
-        apply nempty3.
-        exists x; auto.
-        intro.
-        destruct H0.
-        contradict H0.
-        apply pdom_bind_membership.
-        split.
-        apply nempty3.
-        apply pdom_bind_membership_2 in H.
-        destruct H.
-        destruct H0.
-        exists x0.
-        destruct H0; split; auto.
-        exact (pdom_fun_chain_bot_1 s c x0 H1 x).
-      }
- 
-      {
-        (* when bot is not in the sup *)
-        (* when lhs is empty *)
-        destruct (lem (pdom_is_empty (  pdom_bind (pdom_fun_chain_sup s c) S))).
-        {
-          admit.
-        }
+        rename H into H'.
 
-        (* when lhs is non empty *)
+        destruct (lem ((bot Y) ∈ pdom_bind (pdom_fun_chain_sup s c) S)).
         {
-          assert (~ pdom_is_empty S) as nempty2.
-          {
-            intros.
-            intro.
-            assert (pdom_is_empty ( pdom_bind (pdom_fun_chain_sup s c) S)).
-            apply pdom_bind_empty_1.
-            left; auto.
-            apply (H0 H2).
-          }
-          assert (forall n x, (total x ∈ S) -> ~ pdom_is_empty (s n x)) as nempty1.
-          {
-            intros.
-            intro.
-            assert (pdom_is_empty ( pdom_bind (pdom_fun_chain_sup s c) S)).
-            apply pdom_bind_empty_1.
-            right.
-            exists x.
-            split; auto.
-            apply pdom_fun_chain_empty_2.
-            exists n.
-            auto.
-            apply (H0 H3).
-          }
-          assert (forall n, ~ pdom_is_empty (pdom_bind (s n) S)) as nempty3.
-          {
-            intros n e.
-            apply pdom_bind_empty_2 in e.
-            destruct e.
-            exact (nempty2 H1).
-            destruct H1 as [a [b d]].
-            exact (nempty1 n a b d).
-          }
+          (* when there is bot all the time *)
+          right; split; auto.
+          right.
+          intros y h.
+          apply pdom_is_in_add_element_is_in.
+          split.
+          intros [n e]; exact (nempty3 n e).
+          split.
+          intro.
+          apply pdom_bind_membership_2 in h.
+          destruct h.
+          destruct H2.
+          destruct H2.
+          destruct H3.
+          destruct H4.
+          destruct (lem (exists n : nat, ~ (bot Y ∈ s n x))).
+          apply H5 in H6.
+          destruct H6.
+          exists x0.
+          destruct H6.
+          apply pdom_bind_membership.
+          split.
+          apply nempty3.
+          exists x; auto.
+          assert ((forall n : nat, bot Y ∈ s n x)).
+          destruct (lem ( forall n : nat, bot Y ∈ s n x)); auto.
+          contradict H6.
+          apply neg_forall_exists_neg in H7.
+          exact H7.
+          apply H4 in H7.
+          destruct H7.
+          exists x0.
+          apply pdom_bind_membership.
+          split.
+          apply nempty3.
+          exists x; auto.
+          intro.
+          destruct H0.
+          contradict H0.
+          apply pdom_bind_membership.
+          split.
+          apply nempty3.
+          apply pdom_bind_membership_2 in H.
+          destruct H.
+          destruct H0.
+          exists x0.
+          destruct H0; split; auto.
+          exact (pdom_fun_chain_bot_1 s c x0 H1 x).
+        }
+        
+        {
+        (* when bot is not in the sup *)
+        (* when lhs is non empty *)
 
           left.
-          assert (forall x, (total x) ∈ S ->  ~ ((bot Y) ∈ (pdom_fun_chain_sup s c x))).
-          intros x e.
-          contradict H.
-          apply pdom_bind_membership.          
-          split; auto.
-          exists x; split; auto.
-          
-          admit.
+          assert (forall x, (total x) ∈ S ->  ~ ((bot Y) ∈ (pdom_fun_chain_sup s c x))) as fiber_nbot.
+          {
+            intros x e.
+            contradict H.
+            apply pdom_bind_membership.          
+            split; auto.
+            exists x; split; auto.
+          }
+          apply proj1_sig_injective.
+          apply pred_ext; intros.
+          {
+            pose proof (pdom_bind_membership_2 _ _ _ H0) as [_ [x [p1 p2]]].
+            unfold pdom_fun_chain_sup in p2.
+            apply pdom_chain_sup_membership_1 in p2.
+            destruct p2.
+            assert (a ∈ pdom_bind (s x0) S).
+            apply pdom_bind_membership.
+            split; auto.
+            exists x; auto.
+            destruct a.
+            contradict (H H0).
+            apply pdom_chain_sup_membership_2.
+            split; auto.
+            intro.
+            apply pdom_chain_empty_1 in H3.
+            destruct H3.
+            contradict (nempty3 x1 H3).
+            exists x0; auto.
+          }
+          {
+            destruct a.
+            {
+              (* test index set contains bot *)
+              destruct (lem (bot X ∈ S)).
+              {
+                (* when the index set contains bot, then both sides contain bot anyway *)
+                apply pdom_bind_bot_2; auto.              
+              }
+              {
+                (* when the index set does not contain bot, things become complicated..
+                   first, show that the index set is finite, and use Pigeon to select
+                   an index x ∈ S where f on it contains bot indefinitely. *)
+                assert (~ pset_infinite (proj1_sig S)).
+                intro.
+                apply (H1 (pdom_infinite_bot S H2)).
+                (* first prove that for each n, there exists an index x
+                 where f x contains bot *)
+                assert (forall n, exists x, total x ∈ S /\ (bot Y) ∈ s n x) as fe.
+                {
+                  intro n.
+                  pose proof (pdom_chain_bot_1 _ _ H0 n).
+                  apply pdom_bind_membership_2 in H3.
+                  destruct H3.
+                  destruct H4.
+                  exists x; destruct H4; auto.
+                }
+                apply cchoice in fe.
+                destruct fe as [choice p].
+                pose (fun x : {y | total y ∈ S} => {n : nat | (total (proj1_sig x) ∈ S) /\ bot Y ∈ s n (proj1_sig x)}) as P.
+                pose proof (Pigeon P).
+                assert (infinite { a & P a}).
+                exists (fun n => existT _ (exist _ (choice n) (proj1 (p n))) (exist _ n (p n))).                
+                intros i j e.
+                injection e.
+                intros.
+                auto.
+                apply H3 in H4; clear H3.
+                destruct H4.
+                contradict H2.
+                apply subset_infinite_pset_infinite in H3.
+                destruct H3.
+                exists (fun n => total (x n)).
+                split; destruct H2; auto.
+                intros i j e.
+                apply H2; injection e; auto.
+
+                (* m : x ∈ S is the index where i say ⊥ appears infinitely often in f x *)
+                destruct H3 as [[x m] i].
+                apply pdom_bind_bot_2; auto.
+                right.
+                exists x.
+                split; auto.
+                apply pdom_chain_infinite_bot_bot.
+                destruct i.
+                apply pset_infinite_subset_infinite.
+                
+                exists (fun n => proj1_sig  (x0 n)).
+                split.
+                intros i j e.
+                apply H3; apply proj1_sig_injective in e; auto.
+                intro.
+                destruct (x0 n).
+                simpl.
+                simpl in a.
+                destruct a; auto.              
+              }
+            }
+            
+            {
+              (* when a is a total element *)
+              
+              apply pdom_chain_sup_membership_1 in H0.
+              destruct H0.
+              apply pdom_bind_membership.
+              split; auto.
+              
+              apply pdom_bind_membership_2 in H0.
+              destruct H0 as [_ [p1 [p2 p3]]].
+              exists p1; split; auto.
+              unfold pdom_fun_chain_sup.
+              
+              apply pdom_chain_sup_membership_2.
+              split; auto.
+              unfold pdom_fun_chain_sup in H.
+              intro.
+              apply pdom_chain_empty_1 in H0.
+              destruct H0.
+              contradict (nempty1 x0 p1 p2 H0).
+              exists x; auto.              
+            }
+          }        
         }
-        
       }
     }
-    {
+    { 
       apply pdom_omega_complete.
       intros.
       apply pdom_bind_fst_monotone.
       apply pdom_fun_omega_complete.
     }
-    
-  Admitted.
+  Defined.
   
   Lemma pdom_ite_fst_monotone {X : Type} (S T R : pdom X) :
     S ⊑ T -> (fun b : bool => if b then S else R) ≤ (fun b => if b then T else R).
@@ -2030,7 +2209,6 @@ Section PowerdomainContinuity.
     intro x.
     exact (pdom_bind (fun (b : bool) => if b then (pdom_bind f) (c x) else pdom_unit x) (b x)). 
   Defined.
-  Print pdom_W.
   
   Lemma pdom_W_monotone {X : Type} (b : X -> pdom bool) (c : X -> pdom X) : pdom_fun_is_monotone (pdom_W b c).
   Proof.
