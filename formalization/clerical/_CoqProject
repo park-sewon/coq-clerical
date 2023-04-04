@@ -1,6 +1,12 @@
 -R . Lib
-
-Nondeterminism.v
+PowerdomainBase.v
+PowerdomainInfinite.v
+PowerdomainMonad.v
+PowerdomainProperties.v
+PowerdomainCompleteness.v
+PowerdomainOrderProperties.v
+PowerdomainSemantics.v
+Powerdomain.v
 # Delay.v
 Clerical.v
 # OperationalSemantics.v
