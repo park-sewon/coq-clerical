@@ -6,6 +6,7 @@ Require Import Powerdomain.
 Require Import Semantics.
 Require Import Specification.
 Require Import Reasoning.
+Require Import Reals.
 
 Notation " w |= {{ ϕ }} e {{ ψ }} ":= (sem_ro_prt (@mk_ro_prt _ e _ w ϕ ψ)) (at level 85).
 Notation " w |= [[ ϕ ]] e [[ ψ ]] ":= (sem_ro_tot (@mk_ro_tot _ e _ w ϕ ψ)) (at level 85).
@@ -197,7 +198,31 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' |- {{P}} RE e {{Q}} *)
 
-      apply magic.
+      intros γ m; simpl in m; simpl.
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip γ m) as [p1 p2].
+      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZRcoerce  _ _ w)).
+      simpl.
+      split.
+      {
+        (* nonemptiness *)
+        intro.
+        apply pdom_lift_empty_2 in H.
+        apply (p1 H).        
+      }
+      intros.
+      destruct v.
+      contradict (flat_bot_neq_total _ H0).
+      injection H0; intro j; clear H0.
+      induction j.
+      destruct H as [a b].
+      destruct b as [b c].
+      destruct a.
+      simpl in c.
+      contradict (flat_bot_neq_total _ c).
+      pose proof (p2 _ b z (eq_refl)) as h.
+      simpl in h.
+      simpl in c.
+      injection c; intro i; rewrite <- i; exact h.
 
     ++
       (* | ro_exp_prt : forall Γ e (w : Γ |- e : INTEGER) P Q (w' : Γ |- EXP e : REAL), *)
@@ -206,8 +231,33 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' |- {{P}} EXP e {{Q}} *)
 
-      apply magic.
 
+      intros γ m; simpl in m; simpl.
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip γ m) as [p1 p2].
+      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZRexp  _ _ w)).
+      simpl.
+      split.
+      {
+        (* nonemptiness *)
+        intro.
+        apply pdom_lift_empty_2 in H.
+        apply (p1 H).        
+      }
+      intros.
+      destruct v.
+      contradict (flat_bot_neq_total _ H0).
+      injection H0; intro j; clear H0.
+      induction j.
+      destruct H as [a b].
+      destruct b as [b c].
+      destruct a.
+      simpl in c.
+      contradict (flat_bot_neq_total _ c).
+      pose proof (p2 _ b z (eq_refl)) as h.
+      simpl in h.
+      simpl in c.
+      injection c; intro i; rewrite <- i; exact h.
+      
     ++
       (* (** integer arithmetic  *) *)
       (* | ro_int_op_plus_prt : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2 (w' : Γ |- (e1 :+: e2) : INTEGER) (ψ :post), *)
@@ -218,8 +268,52 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*      w' |- {{ϕ}} e1 :+: e2 {{ψ}} *)
 
-      apply magic.
+      intros γ m; simpl in m; simpl.
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip1 γ m) as [p1 p2].
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip2 γ m) as [q1 q2].
 
+      split.
+      {
+        (* nonemptiness *)
+        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZplus _ _ _ w1 w2)); simpl.      
+        intro.
+        apply pdom_lift_empty_2 in H.
+        unfold pdom_prod in H.
+        apply pdom_bind_empty_2 in H.
+        destruct H.
+        apply (q1 H).
+        destruct H as [H1 H2]; destruct H2 as [H2 H3].
+        apply pdom_lift_empty_2 in H3.
+        apply (p1 H3).        
+      }
+      intros.
+      assert (sem_ro_comp Γ (e1 :+: e2) INTEGER w' γ
+              =
+                pdom_lift2 (BinInt.Z.add) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ)).
+      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZplus _ _ _ w1 w2)); simpl.      
+      auto.
+      rewrite H1 in H.
+      clear H1.
+      unfold pdom_lift2 in H.
+      unfold pdom_prod in H.
+      destruct v.
+      contradict (flat_bot_neq_total _ H0).
+      apply pdom_lift_total_2 in H.
+      destruct H.
+      destruct H.
+      apply pdom_bind_total_2 in H.
+      destruct H.
+      clear H.
+      destruct H2.
+      destruct H.
+      apply pdom_lift_total_2 in H2.
+      destruct H2.
+      destruct H2.
+      injection H0; intro j; induction j; clear H0.
+      rewrite H3 in H1; simpl in H1.
+      rewrite H1; apply (ψ3 x1 x0 _ (p2 _ H2 _ eq_refl) (q2 _ H _ eq_refl)).
+               
+      
     ++
       (* | ro_int_op_mult_prt : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2 (w' : Γ |- (e1 :*: e2) : INTEGER) (ψ : post), *)
       
@@ -229,7 +323,51 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' |- {{ϕ}} (e1 :*: e2) {{ψ}} *)
 
-      apply magic.
+
+      intros γ m; simpl in m; simpl.
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip1 γ m) as [p1 p2].
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip2 γ m) as [q1 q2].
+
+      split.
+      {
+        (* nonemptiness *)
+        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZmult _ _ _ w1 w2)); simpl.      
+        intro.
+        apply pdom_lift_empty_2 in H.
+        unfold pdom_prod in H.
+        apply pdom_bind_empty_2 in H.
+        destruct H.
+        apply (q1 H).
+        destruct H as [H1 H2]; destruct H2 as [H2 H3].
+        apply pdom_lift_empty_2 in H3.
+        apply (p1 H3).        
+      }
+      intros.
+      assert (sem_ro_comp Γ (e1 :*: e2) INTEGER w' γ
+              =
+                pdom_lift2 (BinInt.Zmult) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ)).
+      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZmult _ _ _ w1 w2)); simpl.      
+      auto.
+      rewrite H1 in H.
+      clear H1.
+      unfold pdom_lift2 in H.
+      unfold pdom_prod in H.
+      destruct v.
+      contradict (flat_bot_neq_total _ H0).
+      apply pdom_lift_total_2 in H.
+      destruct H.
+      destruct H.
+      apply pdom_bind_total_2 in H.
+      destruct H.
+      clear H.
+      destruct H2.
+      destruct H.
+      apply pdom_lift_total_2 in H2.
+      destruct H2.
+      destruct H2.
+      injection H0; intro j; induction j; clear H0.
+      rewrite H3 in H1; simpl in H1.
+      rewrite H1; apply (ψ3 x1 x0 _ (p2 _ H2 _ eq_refl) (q2 _ H _ eq_refl)).
 
     ++
       (* | ro_int_op_minus_prt : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2 (w' : Γ |- (e1 :-: e2) : INTEGER) (ψ : post), *)
@@ -240,7 +378,51 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' |- {{ϕ}} (e1 :-: e2) {{ψ}} *)
 
-      apply magic.
+
+      intros γ m; simpl in m; simpl.
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip1 γ m) as [p1 p2].
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip2 γ m) as [q1 q2].
+
+      split.
+      {
+        (* nonemptiness *)
+        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZminus _ _ _ w1 w2)); simpl.      
+        intro.
+        apply pdom_lift_empty_2 in H.
+        unfold pdom_prod in H.
+        apply pdom_bind_empty_2 in H.
+        destruct H.
+        apply (q1 H).
+        destruct H as [H1 H2]; destruct H2 as [H2 H3].
+        apply pdom_lift_empty_2 in H3.
+        apply (p1 H3).        
+      }
+      intros.
+      assert (sem_ro_comp Γ (e1 :-: e2) INTEGER w' γ
+              =
+                pdom_lift2 (BinInt.Zminus) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ)).
+      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZminus _ _ _ w1 w2)); simpl.      
+      auto.
+      rewrite H1 in H.
+      clear H1.
+      unfold pdom_lift2 in H.
+      unfold pdom_prod in H.
+      destruct v.
+      contradict (flat_bot_neq_total _ H0).
+      apply pdom_lift_total_2 in H.
+      destruct H.
+      destruct H.
+      apply pdom_bind_total_2 in H.
+      destruct H.
+      clear H.
+      destruct H2.
+      destruct H.
+      apply pdom_lift_total_2 in H2.
+      destruct H2.
+      destruct H2.
+      injection H0; intro j; induction j; clear H0.
+      rewrite H3 in H1; simpl in H1.
+      rewrite H1; apply (ψ3 x1 x0 _ (p2 _ H2 _ eq_refl) (q2 _ H _ eq_refl)).
 
     ++
       (* (** real arithmetic  *) *)
@@ -252,7 +434,51 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' |- {{ϕ}} (e1 ;+; e2) {{ψ}} *)
 
-      apply magic.
+
+      intros γ m; simpl in m; simpl.
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip1 γ m) as [p1 p2].
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip2 γ m) as [q1 q2].
+
+      split.
+      {
+        (* nonemptiness *)
+        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRplus _ _ _ w1 w2)); simpl.      
+        intro.
+        apply pdom_lift_empty_2 in H.
+        unfold pdom_prod in H.
+        apply pdom_bind_empty_2 in H.
+        destruct H.
+        apply (q1 H).
+        destruct H as [H1 H2]; destruct H2 as [H2 H3].
+        apply pdom_lift_empty_2 in H3.
+        apply (p1 H3).        
+      }
+      intros.
+      assert (sem_ro_comp Γ (e1 ;+; e2) REAL w' γ
+              =
+                pdom_lift2 (Rplus) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ)).
+      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRplus _ _ _ w1 w2)); simpl.      
+      auto.
+      rewrite H1 in H.
+      clear H1.
+      unfold pdom_lift2 in H.
+      unfold pdom_prod in H.
+      destruct v.
+      contradict (flat_bot_neq_total _ H0).
+      apply pdom_lift_total_2 in H.
+      destruct H.
+      destruct H.
+      apply pdom_bind_total_2 in H.
+      destruct H.
+      clear H.
+      destruct H2.
+      destruct H.
+      apply pdom_lift_total_2 in H2.
+      destruct H2.
+      destruct H2.
+      injection H0; intro j; induction j; clear H0.
+      rewrite H3 in H1; simpl in H1.
+      rewrite H1; apply (ψ3 x1 x0 _ (p2 _ H2 _ eq_refl) (q2 _ H _ eq_refl)).
 
     ++
       (* | ro_real_op_mult_prt : forall Γ e1 e2 (w1 : Γ |- e1 : REAL) (w2 : Γ |- e2 : REAL) ϕ ψ1 ψ2 (w' : Γ |- (e1 ;*; e2) : REAL) (ψ : post), *)
@@ -263,7 +489,51 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' |- {{ϕ}} (e1 ;*; e2) {{ψ}} *)
 
-      apply magic.
+
+      intros γ m; simpl in m; simpl.
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip1 γ m) as [p1 p2].
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip2 γ m) as [q1 q2].
+
+      split.
+      {
+        (* nonemptiness *)
+        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRmult _ _ _ w1 w2)); simpl.      
+        intro.
+        apply pdom_lift_empty_2 in H.
+        unfold pdom_prod in H.
+        apply pdom_bind_empty_2 in H.
+        destruct H.
+        apply (q1 H).
+        destruct H as [H1 H2]; destruct H2 as [H2 H3].
+        apply pdom_lift_empty_2 in H3.
+        apply (p1 H3).        
+      }
+      intros.
+      assert (sem_ro_comp Γ _ _ w' γ
+              =
+                pdom_lift2 (Rmult) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ)).
+      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRmult _ _ _ w1 w2)); simpl.      
+      auto.
+      rewrite H1 in H.
+      clear H1.
+      unfold pdom_lift2 in H.
+      unfold pdom_prod in H.
+      destruct v.
+      contradict (flat_bot_neq_total _ H0).
+      apply pdom_lift_total_2 in H.
+      destruct H.
+      destruct H.
+      apply pdom_bind_total_2 in H.
+      destruct H.
+      clear H.
+      destruct H2.
+      destruct H.
+      apply pdom_lift_total_2 in H2.
+      destruct H2.
+      destruct H2.
+      injection H0; intro j; induction j; clear H0.
+      rewrite H3 in H1; simpl in H1.
+      rewrite H1; apply (ψ3 x1 x0 _ (p2 _ H2 _ eq_refl) (q2 _ H _ eq_refl)).
 
     ++
       (* | ro_real_op_minus_prt : forall Γ e1 e2 (w1 : Γ |- e1 : REAL) (w2 : Γ |- e2 : REAL) ϕ ψ1 ψ2 (w' : Γ |- (e1 ;-; e2) : REAL) (ψ : post), *)
@@ -274,7 +544,51 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' |- {{ϕ}} (e1 ;-; e2) {{ψ}} *)
 
-      apply magic.
+
+      intros γ m; simpl in m; simpl.
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip1 γ m) as [p1 p2].
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip2 γ m) as [q1 q2].
+
+      split.
+      {
+        (* nonemptiness *)
+        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRminus _ _ _ w1 w2)); simpl.      
+        intro.
+        apply pdom_lift_empty_2 in H.
+        unfold pdom_prod in H.
+        apply pdom_bind_empty_2 in H.
+        destruct H.
+        apply (q1 H).
+        destruct H as [H1 H2]; destruct H2 as [H2 H3].
+        apply pdom_lift_empty_2 in H3.
+        apply (p1 H3).        
+      }
+      intros.
+      assert (sem_ro_comp Γ _ _ w' γ
+              =
+                pdom_lift2 (Rminus) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ)).
+      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRminus _ _ _ w1 w2)); simpl.      
+      auto.
+      rewrite H1 in H.
+      clear H1.
+      unfold pdom_lift2 in H.
+      unfold pdom_prod in H.
+      destruct v.
+      contradict (flat_bot_neq_total _ H0).
+      apply pdom_lift_total_2 in H.
+      destruct H.
+      destruct H.
+      apply pdom_bind_total_2 in H.
+      destruct H.
+      clear H.
+      destruct H2.
+      destruct H.
+      apply pdom_lift_total_2 in H2.
+      destruct H2.
+      destruct H2.
+      injection H0; intro j; induction j; clear H0.
+      rewrite H3 in H1; simpl in H1.
+      rewrite H1; apply (ψ3 x1 x0 _ (p2 _ H2 _ eq_refl) (q2 _ H _ eq_refl)).
 
     ++
       (* (** reciprocal *) *)
@@ -297,7 +611,51 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' |- {{ϕ}} (e1 :=: e2) {{ψ}} *)
 
-      apply magic.
+
+      intros γ m; simpl in m; simpl.
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip1 γ m) as [p1 p2].
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip2 γ m) as [q1 q2].
+
+      split.
+      {
+        (* nonemptiness *)
+        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZeq _ _ _ w1 w2)); simpl.      
+        intro.
+        apply pdom_lift_empty_2 in H.
+        unfold pdom_prod in H.
+        apply pdom_bind_empty_2 in H.
+        destruct H.
+        apply (q1 H).
+        destruct H as [H1 H2]; destruct H2 as [H2 H3].
+        apply pdom_lift_empty_2 in H3.
+        apply (p1 H3).        
+      }
+      intros.
+      assert (sem_ro_comp Γ _ _ w' γ
+              =
+                pdom_lift2 (BinInt.Z.eqb) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ)).
+      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZeq _ _ _ w1 w2)); simpl.      
+      auto.
+      rewrite H1 in H.
+      clear H1.
+      unfold pdom_lift2 in H.
+      unfold pdom_prod in H.
+      destruct v.
+      contradict (flat_bot_neq_total _ H0).
+      apply pdom_lift_total_2 in H.
+      destruct H.
+      destruct H.
+      apply pdom_bind_total_2 in H.
+      destruct H.
+      clear H.
+      destruct H2.
+      destruct H.
+      apply pdom_lift_total_2 in H2.
+      destruct H2.
+      destruct H2.
+      injection H0; intro j; induction j; clear H0.
+      rewrite H3 in H1; simpl in H1.
+      rewrite H1; apply (ψ3 x1 x0 _ (p2 _ H2 _ eq_refl) (q2 _ H _ eq_refl)).
 
     ++
       (* | ro_int_comp_lt_prt : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) P ψ1 ψ2 (w' : Γ |- (e1 :<: e2) : BOOL) (ψ : post), *)
@@ -308,7 +666,51 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' |- {{P}} (e1 :<: e2) {{ψ}} *)
 
-      apply magic.
+
+      intros γ m; simpl in m; simpl.
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip1 γ m) as [p1 p2].
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip2 γ m) as [q1 q2].
+
+      split.
+      {
+        (* nonemptiness *)
+        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZlt _ _ _ w1 w2)); simpl.      
+        intro.
+        apply pdom_lift_empty_2 in H.
+        unfold pdom_prod in H.
+        apply pdom_bind_empty_2 in H.
+        destruct H.
+        apply (q1 H).
+        destruct H as [H1 H2]; destruct H2 as [H2 H3].
+        apply pdom_lift_empty_2 in H3.
+        apply (p1 H3).        
+      }
+      intros.
+      assert (sem_ro_comp Γ _ _ w' γ
+              =
+                pdom_lift2 (BinInt.Z.ltb) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ)).
+      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZlt _ _ _ w1 w2)); simpl.      
+      auto.
+      rewrite H1 in H.
+      clear H1.
+      unfold pdom_lift2 in H.
+      unfold pdom_prod in H.
+      destruct v.
+      contradict (flat_bot_neq_total _ H0).
+      apply pdom_lift_total_2 in H.
+      destruct H.
+      destruct H.
+      apply pdom_bind_total_2 in H.
+      destruct H.
+      clear H.
+      destruct H2.
+      destruct H.
+      apply pdom_lift_total_2 in H2.
+      destruct H2.
+      destruct H2.
+      injection H0; intro j; induction j; clear H0.
+      rewrite H3 in H1; simpl in H1.
+      rewrite H1; apply (ψ3 x1 x0 _ (p2 _ H2 _ eq_refl) (q2 _ H _ eq_refl)).
 
     ++
       (* (** real comparison  *) *)
@@ -320,8 +722,9 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' |- {{P}} (e1 ;<; e2) {{ψ}} *)
 
-      apply magic.
 
+      apply magic.
+      
     ++
       (* (* Limit *) *)
       (* | ro_lim_prt : forall Γ e (w : (INTEGER :: Γ) |- e : REAL) ϕ θ (w' : Γ |- Lim e : REAL) ψ, *)
