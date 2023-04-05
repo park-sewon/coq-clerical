@@ -859,8 +859,60 @@ Proof.
       (*     (forall γ, ϕ γ -> exists y, ψ y γ /\ forall x z, θ z (x, γ) -> (Rabs (z - y)%R < powerRZ 2 (- x))%R) -> *)
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' |- {{ϕ}} Lim e {{ψ}} *)
-      
-      apply magic.
+
+      intros γ m; simpl; simpl in m.
+      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_Lim _ _ w)).
+      simpl.
+      pose proof (fun z => proves_ro_tot_sound _ _ _ w (fun zγ => ϕ0 (snd zγ)) θ p (z, γ) m).
+      simpl in H.
+      pose proof (e0 γ m).
+      destruct H0 as [y h1].
+      destruct h1 as [h1 h2].
+      split.
+      {
+        apply (pdom_is_neg_empty_by_evidence _ (total y)).
+        simpl.
+        unfold Rlim_def.
+        exists y; split; auto.
+        intros.
+        destruct z.
+        destruct (H x) as [_ h].
+        pose proof (h (bot R) H0).
+        destruct H1.
+        destruct H1.
+        contradict (flat_bot_neq_total _ H1).
+        exists r; split; auto.
+        destruct (H x) as [_ h].
+        pose proof (h _ H0).
+        destruct H1.
+
+        destruct H1.
+        injection H1; intro j; rewrite <- j in H2; clear j.
+        apply (h2 x r H2).
+      }
+      intros.
+      assert (total y = total v').
+      apply (Rlim_def_unique ((fun x : Z => sem_ro_comp (INTEGER :: Γ) e REAL w (x, γ)))); auto.
+      unfold Rlim_def.
+      exists y.
+      split; auto.
+      intros.
+      destruct z.
+      destruct (H x) as [_ h].
+      pose proof (h (bot R) H2).
+      destruct H3.
+      destruct H3.
+      contradict (flat_bot_neq_total _ H3).
+      exists r; split; auto.
+      destruct (H x) as [_ h].
+      pose proof (h _ H2).
+      destruct H3.
+      destruct H3.
+      apply h2.
+      injection H3; intro j; rewrite j; auto.
+      rewrite <- H1; auto.
+      injection H2; intro j; rewrite <- j; auto.
+
 
   + (*  total correctness triple for read only expressions *)
     intros Γ e τ w ϕ ψ trip.
@@ -875,8 +927,7 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w |- [[ P']]  e [[ Q' ]] *)
 
-      intros γ m.
-      simpl; simpl in m.
+      intros γ m; simpl; simpl in m.
       apply a in m.
       pose proof (proves_ro_tot_sound _ _ _ _ _ _ trip γ m) as H.
       simpl in H.
@@ -892,7 +943,8 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*)     *)
       (*     w |- [[ (fun _ => False) ]] e [[ Q ]] *)
 
-      apply magic.
+      intros γ m; simpl; simpl in m.
+      contradict m.
 
     ++
       (* | ro_conj_tot : forall Γ e τ (w : Γ |- e : τ) P Q Q', *)
@@ -902,9 +954,22 @@ Proof.
       (*     w |- [[P]] e [[Q']] ->  *)
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w |- [[P]] e [[Q /\\\ Q']] *)
-
-      apply magic.
-
+      intros γ m; simpl; simpl in m.
+      pose proof (proves_ro_tot_sound _ _ _ _ _ _ trip1 γ m) as [p1 p2].
+      pose proof (proves_ro_tot_sound _ _ _ _ _ _ trip2 γ m) as [_ q2].
+      split.
+      intro.
+      apply (p1 H).
+      intros v i.
+      pose proof (p2 _ i).
+      pose proof (q2 _ i).
+      destruct H, H0.
+      destruct H, H0.
+      exists x.
+      split; auto.
+      split; auto.
+      rewrite H in H0; injection H0; intro j; rewrite j; auto.
+      
     ++
       (* | ro_disj_tot : forall Γ e τ (w : Γ |- e : τ) P P' Q, *)
 
@@ -912,9 +977,13 @@ Proof.
       (*     w |- [[P']] e [[Q]] ->  *)
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w |- [[P \// P']] e [[Q]] *)
-
-      apply magic.
-
+      intros γ m; simpl; simpl in m.
+      destruct m as [m|m].
+      pose proof (proves_ro_tot_sound _ _ _ _ _ _ trip1 γ m) as [p1 p2].
+      split; auto.
+      pose proof (proves_ro_tot_sound _ _ _ _ _ _ trip2 γ m) as [p1 p2].
+      split; auto.
+      
     ++
       (* (** variables and constants *) *)
       (* | ro_var_tot : forall Γ k τ (w : Γ |- VAR k : τ) Q, *)
@@ -1335,5 +1404,5 @@ Proof.
       (*     wty ||- [[ϕ]] While e c [[fun _ => (ϕ /\\ ro_to_rw_pre (θ false))]] *)
 
       apply magic.
-Defined.
+Qed.
 
