@@ -3,7 +3,7 @@ Require Import Reals.
 Require Import Clerical.
 Require Import Typing.
 Require Import TypingProperties.
-Require Import Nondeterminism.
+Require Import Powerdomain.
 Require Import List.
 
 Definition sem_datatype (τ : datatype) : Type :=

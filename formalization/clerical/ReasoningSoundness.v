@@ -2,6 +2,7 @@ Require Import List.
 
 Require Import Clerical.
 Require Import Typing.
+Require Import Powerdomain.
 Require Import Semantics.
 Require Import Specification.
 Require Import Reasoning.
@@ -12,6 +13,18 @@ Notation " w ||= {{ ϕ }} e {{ ψ }} ":= (sem_rw_prt (@mk_rw_prt _ _ e _ w ϕ ψ
 Notation " w ||= [[ ϕ ]] e [[ ψ ]] ":= (sem_rw_tot (@mk_rw_tot _ _ e _ w ϕ ψ)) (at level 85).
 
 Axiom magic : forall A, A.
+
+(* semantics is unique *)
+Lemma sem_ro_comp_unique : forall Γ e τ (w1 w2 : Γ |- e : τ), sem_ro_comp Γ e τ w1 = sem_ro_comp Γ e τ w2
+with sem_rw_comp_unique : forall Γ Δ e τ (w1 w2 : Γ ;;; Δ ||- e : τ), sem_rw_comp Γ Δ e τ w1 = sem_rw_comp Γ Δ e τ w2.
+Proof.
+  intros.
+
+  induction w1; apply magic.
+
+  intros.
+  induction e; apply magic.
+Qed.
 
 Lemma proves_ro_prt_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, w |- {{ϕ}} e {{ψ}} -> w |= {{ϕ}} e {{ψ}}
 with proves_ro_tot_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, w |- [[ϕ]] e [[ψ]] -> w |= [[ϕ]] e [[ψ]]
@@ -34,15 +47,24 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w |- {{ P'}}  e {{ Q' }} *)
 
-      apply magic.
+
+      intros γ m.
+      simpl; simpl in m.
+      apply a in m.
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip γ m) as H.
+      simpl in H.
+      split; destruct H as [h1 h2]; auto.
+      intros t1 t2 t3 t4.
+      apply a0, (h2 _ t2 _ t4).
       
     ++
       (* | ro_exfalso_prt : forall Γ e τ (w : Γ |- e : τ) Q, *)
       
       (*     (*——————————-——————————-——————————-——————————-——————————-*)     *)
       (*     w |- {{ (fun _ => False) }} e {{ Q }} *)
-
-      apply magic.
+      intros γ m.
+      simpl in m.
+      contradict m; auto.
       
     ++
       (* | ro_conj_prt : forall Γ e τ (w : Γ |- e : τ) P Q Q', *)
@@ -52,7 +74,12 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w |- {{P}} e {{Q /\\\ Q'}} *)
 
-      apply magic.
+      intros γ m; simpl in m; simpl.
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip1 γ m) as H1; simpl in H1.
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip2 γ m) as H2; simpl in H2.
+      destruct H1 as [a p1]; destruct H2 as [_ p2]; split; auto.
+      intros v p v' p'.
+      split; try apply (p1 v p v' p'); try apply (p2 v p v' p').
 
     ++
       (* | ro_disj_prt : forall Γ e τ (w : Γ |- e : τ) P P' Q, *)
@@ -61,8 +88,11 @@ Proof.
       (*     w |- {{P'}} e {{Q}} ->  *)
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w |- {{P \// P'}} e {{Q}} *)
-
-      apply magic.
+    
+      intros γ m; simpl in m; simpl.
+      destruct m as [m|m]. 
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip1 γ m) as [p1 p2]; split; auto.
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip2 γ m) as [p1 p2]; split; auto.
 
     ++
       (* (** variables and constants *) *)
@@ -71,6 +101,7 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w |- {{fun γ => Q (ro_access Γ k τ w γ) γ}} VAR k {{Q}} *)
 
+      intros γ m; simpl in m; simpl.
       apply magic.
 
     ++
@@ -78,16 +109,27 @@ Proof.
       
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w |- {{Q tt}} SKIP {{Q}} *)
-
-      apply magic.
-
+      intros γ m; simpl in m; simpl.
+      rewrite (sem_ro_comp_unique Γ SKIP UNIT w (has_type_ro_Skip _)).
+      simpl.
+      split.
+      apply pdom_unit_neg_is_empty.
+      intros p1 p2 p3 p4.
+      destruct p3; auto.
+      
     ++
       (* | ro_true_prt : forall Γ (w : Γ |- TRUE : BOOL) Q, *)
 
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w |- {{Q true}} TRUE {{Q}} *)
-
-      apply magic.
+      
+      intros γ m; simpl in m; simpl.
+      rewrite (sem_ro_comp_unique _ _ _ w (has_type_ro_True _)).
+      simpl.
+      split.
+      apply pdom_unit_neg_is_empty.
+      intros p1 p2 p3 p4.
+      rewrite <- p2 in p4; injection p4; intro j; rewrite <- j; auto. 
 
     ++
       (* | ro_false_prt : forall Γ (w : Γ |- FALSE : BOOL) Q, *)
@@ -95,7 +137,14 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w |- {{Q false}} FALSE {{Q}} *)
 
-      apply magic.
+
+      intros γ m; simpl in m; simpl.
+      rewrite (sem_ro_comp_unique _ _ _ w (has_type_ro_False _)).
+      simpl.
+      split.
+      apply pdom_unit_neg_is_empty.
+      intros p1 p2 p3 p4.
+      rewrite <- p2 in p4; injection p4; intro j; rewrite <- j; auto. 
 
     ++
       (* | ro_int_prt : forall Γ k (w : Γ |- INT k : INTEGER) Q, *)
@@ -103,7 +152,14 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w |- {{Q k}} INT k {{Q}} *)
 
-      apply magic.
+
+      intros γ m; simpl in m; simpl.
+      rewrite (sem_ro_comp_unique _ _ _ w (has_type_ro_Int _ _)).
+      simpl.
+      split.
+      apply pdom_unit_neg_is_empty.
+      intros p1 p2 p3 p4.
+      rewrite <- p2 in p4; injection p4; intro j; rewrite <- j; auto. 
 
     ++
       (* (** passage between read-only and read-write correctness *) *)
@@ -113,7 +169,25 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' |- {{fun γ => P (tt, γ)}} c {{fun v w => Q v (tt, w)}} *)
 
-      apply magic.
+      intros γ m; simpl in m; simpl.
+      pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p γ tt m) as [p1 p2].
+      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_rw _ _ _ w)).
+      simpl.
+      split.
+      intro h.
+      apply pdom_lift_empty_2 in h.
+      apply (p1 h).
+      intros x1 x2 x3 x4.
+      apply (p2 (tt, x3)).
+      destruct x2.
+      destruct H.
+      destruct x.
+      simpl in H0.
+      rewrite <- H0 in x4; contradict (flat_bot_neq_total _ x4).
+      simpl in H0.
+      rewrite <- H0 in x4.
+      destruct p0; auto.
+      simpl in x4; injection x4; intro j; rewrite <- j; destruct u; auto.
 
     ++
       (* (** coercion and exponentiation *) *)

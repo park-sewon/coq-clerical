@@ -1,6 +1,6 @@
 Require Import Clerical.
 Require Import Semantics.
-Require Import Nondeterminism.
+Require Import Powerdomain.
 Require Import Typing.
 
 Structure ro_prt {Γ : ro_ctx} {e : comp} {τ : datatype} (wty : Γ |- e : τ) :=
