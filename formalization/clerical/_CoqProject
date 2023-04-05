@@ -16,4 +16,5 @@ Semantics.v
 # Examples.v
 
 Specification.v
-Reasoning.v			
+Reasoning.v
+ReasoningSoundness.v

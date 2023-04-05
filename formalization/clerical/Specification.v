@@ -55,3 +55,4 @@ Definition sem_rw_tot {Γ Δ} {c} {τ} {wty} (t : rw_tot wty) :=
   forall γ δ, P (δ, γ) ->
               let V := sem_rw_comp Γ Δ c τ wty γ δ in
               pdom_neg_is_empty V /\ exists v, proj1_sig V (total v) -> Q (snd v) (fst v, γ).
+
