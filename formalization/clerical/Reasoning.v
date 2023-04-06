@@ -95,7 +95,7 @@ Defined.
 
 Definition post {X Y : Type} := X -> Y -> Prop.
 
-Notation " ( γ ; δ ) " := (pair_concat γ δ).
+Notation " ( γ ; δ ) " := (tedious_prod_sem _ _  (γ, δ)).
 
 Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
 (*  partial correctness triple for read only expressions *)
