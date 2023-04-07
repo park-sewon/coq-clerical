@@ -252,6 +252,47 @@ Proof.
   contradict (flat_total_neq_bot _ h).
 Defined.
 
+Lemma pdom_case2_bot_1 {X : Type} (b1 b2 : pdom bool) (c1 c2 : pdom X) :
+  ~ (pdom_is_empty (pdom_case2 b1 b2 c1 c2)) ->
+  (total true ∈ b1 /\ bot _ ∈ c1) \/ (total true ∈ b2 /\ bot _ ∈ c2)
+  \/  ((bot bool ∈ b1 \/ total false ∈ b1) /\ (bot bool ∈ b2 \/ total false ∈ b2))
+  -> bot X ∈ pdom_case2 b1 b2 c1 c2.
+Proof.
+  intros.
+  repeat split.
+  intro.
+  contradict H.
+  apply pdom_case2_empty_1; auto.
+  intro.
+  contradict H.
+  apply pdom_case2_empty_1; auto.
+  intros h1 h2.
+  contradict H.
+  apply pdom_case2_empty_1; auto.
+  intros h1 h2.
+  contradict H.
+  apply pdom_case2_empty_1; auto.
+  destruct H0.
+  left; auto.
+  destruct H0.
+  right; left; auto.
+  right; right; destruct H0; repeat split; auto.
+Defined.
+
+Lemma pdom_case2_bot_2 {X : Type} (b1 b2 : pdom bool) (c1 c2 : pdom X) :
+  bot X ∈ pdom_case2 b1 b2 c1 c2 ->
+(total true ∈ b1 /\ bot _ ∈ c1) \/ (total true ∈ b2 /\ bot _ ∈ c2)
+\/  ((bot bool ∈ b1 \/ total false ∈ b1) /\ (bot bool ∈ b2 \/ total false ∈ b2)).
+Proof.
+  intros.
+  destruct H as [h1 [h2 [h3 h4]]].
+  destruct h4.
+  left; auto.
+  destruct H.
+  right; left; auto.
+  right; right; destruct H.
+  destruct H0; auto.
+Defined.
 
 Lemma pdom_bind_fst_monotone {X Y : Type} (f g: X -> pdom Y) (S : pdom X) :
   f ≤ g -> pdom_bind f S ⊑ pdom_bind g S.
