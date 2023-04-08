@@ -25,6 +25,33 @@ Proof.
 Qed.
 
 
+
+
+Lemma pdom_neg_empty_exists {X : Type} (x : pdom X) : ~ pdom_is_empty x -> exists y, y ∈ x.
+Proof.
+  intros.
+  apply neg_forall_exists_neg in H.
+  destruct H.
+  exists x0.
+  apply dn_elim; auto.
+Defined.
+
+Lemma flat_to_pdom_neg_empty : forall X (x : flat X), pdom_neg_is_empty (flat_to_pdom x).
+Proof.
+  intros.
+  destruct x.
+  apply (pdom_is_neg_empty_by_evidence _ (bot X)).
+  simpl; auto.
+  apply (pdom_is_neg_empty_by_evidence _ (total x)).
+  simpl; auto.
+Qed.
+
+Lemma total_is_injective : forall {X} {x y : X}, total x = total y -> x = y.
+Proof.
+  intros.
+  injection H; auto.
+Defined.
+
 Lemma pdom_unit_neg_is_empty {X} : forall x :X, pdom_neg_is_empty (pdom_unit x).
 Proof.
   intros x.

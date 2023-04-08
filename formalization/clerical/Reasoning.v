@@ -15,18 +15,6 @@ Reserved Notation " w ||- {{ P }} e {{ y | Q }} " (at level 50, P, e, y, Q at ne
 Reserved Notation " w ||- [{ P }] e [{ y | Q }] " (at level 50, P, e, y, Q at next level).
 
 
-Definition mk_ro_prt {Γ} {e} {τ} (w : Γ |- e : τ) P Q : ro_prt w
-  := {| ro_prt_pre := P ; ro_prt_post := Q |}.
-
-Definition mk_ro_tot {Γ} {e} {τ} (w : Γ |- e : τ) P Q : ro_tot w
-  := {| ro_tot_pre := P ; ro_tot_post := Q |}.
-
-Definition mk_rw_prt {Γ Δ} {e} {τ} (w : Γ ;;; Δ ||- e : τ) P Q : rw_prt w
-  := {| rw_prt_pre := P ; rw_prt_post := Q |}.
-
-Definition mk_rw_tot {Γ Δ} {e} {τ} (w : Γ ;;; Δ ||- e : τ) P Q : rw_tot w
-  := {| rw_tot_pre := P ; rw_tot_post := Q |}.
-
 Definition ro_asrt_imp {Γ} (P Q : sem_ro_ctx Γ -> Prop) : Prop :=
   forall γ, P γ -> Q γ.
 
@@ -94,8 +82,6 @@ Proof.
 Defined.
 
 Definition post {X Y : Type} := X -> Y -> Prop.
-
-Notation " ( γ ; δ ) " := (tedious_prod_sem _ _  (γ, δ)).
 
 Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
 (*  partial correctness triple for read only expressions *)

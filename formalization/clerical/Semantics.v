@@ -51,7 +51,26 @@ Proof.
   exact s.
   exact (IHΓ (s1, s0)).
 Defined.
-  
+
+
+
+Lemma tedious_equiv_1 : forall Δ Γ δ γ,  tedious_sem_concat Δ Γ (tedious_prod_sem Δ Γ (δ, γ)) = (δ, γ).
+Proof.
+  intros.
+  induction Δ.
+  simpl in δ.
+  destruct δ.
+  simpl.
+  auto.
+  simpl.
+  simpl in δ.
+  destruct δ.
+  rewrite IHΔ.
+  auto.
+Defined.
+
+Notation " ( γ ; δ ) " := (tedious_prod_sem _ _  (γ, δ)).
+
                                     
 Definition sem_rw_ctx : rw_ctx -> Type.
 Proof.
@@ -139,15 +158,16 @@ Definition Rlim_def (f : Z -> pdom R) : flat R -> Prop :=
                         exists z' : R, z = total z' /\ Rabs (z' - y') < powerRZ 2 (- x))%R.
 
 
-Axiom magic : forall A, A.
 Lemma Rlim_def_unique f : forall x y, Rlim_def f x -> Rlim_def f y -> x = y.
 Proof.
   intros x y H H0.
   destruct H as [x' [tx hx]].
   destruct H0 as [y' [ty hy]].
-  apply magic.
-Qed.
+Admitted.
 
+Lemma Rlim_def_never_bot : forall f, ~ (Rlim_def f (bot R)).
+Proof.
+Admitted.
   
 Definition Rlim : (Z -> pdom R) -> pdom R.
 Proof.

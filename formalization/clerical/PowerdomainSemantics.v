@@ -140,14 +140,6 @@ Proof.
   apply h4 in H; auto.
 Defined.
 
-Lemma pdom_neg_empty_exists {X : Type} (x : pdom X) : ~ pdom_is_empty x -> exists y, y ∈ x.
-Proof.
-  intros.
-  apply neg_forall_exists_neg in H.
-  destruct H.
-  exists x0.
-  apply dn_elim; auto.
-Defined.
 
 Definition pdom_case2_empty_2 {X : Type} (b1 b2 : pdom bool) (c1 c2 : pdom X) :
   pdom_is_empty (pdom_case2 b1 b2 c1 c2) -> pdom_is_empty b1 \/ pdom_is_empty b2 \/ (total true ∈ b1 /\ pdom_is_empty c1) \/ (total true ∈ b2 /\ pdom_is_empty c2).

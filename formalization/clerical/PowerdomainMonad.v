@@ -281,6 +281,7 @@ Section Powerdomain.
     contradict H; auto.
   Defined.
 End Powerdomain.
+
 Notation "x ∈ S" := (proj1_sig S x) (at level 80).
-
-
+Notation "x ∉ S" := (~proj1_sig S x) (at level 85).
+Notation "⊥" := (bot _).
