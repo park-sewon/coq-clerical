@@ -4,7 +4,7 @@ Require Import PowerdomainMonad.
 Require Import PowerdomainProperties.
 Require Import PowerdomainCompleteness.
 Require Import PowerdomainOrderProperties.
-Require Import PowerdomainContinuity.
+Require Import PowerdomainFixedpoints.
 
 Require Import Lia.
 
