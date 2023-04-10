@@ -6,6 +6,7 @@ PowerdomainProperties.v
 PowerdomainCompleteness.v
 PowerdomainOrderProperties.v
 PowerdomainSemantics.v
+PowerdomainFixedpoints.v
 Powerdomain.v
 # Delay.v
 Clerical.v
@@ -16,7 +17,6 @@ Semantics.v
 # Examples.v
 
 Specification.v
-Reasoning.v
+ReasoningRules.v
 ReasoningSoundness.v
-
-Admissible.v
+ReasoningAdmissible.v

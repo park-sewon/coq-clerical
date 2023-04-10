@@ -6,8 +6,8 @@ Require Import Powerdomain.
 Require Import Semantics.
 Require Import Specification.
 Require Import Reasoning.
+Require Import ReasoningAdmissible.
 Require Import Reals.
-
 
   
 Lemma sem_ro_prt_excludes_bot_is_tot : forall Γ e τ ϕ ψ (w : Γ |- e : τ), 
@@ -111,15 +111,15 @@ Axiom magic : forall A, A.
 Lemma sem_ro_comp_unique : forall Γ e τ (w1 w2 : Γ |- e : τ), sem_ro_comp Γ e τ w1 = sem_ro_comp Γ e τ w2
 with sem_rw_comp_unique : forall Γ Δ e τ (w1 w2 : Γ ;;; Δ ||- e : τ), sem_rw_comp Γ Δ e τ w1 = sem_rw_comp Γ Δ e τ w2.
 Proof.
-  intros.
-
-  induction w1; apply magic.
-
-  intros.
-  induction e; apply magic.
-Qed.
-
+  Admitted.
   
+Lemma sem_ro_comp_auxiliary_ctx : forall Γ Γ' e τ (w : Γ |- e : τ) (w' : (Γ ++ Γ') |- e : τ) γ γ', sem_ro_comp Γ e τ w γ = sem_ro_comp (Γ ++ Γ') e τ w' (γ; γ')
+with sem_rw_comp_auxiliary_ctx : forall Γ Γ' Δ e τ (w : Γ ;;; Δ ||- e : τ) (w' : (Γ ++ Γ') ;;; Δ ||- e : τ) γ γ' δ, sem_rw_comp Γ Δ e τ w γ δ = sem_rw_comp (Γ ++ Γ') Δ e τ w' (γ ; γ') δ.
+Proof.
+Admitted.
+  
+  
+
 Lemma proves_ro_prt_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, w |- {{ϕ}} e {{ψ}} -> w |= {{ϕ}} e {{ψ}}
 with proves_ro_tot_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, w |- [{ϕ}] e [{ψ}] -> w |= [{ϕ}] e [{ψ}]
 with proves_rw_prt_sound : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ, w ||- {{ϕ}} e {{ψ}} -> w ||= {{ϕ}} e {{ψ}}
@@ -283,6 +283,23 @@ Proof.
       rewrite i in j.
       rewrite <- j.
       destruct p0, u; simpl; auto.
+    ++
+    (* (** restricting auxiliary variables *) *)
+    (* | ro_proj_prt : forall Γ Γ' e τ (w : Γ |- e : τ) (w' : (Γ ++ Γ') |- e : τ) ϕ ψ,  *)
+    (*     w' |- {{ϕ}} e {{ψ}} -> *)
+    (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
+    (*     w |- {{fun γ => exists γ', ϕ (γ ; γ')}} e {{y | fun γ => exists γ', ψ y (γ ; γ')}} *)
+      intros γ [γ' m]; simpl in m; simpl.
+      
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip (γ; γ')  m) as [p1 p2].
+      split.
+      rewrite <- (sem_ro_comp_auxiliary_ctx _ _ _ _ w) in p1; auto.
+      intros h1 h2 h3 h4.
+      exists γ'.
+      rewrite <- (sem_ro_comp_auxiliary_ctx _ _ _ _ w) in p2; auto.
+      pose proof (p2 h1 h2 _ h4).
+      simpl in H; auto.
+      
       
     ++
       (* (** coercion and exponentiation *) *)
@@ -1150,7 +1167,25 @@ Proof.
       exists v.
       simpl in h2.
       rewrite h1 in x4; simpl in x4; rewrite <- x4; destruct u; split; auto.
+
+    ++
+      (* (** restricting auxiliary variables *) *)
+      (* | ro_proj_tot : forall Γ Γ' e τ (w : Γ |- e : τ) (w' : (Γ ++ Γ') |- e : τ) ϕ ψ,  *)
+      (*     w' |- [{ϕ}] e [{ψ}] -> *)
+      (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
+      (*     w |- [{fun γ => exists γ', ϕ (γ ; γ')]} e [{y | fun γ => exists γ', ψ y (γ ; γ')}] *)
+      intros γ [γ' m]; simpl in m; simpl.
       
+      pose proof (proves_ro_tot_sound _ _ _ _ _ _ trip (γ; γ')  m) as [p1 p2].
+      split.
+      rewrite <- (sem_ro_comp_auxiliary_ctx _ _ _ _ w) in p1; auto.
+      intros h1 h2. 
+      rewrite <- (sem_ro_comp_auxiliary_ctx _ _ _ _ w) in p2; auto.
+      pose proof (p2 _ h2) as [p3 [p4 p5]].
+      exists p3; split; auto.
+      exists γ'; auto.
+      
+
     ++
       (* (** coercion and exponentiation *) *)
       (* | ro_coerce_tot : forall Γ e (w : Γ |- e : INTEGER) ϕ ψ (w' : Γ |- RE e : REAL), *)
@@ -1938,6 +1973,19 @@ Proof.
       apply H; auto.
 
     ++
+      (* (** restricting auxiliary variables *) *)
+      intros γ δ [γ' m]; simpl in m; simpl.
+      
+      pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip (γ; γ') δ  m) as [p1 p2].
+      split.
+      rewrite <- (sem_rw_comp_auxiliary_ctx _ _ _ _ _ w) in p1; auto.
+      intros h1 h2 h3 h4.
+      exists γ'.
+      rewrite <- (sem_rw_comp_auxiliary_ctx _ _ _ _ _ w) in p2; auto.
+      pose proof (p2 h1 h2 _ h4).
+      simpl in H; auto.
+      
+    ++
       (* (** operational proof rules  *)                             *)
       (* | rw_sequence_prt : forall Γ Δ c1 c2 τ (w1 : Γ ;;; Δ ||- c1 : DUnit) (w2 : Γ ;;; Δ ||- c2 : τ) ϕ θ ψ (w' : Γ ;;; Δ ||- (c1 ;; c2) : τ), *)
       
@@ -2404,6 +2452,20 @@ Proof.
       rewrite q2 in h4.
       simpl in h4.
       exists (δ, q1); split; simpl; auto.
+      
+    ++
+      (* (** restricting auxiliary variables *) *)
+      intros γ δ [γ' m]; simpl in m; simpl.
+      
+      pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip (γ; γ') δ m) as [p1 p2].
+      split.
+      rewrite <- (sem_rw_comp_auxiliary_ctx _ _ _ _ _ w) in p1; auto.
+      intros h1 h2. 
+      rewrite <- (sem_rw_comp_auxiliary_ctx _ _ _ _ _ w) in p2; auto.
+      pose proof (p2 _ h2) as [p3 [p4 p5]].
+      exists p3; split; auto.
+      exists γ'; auto.
+      
 
     ++
       (* (** operational proof rules  *)                             *)
