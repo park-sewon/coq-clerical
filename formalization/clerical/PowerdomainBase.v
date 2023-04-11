@@ -2,6 +2,10 @@
 Section Base.
   Axiom lem : forall P : Prop, P \/ ~P.
   Axiom cchoice : forall (A : Type) (P : nat -> A -> Prop), (forall n : nat, exists a : A, P n a) -> exists f : nat -> A, forall n, P n (f n).
+  Axiom dchoice : forall (P : nat -> Type) (R : forall n, P n -> P (S n ) -> Prop),
+      P 0 -> (forall n x, exists y, R n x y) -> exists (f : forall n, P n), forall n, R n (f n) (f (S n)).  
+
+    
   Axiom prop_ext : forall (P Q : Prop), (P -> Q) -> (Q -> P) -> P = Q.
   Axiom dfun_ext : forall A (P : A-> Type) (f g : forall a, P a), (forall a, f a = g a) -> f = g.
   Lemma pred_ext : forall A (P Q : A -> Prop), (forall a, P a -> Q a) -> (forall a, Q a -> P a) -> P = Q.
@@ -15,6 +19,7 @@ Section Base.
   Defined.
 
   
+  
   Lemma prop_irrl : forall (P : Prop) (p q : P), p = q.
   Proof.
     intros.
@@ -24,13 +29,6 @@ Section Base.
     destruct p.
     destruct q.
     auto.
-  Defined.
-
-  Definition lp : forall S T (f : S -> T) (a b : S), a = b -> f a = f b.
-  Proof.
-    intros.
-    rewrite H.
-    exact (eq_refl _).
   Defined.
 
   Lemma dn_elim : forall P : Prop, ~~P -> P.
@@ -111,3 +109,117 @@ Section Base.
 
   
 End Base.
+
+
+  Definition tr {A : Type} (P : A -> Type) a b : (a = b) -> P a -> P b.
+    intros e y.
+    induction e.
+    exact y.
+  Defined.
+  
+  Definition lp : forall S T (f : S -> T) (a b : S), a = b -> f a = f b.
+  Proof.
+    intros.
+    rewrite H.
+    exact (eq_refl _).
+  Defined.
+
+  (* dependent choice with starting position *)
+  Lemma dchoice_start : forall (P : nat -> Type) (R : forall n, P n -> P (S n) -> Prop) x,
+      (forall n x, exists y', R n x y') -> exists (f : forall n, P n), f 0 = x /\forall n, R n (f n) (f (S n)).  
+  Proof.
+    intros.
+    pose proof (dchoice (fun n => ((n = 0) * {y' : P 0 | y' = x}) + ((n <> 0) * P n))%type (fun n a b =>
+                                                                                           match a with
+                                                                                             inl (e, t) => match b with
+                                                                                                      | inl _ => False
+                                                                                                           | inr (_, y) => R 0 x
+                                                                                                                             (tr _ _ _ (lp _ _ S _ _ e) y)
+                                                                                                      end
+                                                                                           | inr (_, x') => match b with
+                                                                                                            | inl _ => False
+                                                                                                            | inr (_, y) => R n x' y
+                                                                                                            end
+                                                                                           end)
+                        ) as [f h].
+    left; split; auto.
+    exists x; auto.
+    intros.
+  
+    destruct x0.
+    destruct p.
+    destruct (eq_sym e).
+    assert (1 <> 0).
+    auto.
+    destruct (H 0 x).
+    exists (inr (H0, x0)).
+    rewrite (prop_irrl _ e eq_refl). 
+    simpl.
+    auto.
+    destruct p.
+    assert (S n <> 0).
+    auto.
+    destruct (H n p).
+    exists (inr (H0, x0)).
+    auto.
+    assert (forall n, (n = 0) + (n <> 0)).
+    auto.
+    intro.
+    Require Import Coq.Arith.Compare_dec.
+    destruct (lt_eq_lt_dec n 0).
+    destruct s.
+    right; auto.
+    Require Import Lia.
+    lia.
+    left; auto.
+    right; lia.
+    exists (fun n => match (H0 n) with
+                     | inl e => match f n with
+                                | inl _ => (tr _ _ _ (eq_sym e) x)
+                                | inr (ne, _) => False_rect _ (ne e)
+                                end
+                     | inr ne => match f n with
+                                 | inl (e, _) => False_rect _ (ne e)
+                                 | inr (_, y) => y
+                                 end
+                     end
+                       ).
+    split.
+    destruct (H0 0).
+    destruct (f 0).
+    rewrite (prop_irrl _ (eq_sym e) eq_refl). 
+    auto.
+    destruct p.
+    contradict n; auto.
+    contradict n; auto.
+    intros.
+    destruct (H0 n).
+    destruct (H0 (S n)).
+    contradict (e0).
+    auto.
+    pose proof (h n).
+    destruct (f n).
+    destruct p.
+    destruct (f (S n)).
+    contradict H1.
+    destruct p.
+    destruct e.
+    simpl.
+    rewrite (prop_irrl _ (e0) eq_refl) in H1.
+    simpl in H1; auto.
+    destruct p.
+    contradict n1; auto.
+    destruct (H0 (S n)).
+    contradict e.
+    auto.
+    pose proof (h n).
+    destruct (f n).
+    destruct p.
+    contradict n0; auto.
+    destruct p.
+    destruct (f (S n)).
+    contradict H1.
+    destruct p0.
+    auto.
+  Defined.
+  
