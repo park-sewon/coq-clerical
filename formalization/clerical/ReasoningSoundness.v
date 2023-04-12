@@ -355,7 +355,163 @@ Proof.
   intros p1 p2.
   exists (ro_access _ _ _ w γ); split; auto.  
 Defined.
-         
+
+Lemma update_assignable_irrl : forall k Δ τ  x δ (a1 a2 : assignable Δ τ k),
+    update k x δ a1 = update k x δ a2.
+Proof.
+  intro k.
+  dependent induction k.
+  intros.
+  dependent destruction a1.
+  dependent destruction a2; auto.
+  intros.
+  dependent destruction a1.
+  dependent destruction a2; auto.
+  destruct δ.
+  assert (
+      (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_list_datatype Δ) s s0) (assignable_S Δ τ σ k a1))
+            = (s, update k x s0 a1)). 
+  simpl.
+  unfold update.
+  unfold assignable_rect.
+  destruct a1; auto.
+  assert (
+      (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_list_datatype Δ) s s0) (assignable_S Δ τ σ k a2))
+            = (s, update k x s0 a2)). 
+  simpl.
+  unfold update.
+  unfold assignable_rect.
+  destruct a2; auto.
+  rewrite H, H0; auto.
+  assert (update k x s0 a1 = update k x s0 a2).
+  apply IHk.
+  rewrite H1; auto.
+Defined.
+
+Lemma update'_typing_irrl_2 Γ Δ k e τ (w1 w2 : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit) δ x :
+  update' w1 w' δ x = update' w2 w' δ x.
+Proof.
+  unfold update'.
+  apply update_assignable_irrl.
+Defined.
+
+Lemma tedious_equiv_2 {Δ Γ} (γ : sem_ro_ctx (Δ ++ Γ)) : γ = (fst_concat γ; snd_concat γ). 
+Proof.
+Admitted.
+
+Lemma assignable_absurd k τ (a : assignable nil τ k) : False.
+Proof.
+  inversion a.
+Defined.
+
+Fixpoint has_type_rw_Assign_absurd Γ k e (w : Γ ;;; nil ||- Assign k e : DUnit) : False.
+Proof.
+  dependent destruction w.
+  dependent destruction h.
+  apply (has_type_rw_Assign_absurd _ _ _ h).
+  apply (assignable_absurd k τ a); auto.
+Defined.
+  
+Lemma proves_rw_prt_Assign_sound
+  Γ Δ e k τ ϕ0 (ψ0 :post) θ (w : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit)  :
+  w |= {{(fun δγ : sem_ro_ctx (Δ ++ Γ) => ϕ0 (tedious_sem_concat Δ Γ δγ))}} e {{θ}}
+  -> (forall x γ δ , θ x (δ; γ) -> ψ0 tt (update' w w' δ x, γ))
+  ->  w' ||= {{ϕ0}} Assign k e {{ψ0}}.
+Proof.
+  intros.
+  dependent destruction w'.
+  dependent destruction h.
+  contradict (has_type_rw_Assign_absurd _ _ _ h).
+  intros γ δ m; simpl; simpl in m.
+  easy_rewrite_uip.
+  split.
+  intro.
+  apply pdom_lift_empty_2 in H1.
+  apply pdom_lift_empty_2 in H1.
+  pose proof (H (δ; γ)).
+  simpl in H2.
+  rewrite tedious_equiv_1 in H2.
+  pose proof (H2 m); clear H2.
+  destruct H3.
+  pose proof (has_type_ro_unambiguous _ _ _ _ h w).
+  induction H4.
+  rewrite  (sem_ro_comp_unique _ _ _ h w) in H1.
+  auto.
+  intros h1 h2 h3 h4.
+  destruct h2.
+  destruct H1.
+  destruct H1.
+  destruct H1.
+  destruct x0.
+  simpl in H3.
+  rewrite <- H3 in H2.
+  simpl in H2.
+  rewrite <- H2 in h4.
+  contradict (flat_bot_neq_total _ h4).
+  simpl in H3.
+  rewrite <- H3 in H2.
+  simpl in H2.
+  rewrite <- H2 in h4.
+  apply total_is_injective in h4.
+  rewrite <- h4.
+  simpl.
+  pose proof (H (δ; γ)).
+  simpl in H4.
+  rewrite tedious_equiv_1 in H4.
+  pose proof (H4 m); clear H4.
+  destruct H5 as [_ H5].
+  pose proof (has_type_ro_unambiguous _ _ _ _ h w).
+  induction H4.
+  rewrite <- (sem_ro_comp_unique _ _ _ h w) in H5.
+  pose proof (H5 (total s) H1 _ eq_refl).
+  pose proof (H0 s γ δ H4).
+  unfold update' in H6.
+  assert (
+      update k s δ (assign_wty_assignable Γ Δ k e τ0 w (has_type_rw_Assign Γ Δ e τ0 k a h)) =
+        update k s δ a).
+  apply update_assignable_irrl.
+  rewrite H7 in H6; auto.
+Defined.
+
+Lemma proves_rw_tot_Assign_sound
+  Γ Δ e k τ ϕ0 (ψ0 :post) θ (w : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit)  :
+  w |= [{(fun δγ : sem_ro_ctx (Δ ++ Γ) => ϕ0 (tedious_sem_concat Δ Γ δγ))}] e [{θ}]
+  -> (forall x γ δ , θ x (δ; γ) -> ψ0 tt (update' w w' δ x, γ))
+  ->  w' ||= [{ϕ0}] Assign k e [{ψ0}].
+Proof.
+  intros.
+  apply sem_ro_tot_is_prt_excludes_bot in H as [h1 h2].
+  apply sem_rw_prt_excludes_bot_is_tot.
+  apply (proves_rw_prt_Assign_sound _ _ _ _ _ _ _ _ _ _ h1 H0).
+  (* non bottom *)
+  intros.
+  dependent destruction w'.
+  dependent destruction h.
+  contradict (has_type_rw_Assign_absurd _ _ _ h).
+  simpl.
+  intro.
+  destruct H1.
+  destruct H1.
+  destruct H1.
+  destruct H1.
+  destruct x0.
+
+  pose proof (has_type_ro_unambiguous _ _ _ _ h w).
+  induction H4.
+  rewrite  (sem_ro_comp_unique _ _ _ h w) in H1.
+  pose proof (h2 (δ; γ)).
+  rewrite tedious_equiv_1 in H4.
+  apply (H4 H H1).
+  
+  pose proof (has_type_ro_unambiguous _ _ _ _ h w).
+  induction H4.
+  rewrite  (sem_ro_comp_unique _ _ _ h w) in H1.
+  simpl in H3.
+  rewrite <- H3 in H2.
+  simpl in H2.
+  contradict (flat_total_neq_bot _ H2).
+Defined.
+
 Lemma proves_ro_prt_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, w |- {{ϕ}} e {{ψ}} -> w |= {{ϕ}} e {{ψ}}
 with proves_ro_tot_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, w |- [{ϕ}] e [{ψ}] -> w |= [{ϕ}] e [{ψ}]
 with proves_rw_prt_sound : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ, w ||- {{ϕ}} e {{ψ}} -> w ||= {{ϕ}} e {{ψ}}
@@ -2428,8 +2584,9 @@ Proof.
       (*     (forall x γ δ, θ x (tedious_prod_sem _ _ (δ, γ)) -> ψ tt (update' w w' δ x, γ)) -> *)
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- {{ϕ}} LET k := e {{ψ}} *)
-      apply magic.
-
+      apply proves_ro_prt_sound in p.
+      apply (proves_rw_prt_Assign_sound _ _ _ _ _ _ _ _ _ _ p ψ1).
+    
     ++
       (* | rw_cond_prt : forall Γ Δ e c1 c2 τ (w : (Δ ++ Γ) |- e : BOOL) (w1 : Γ ;;; Δ ||- c1 : τ) (w2 : Γ ;;; Δ ||- c2 : τ) (w' : Γ ;;; Δ ||- Cond e c1 c2 : τ) ϕ θ ψ, *)
 
@@ -2984,7 +3141,8 @@ Proof.
       (*     (forall x γ δ, θ x (tedious_prod_sem _ _ (δ, γ)) -> ψ tt (update' w w' δ x, γ)) -> *)
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- [{ϕ}] LET k := e [{ψ}] *)
-      apply magic.
+      apply proves_ro_tot_sound in p.
+      apply (proves_rw_tot_Assign_sound _ _ _ _ _ _ _ _ _ _ p ψ1).
 
     ++
       (* | rw_cond_tot : forall Γ Δ e c1 c2 τ (w : (Δ ++ Γ) |- e : BOOL) (w1 : Γ ;;; Δ ||- c1 : τ) (w2 : Γ ;;; Δ ||- c2 : τ) (w' : Γ ;;; Δ ||- Cond e c1 c2 : τ) ϕ θ ψ, *)
