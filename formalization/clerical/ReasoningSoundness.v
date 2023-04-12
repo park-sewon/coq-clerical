@@ -512,6 +512,171 @@ Proof.
   contradict (flat_total_neq_bot _ H2).
 Defined.
 
+Lemma proves_rw_while_prt_sound : forall Γ Δ  e c (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : Γ ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT)  ϕ θ,   
+    wty_e |= {{rw_to_ro_pre ϕ}} e {{θ}} ->
+    wty_c ||= {{ro_to_rw_pre (θ true)}} c {{fun _ => ϕ}} ->
+    (*——————————-——————————-——————————-——————————-——————————-*)
+    wty ||= {{ϕ}} While e c {{fun _ => (ϕ /\\ ro_to_rw_pre (θ false))}}.
+Proof.
+  intros Γ Δ e c wty_e wty_c wty ϕ θ BB CC.
+  intros γ δ m; simpl; simpl in m.
+  pose (fun d => sem_ro_comp _ _ _ wty_e (d; γ)) as B.
+  pose (fun d => pdom_lift fst (sem_rw_comp _ _ _ _ wty_c γ d)) as C.
+      replace (sem_rw_comp Γ Δ (WHILE e DO c END) UNIT wty γ δ) with
+        (pdom_lift (fun x => (x, tt)) (pdom_while B C δ))
+        by (rewrite (sem_rw_comp_unique _ _ _ _ wty (has_type_rw_While _ _ _ _ wty_e  wty_c)); simpl; auto).
+      assert ( (rw_to_ro_pre ϕ) (δ; γ)) as m'
+          by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
+      pose proof (BB _ m') as [p1 p2].
+
+      (* important sub lemmas *)
+      pose (fun n δ => pdom_fun_bot_chain (pdom_W B C) (pdom_W_monotone B C) n δ) as thechain.
+      (* the chain respects invariant *)
+      assert (forall n, forall δ1 δ2, ϕ (δ1, γ) -> total δ2 ∈ thechain n δ1 -> ϕ (δ2, γ) /\ ro_to_rw_pre (θ false) (δ2, γ)) as l.
+      {
+        (* base *)
+        intro n.
+        induction n.
+        intros.
+        simpl in H0.
+        contradiction (flat_bot_neq_total _ H0).
+        (* induction step *)
+        intros.
+        simpl in H0.
+        destruct H0 as [h1 [h2 [[h3 h4] | [h3 h4]]]].
+        contradict (flat_total_neq_bot _ h3).
+        destruct h4 as [H1 [b [H3 H4]]].
+        destruct b.
+        simpl in H4.
+        contradiction (flat_bot_neq_total _ H4).
+        simpl in H4.
+        destruct b.
+        apply total_is_injective in H4.
+        rewrite <- H4 in H1; clear H4.
+        apply pdom_bind_total_2 in H1 as [_ [d [hh1 hh2]]].
+        apply (IHn d δ2).
+        assert (rw_to_ro_pre ϕ (δ1; γ))        
+          by (unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
+          
+        pose proof (ro_prt_post_pre _ _ _ _ _ _ ((BB)) true (δ1 ; γ) H0 H3) as m''.
+        pose proof (CC _ _ m'') as [_ r2].
+        simpl in r2.
+        assert (total (d, tt) ∈  sem_rw_comp Γ Δ c UNIT wty_c γ δ1).
+        {
+          unfold C in hh1.
+          apply pdom_lift_total_2 in hh1.
+          destruct hh1.
+          destruct H1.
+          destruct x.
+          destruct s0.
+          simpl in H2.
+          rewrite H2; auto.
+        }
+        pose proof (r2 (total (d, tt)) H1 _ eq_refl).
+        simpl in H2; auto.
+        exact hh2.
+        apply total_is_injective in H4.
+        rewrite <- H4 in H1.
+        simpl in H1.
+        apply total_is_injective in H1.
+        assert (rw_to_ro_pre ϕ (δ1; γ))        
+          by (unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
+        
+        pose proof (ro_prt_post_pre _ _ _ _ _ _ ((BB)) false (δ1 ; γ) H0 H3) as m''.
+        rewrite <- H1; split; auto.
+      }
+
+      (* nondempty *)
+      assert (forall n, forall δ1, ϕ (δ1, γ) -> ~ pdom_is_empty (thechain n δ1)) as r.
+      {
+        intro n.
+        induction n.
+        intros.
+        simpl.
+        apply (pdom_is_neg_empty_by_evidence _ (bot _)); simpl; auto.
+
+        intros.
+        simpl.
+        pose proof (IHn _ H).
+        apply pdom_neg_empty_exists in H0 as [δ' h1].
+        intro.
+        unfold pdom_W in H0.
+        apply pdom_bind_empty_2 in H0.
+        destruct H0.
+        assert ( (rw_to_ro_pre ϕ) (δ1; γ)) as m''
+            by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
+
+        pose proof (BB _ m'') as [h _]; auto.
+        destruct H0.
+        destruct H0.
+        destruct x.
+        apply pdom_bind_empty_2 in H1.
+        destruct H1.
+        unfold C in H1.
+        apply pdom_lift_empty_2 in H1.
+        assert ( (rw_to_ro_pre ϕ) (δ1; γ)) as m''
+            by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
+
+        pose proof (ro_prt_post_pre _ _ _ _ _ _ ((BB)) true (δ1 ; γ) m'' H0) as m'''.
+        pose proof (CC _ _ m''') as [r1 _].
+        auto.
+        destruct H1.
+        destruct H1.
+        apply (fun k => IHn x k H2).
+        assert ( (rw_to_ro_pre ϕ) (δ1; γ)) as m''
+            by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
+
+        pose proof (ro_prt_post_pre _ _ _ _ _ _ ((BB)) true (δ1 ; γ) m'' H0) as m'''.
+        pose proof (CC _ _ m''') as [_ r2].
+        unfold C in H1.
+        apply pdom_lift_total_2 in H1.
+        destruct H1.
+        destruct H1.
+        destruct x0.
+        destruct s0.
+        simpl in H3.
+        induction H3.
+        pose proof (r2 (total (x, tt)) H1 _ eq_refl).
+        simpl in H3.
+        auto.
+        contradict H1.
+        apply (pdom_is_neg_empty_by_evidence _ (total δ1)); simpl; auto.
+      }
+      split.
+      intro.
+      apply pdom_lift_empty_2 in H.
+      unfold pdom_while in H.
+      unfold pdom_fun_lfp in H.
+      apply pdom_fun_chain_empty_2 in H as [n h].
+      apply (r n δ m h).
+      intros.
+      rewrite H0 in H; clear H0.
+      apply pdom_lift_total_2 in H.
+      destruct H.
+      destruct H.
+      unfold pdom_while in H.
+      unfold pdom_fun_lfp in H.
+      unfold pdom_fun_chain_sup in H.
+      apply pdom_chain_membership_2 in H as [n h].
+      
+      pose proof (l n δ x m h).
+      rewrite H0 ; simpl; auto.
+Defined.
+
+Lemma proves_rw_while_tot_sound :
+  forall Γ Δ e c (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : (Γ ++ Δ) ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT) ϕ θ ψ, 
+    wty_e |= [{rw_to_ro_pre ϕ}] e [{θ}] ->
+    wty_c ||= [{fun δγδ' => ro_to_rw_pre (θ true) (fst δγδ', fst_concat (snd δγδ')) /\ fst δγδ' = snd_concat (snd δγδ')}] c [{fun _ δγδ' => ϕ (fst δγδ', fst_concat (snd δγδ')) /\ ψ δγδ' }] ->
+    (forall δ γ, ϕ (δ, γ) ->
+            ~exists f : nat -> sem_ro_ctx Δ,
+                f 0 = δ /\ forall n, ψ (f (S n), (γ ; f n))) ->
+    (*——————————-——————————-——————————-——————————-——————————-*)
+    wty ||= [{ϕ}] While e c [{fun _ => (ϕ /\\ ro_to_rw_pre (θ false))}].
+Proof.
+  intros Γ Δ e c wty_e wty_c wty ϕ θ ψ BB CC chainp.
+Admitted.
+
+
 Lemma proves_ro_prt_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, w |- {{ϕ}} e {{ψ}} -> w |= {{ϕ}} e {{ψ}}
 with proves_ro_tot_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, w |- [{ϕ}] e [{ψ}] -> w |= [{ϕ}] e [{ψ}]
 with proves_rw_prt_sound : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ, w ||- {{ϕ}} e {{ψ}} -> w ||= {{ϕ}} e {{ψ}}
