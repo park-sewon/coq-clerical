@@ -343,7 +343,6 @@ Section RestrictedTyping.
       apply (phas_type_rw_While); auto.
   Defined.
 
-  Axiom magic : forall X : Type, X.
   Fixpoint phas_type_ro_has_type_ro Γ e τ (w : Γ |~ e : τ) {struct w}: Γ |- e : τ
   with phas_type_rw_has_type_rw Γ Δ e τ (w : Γ ;;; Δ ||~ e : τ) {struct w}: Γ ;;; Δ ||- e : τ.
   Proof.

@@ -167,29 +167,194 @@ Proof.
 Defined.
 
 Check ro_access.
+Locate ro_access.
+Require Import Coq.Program.Equality.
 
-Lemma ro_access_typing_irrl : forall Γ k τ (w1 w2 : Γ |- Var k : τ) γ, ro_access Γ k τ w1 γ = ro_access Γ k τ w2 γ.
+Fixpoint p_ro_access  Γ k τ (w : phas_type_ro Γ (Var k) τ) : sem_ro_ctx Γ -> sem_datatype τ.
+Proof.
+  inversion w.  
+  intro.
+  simpl in X.
+  destruct X.
+  exact s.
+  intro.
+  apply (p_ro_access _ _ _ H1).
+  destruct X.
+  exact s0.
+Defined.
+
+Lemma ro_access_typing_irrl' Γ k τ (w1 : Γ |- Var k : τ): forall γ, ro_access Γ k τ w1 γ = p_ro_access Γ k τ (has_type_ro_phas_type_ro _ _ _ w1) γ.
+Proof.
+  unfold ro_access.
+  unfold p_ro_access.
+  unfold has_type_ro_phas_type_ro.
+  dependent induction w1.
+  simpl.
+  intros.
+  dependent destruction h.
+  simpl.
+Admitted.
+ 
+Fixpoint ro_access_Var_0 Γ τ (w : (τ :: Γ) |- Var 0 : τ) {struct w} : forall x (γ : sem_ro_ctx Γ), ro_access (τ :: Γ) 0 τ w (x, γ) = x.
 Proof.
   intros.
-Admitted.
+  dependent destruction w.
+  dependent destruction h.
+  assert (ro_access (τ :: Γ) 0 τ (has_type_ro_rw (τ :: Γ) (VAR 0) τ (has_type_rw_ro (τ :: Γ) nil (VAR 0) τ h)) (x, γ) = ro_access _ _ _ h (x, γ)).
+  auto.
+  rewrite H.
+  apply ro_access_Var_0.
+  simpl.
+  clear ro_access_Var_0.
+  auto.  
+Defined.
 
-
-  
-Require Import Coq.Program.Equality.
-Fixpoint proves_ro_prt_Var_sound  k Γ τ (w : Γ |- Var k : τ) ϕ {struct w} :
-    w |= {{fun γ => ϕ (ro_access Γ k τ w γ) γ}} Var k {{ϕ}}.
+Fixpoint has_type_ro_Var_S_inv Γ k τ σ (w : (τ :: Γ) |- Var (S k) : σ) : Γ |- Var k : σ.
 Proof.
   dependent destruction w.
   dependent destruction h.
-  simpl in h.
-  apply (trip_ro_prt_sem_typing_irrl _ _ _ _ _  h).
-  pose proof (proves_ro_prt_Var_sound k Γ τ h ϕ).
+  apply (has_type_ro_Var_S_inv _ _ _ _ h).
+  exact w.
+Defined.
+
+Ltac easy_rewrite_uip :=
+  repeat (try unfold simplification_heq; try unfold solution_left; try unfold eq_rect_r; try rewrite (prop_irrl _ (eq_sym _) eq_refl); simpl).
+ 
+Fixpoint ro_access_Var_S Γ k τ σ (w : (τ :: Γ) |- Var (S k) : σ) {struct w} : forall x (γ : sem_ro_ctx Γ),
+    ro_access (τ :: Γ) (S k) σ w (x, γ) = ro_access Γ k σ (has_type_ro_Var_S_inv _ _ _ _ w) γ .
+Proof.
+  intros.
+  dependent destruction w.
+  dependent destruction h.
+  assert (ro_access (τ :: Γ) (S k) τ0 (has_type_ro_rw (τ :: Γ) (VAR S k) τ0 (has_type_rw_ro (τ :: Γ) nil (VAR S k) τ0 h)) (x, γ) = ro_access _ _ _ h (x, γ)).
+  auto.
+  rewrite H.
+  assert ((has_type_ro_Var_S_inv Γ k τ τ0 (has_type_ro_rw (τ :: Γ) (VAR S k) τ0 (has_type_rw_ro (τ :: Γ) nil (VAR S k) τ0 h))) = (has_type_ro_Var_S_inv Γ k τ τ0 h)).
+  simpl.
+  unfold simplification_heq.
+  unfold solution_left.
+  unfold eq_rect_r.
+  simpl.
+  
+  rewrite (prop_irrl _ (eq_sym _) eq_refl).
+  simpl.
+  auto.
+  rewrite H0.
+  apply ro_access_Var_S.
+  simpl.
+  
+  unfold eq_rect_r.
+  simpl.  
+  unfold simplification_heq.
+  unfold solution_left.
+  unfold eq_rect_r.
+  rewrite (prop_irrl _ (eq_sym _) eq_refl).
+  simpl.
+  rewrite (prop_irrl _ (eq_sym _) eq_refl).
+  simpl.
+  auto.
+Defined.
+
+Lemma pdom_lift_comp : forall {X Y Z} (f : X -> Y) (g : Y -> Z), forall x : pdom X, pdom_lift g (pdom_lift f x) = pdom_lift (fun y => g (f y)) x.
+Proof.
+Admitted.
+
+Lemma pdom_lift_id : forall {X} x, @pdom_lift X X (fun x => x) x = x.
+Proof.
+Admitted.
+
+Lemma ro_access_typing_irrl k : forall Γ τ (w1 : Γ |- Var k : τ) (w2 : Γ |- Var k : τ) γ, ro_access Γ k τ w1 γ = ro_access Γ k τ w2 γ.
+Proof.
+  dependent induction k; intros.
+  destruct Γ.
+  contradict w1.
+  intro.
+  apply has_type_ro_phas_type_ro in w1.
+  apply phas_type_ro_Var_absurd in w1.
+  auto.
+  simpl in γ.
+  destruct γ.
+  pose proof (has_type_ro_unambiguous _ _ _ _ w1 (has_type_ro_Var_0 Γ d)).
+  induction H.
+  rewrite (ro_access_Var_0 Γ τ w1 ).
+  rewrite (ro_access_Var_0 Γ τ w2 ).
+  auto.
+  destruct Γ.
+  contradict w1.
+  intro.
+  apply has_type_ro_phas_type_ro in w1.
+  apply phas_type_ro_Var_absurd in w1.
+  auto.
+  simpl in γ.
+  destruct γ.
+  rewrite ro_access_Var_S.
+  rewrite ro_access_Var_S.
+  apply (IHk _ _ (has_type_ro_Var_S_inv Γ k d τ w1) (has_type_ro_Var_S_inv Γ k d τ w2)).
+Defined.
+
+Fixpoint Var_sem_ro_access_equiv k Γ τ (w : Γ |- Var k : τ) γ {struct w}: 
+    sem_ro_comp _ _ _ w γ = pdom_unit (ro_access _ _ _ w γ).
+Proof.
+  intros.
+  dependent induction w.
+  dependent destruction h.
+  simpl.
+  easy_rewrite_uip.
+  rewrite pdom_lift_comp.
+  simpl.
+  rewrite pdom_lift_id.
+  apply Var_sem_ro_access_equiv.
+  simpl.
+  easy_rewrite_uip.
+  destruct γ; simpl.
+  apply eq_refl.
+  assert (sem_ro_comp (σ :: Γ) (VAR S k0) τ (has_type_ro_Var_S Γ σ τ k0 w) γ
+          = sem_ro_comp Γ (Var k0) τ w (snd γ)).
+  simpl.
+  destruct γ.
+  auto.
+  simpl.
+
+  unfold has_type_ro_rect.
+  destruct w; auto.
+  rewrite H.
+  rewrite Var_sem_ro_access_equiv.
+  destruct γ.
+  rewrite ro_access_Var_S.
+  apply lp.
+  apply ro_access_typing_irrl.
+Defined.
+
+  
+Fixpoint proves_ro_prt_Var_sound  k Γ τ (w : Γ |- Var k : τ) ϕ {struct w} :
+    w |= {{fun γ => ϕ (ro_access Γ k τ w γ) γ}} Var k {{ϕ}}.
+Proof.
   intros γ m.
+  rewrite Var_sem_ro_access_equiv.
   simpl.
   split.
+  apply (pdom_is_neg_empty_by_evidence _ (total (ro_access Γ k τ w γ))).
+  simpl; auto.
+  intros p1 p2 p3 p4.
+  rewrite p4 in p2.
+  apply total_is_injective in p2.
+  rewrite <- p2.
   simpl in m.
-  
-Admitted.
+  auto.
+Defined.
+
+Fixpoint proves_ro_tot_Var_sound  k Γ τ (w : Γ |- Var k : τ) ϕ {struct w} :
+    w |= [{fun γ => ϕ (ro_access Γ k τ w γ) γ}] Var k [{ϕ}].
+Proof.
+  intros γ m.
+  rewrite Var_sem_ro_access_equiv.
+  simpl.
+  split.
+  apply (pdom_is_neg_empty_by_evidence _ (total (ro_access Γ k τ w γ))).
+  simpl; auto.
+  intros p1 p2.
+  exists (ro_access _ _ _ w γ); split; auto.  
+Defined.
          
 Lemma proves_ro_prt_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, w |- {{ϕ}} e {{ψ}} -> w |= {{ϕ}} e {{ψ}}
 with proves_ro_tot_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, w |- [{ϕ}] e [{ψ}] -> w |= [{ϕ}] e [{ψ}]
@@ -266,9 +431,8 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w |- {{fun γ => Q (ro_access Γ k τ w γ) γ}} VAR k {{Q}} *)
 
-      intros γ m; simpl in m; simpl.
-      apply magic.
-
+      apply proves_ro_prt_Var_sound.
+      
     ++
       (* | ro_skip_prt : forall Γ (w : Γ |- SKIP : UNIT) Q, *)
       
@@ -1158,8 +1322,7 @@ Proof.
       
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w |- [{fun γ => Q (ro_access Γ k τ w γ) γ}] VAR k [{Q}] *)
-
-      apply magic.
+      apply proves_ro_tot_Var_sound.
 
     ++
       (* | ro_skip_tot : forall Γ (w : Γ |- SKIP : UNIT) Q, *)
@@ -1678,7 +1841,98 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' |- [{ϕ}] ;/; e [{ψ}] *)
 
-      apply magic.
+      intros γ m; simpl in m; simpl.
+      pose proof (proves_ro_tot_sound _ _ _ _ _ _ trip γ m) as [p1 p2].
+      split.
+      {
+        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRrecip  _ _ w)).
+        simpl.
+        intro.
+        apply pdom_bind_empty_2 in H.
+        destruct H.
+        apply (p1 H).
+        destruct H as [x p].
+        destruct p as [p q].
+        unfold Rrecip in q.
+        contradict q.
+        destruct (Rrecip' x).
+        apply (pdom_is_neg_empty_by_evidence _ (bot R)); simpl; auto.
+        apply (pdom_is_neg_empty_by_evidence _ (total r)); simpl; auto.
+      }
+      intros v h1.
+      assert (sem_ro_comp Γ (;/; e) REAL w' γ =
+                pdom_bind Rrecip (sem_ro_comp Γ e REAL w γ)).
+      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRrecip  _ _ w)); simpl; auto.
+      rewrite H in h1; clear H.
+      simpl in p2.
+
+      destruct v.
+      {
+        (* non bottom *)
+        apply pdom_bind_bot_2 in h1.
+        destruct h1.
+        pose proof (p2 _ H).
+        destruct H0.
+        destruct H0.
+        contradict (flat_bot_neq_total _ H0).
+        destruct H.
+        destruct H.
+        pose proof (p2 _ H).
+        destruct H1.
+        destruct H1.
+        
+        unfold Rrecip in H0.
+        unfold flat_to_pdom in H0.
+        unfold Rrecip' in H0.
+        simpl in H0.
+        apply total_is_injective in H1.
+        induction H1.
+        pose proof (a x γ H2).
+        destruct H1.
+        destruct (total_order_T x 0).
+        destruct s.
+        contradict (flat_total_neq_bot _ H0).
+        contradict H1; auto.
+        contradict (flat_total_neq_bot _ H0).
+      }
+      apply  pdom_bind_total_2 in h1.
+      destruct h1 as [_ h1].
+      destruct h1 as [x h].
+      destruct h as [h1 h3].
+      unfold Rrecip in h3.
+      unfold  flat_to_pdom in h3.
+      unfold Rrecip' in h3.
+      simpl in h3.
+      destruct (total_order_T x 0) as [[s|s]|s].
+      {
+        (* when x < 0 *)     
+        destruct (a x γ).
+        destruct (p2 _ h1).
+        destruct H.
+        apply total_is_injective in H.
+        rewrite H; auto.
+        exists r; split; auto.
+        apply total_is_injective in h3.
+        rewrite <- h3.
+        auto.
+      }
+      {
+        (* when x = 0 *)
+       contradict (flat_bot_neq_total _ h3).
+      } 
+      {
+        (* when x > 0 *)     
+        destruct (a x γ).
+        destruct (p2 _ h1).
+        destruct H.
+        apply total_is_injective in H.
+        rewrite H; auto.
+        exists r; split; auto.
+        apply total_is_injective in h3.
+        rewrite <- h3.
+        auto.
+      }
+
 
     ++
       (* (** integer comparison  *) *)
