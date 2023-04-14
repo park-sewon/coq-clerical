@@ -1,7 +1,15 @@
 (* about the base of our type theory allowing Prop to be classical and some other trivally derived stuffs *)
 Section Base.
   Axiom lem : forall P : Prop, P \/ ~P.
-  Axiom cchoice : forall (A : Type) (P : nat -> A -> Prop), (forall n : nat, exists a : A, P n a) -> exists f : nat -> A, forall n, P n (f n).
+
+  Axiom dcchoice : forall (A : nat -> Type) (P : forall n, A n -> Prop), (forall n : nat, exists a : A n, P n a) -> exists f : forall n, A n, forall n, P n (f n).
+
+  Lemma cchoice : forall (A : Type) (P : nat -> A -> Prop), (forall n : nat, exists a : A, P n a) -> exists f : nat -> A, forall n, P n (f n).
+  Proof.
+    intros.
+    apply (dcchoice (fun _ => A) P H).
+  Defined.
+  
   Axiom dchoice : forall (P : nat -> Type) (R : forall n, P n -> P (S n ) -> Prop),
       P 0 -> (forall n x, exists y, R n x y) -> exists (f : forall n, P n), forall n, R n (f n) (f (S n)).  
 

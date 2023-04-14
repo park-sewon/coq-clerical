@@ -663,6 +663,170 @@ Proof.
       rewrite H0 ; simpl; auto.
 Defined.
 
+Section FinitelyBranchingTree.
+
+Definition E_tree_is_fin {X} (E : X -> X -> Prop) :=
+  forall x, ~ infinite {y | E x y}.
+
+Inductive E_finite_chain {X} (E : X -> X -> Prop) x : nat -> Type :=
+  nil_chain : E_finite_chain E x 0
+| cons_chain : forall n y, E x y -> E_finite_chain E y n -> E_finite_chain E x (S n).
+
+Definition E_is_infintie_chain {X} (E : X -> X -> Prop) x f : Prop
+  := f 0 = x /\ forall n, E (f n) (f (S n)).
+
+Definition E_finite_chains {X} (E : X -> X -> Prop) x := {n : nat & E_finite_chain E x n}.
+
+Definition E_finite_chains_next {X} (E : X -> X -> Prop) x (c : E_finite_chains E x) :
+  projT1 c <> 0 -> {y & (E x y * E_finite_chains E y)%type}.
+Proof.
+  intros.
+  destruct c.
+  destruct x0.
+  dependent destruction e.
+  simpl in H; contradict H; auto.
+  dependent destruction e.
+  exists y.
+  split; auto.
+  exists x0.
+  auto.
+Defined.
+
+Lemma E_infinite_finite_chains_S_aux1 :   forall {X} (E : X -> X -> Prop) (x : X),
+    {y' : {y : X | E x y} &  (E_finite_chains E (proj1_sig y'))} ->
+    E_finite_chains E x.
+Proof.
+  intros.
+  destruct X0.
+  destruct x0.
+  simpl in e.
+  destruct e.
+  exists (S x1).
+  exact (cons_chain _ _ _ _ e0 e).
+Defined.
+
+Lemma E_infinite_finite_chains_S_aux2 :forall {X} (E : X -> X -> Prop) (x : X),
+    {y' : {y : X | E x y} & E_finite_chains E (proj1_sig y')} -> {c : E_finite_chains E x | projT1 c <> 0}.
+Proof.
+  intros.
+  destruct X0.
+  destruct x0.
+  simpl in e.
+  destruct e.
+  exists (existT (S x1) (cons_chain _ _ _ _ e0 e)).
+  simpl.
+  auto.
+Defined.
+  
+(* Definition E_infinite_finite_chains_S_aux2 : forall {X} (E : X -> X -> Prop) (x : X), *)
+(*     infinite (E_finite_chains E x) -> nat -> {c : E_finite_chains E x | projT1 c <> 0}. *)
+(* Proof. *)
+(*   intros. *)
+(*   destruct H. *)
+  
+
+Lemma E_infinite_finite_chains_S :
+  forall {X} (E : X -> X -> Prop), E_tree_is_fin E -> forall (x : X),  
+    infinite (E_finite_chains E x) -> exists y, E x y /\ infinite (E_finite_chains E y).
+Proof.
+  intros X E fin x H.
+  assert (infinite {y' : {y | E x y} & (E_finite_chains E (proj1_sig y'))}).
+  {
+    assert (infinite {c : E_finite_chains E x | projT1 c <> 0}).
+    {
+      assert (infinite {c : E_finite_chains E x | projT1 c = 0 \/ projT1 c <> 0}).
+      {
+        destruct H.
+        exists (fun n => exist _ (x0 n) (lem _)).
+        intros i j e.
+        injection e; intros.
+        apply H; auto.
+      }
+      apply Pigeon2' in H0.
+      destruct H0; auto.
+      destruct H0 as [f i].
+      case_eq (f 0); intros.
+      case_eq (f 1); intros.
+      assert (x0 = x1).
+      destruct x0.
+      destruct x1.
+      simpl in e, e0.
+      clear H0.
+      clear H1.
+      induction (eq_sym e0).
+      induction (eq_sym e).
+      dependent destruction e1.
+      dependent destruction e2.
+      auto.
+      induction H2.
+      assert (f 0 = f 1).
+      rewrite H0, H1.
+      apply sig_eq.
+      simpl; auto.
+      apply i in H2.
+      contradict H2; auto.
+    }
+    apply (fun f => surjection_infinite2 f H0).
+    exists (E_infinite_finite_chains_S_aux2 E x).
+    intro.
+    destruct b.
+    destruct x0.
+    simpl in n.
+    
+    assert (exists n, S n = x0).
+    exists (pred x0).
+    apply Nat.succ_pred; auto.
+    destruct H1.
+    induction H1.
+    dependent destruction e.
+    exists (existT (exist _ y e) (existT x1 e1)).
+    simpl.
+    apply sig_eq.
+    simpl.
+    auto.
+  }
+  apply Pigeon in  H0.
+  destruct H0.
+  contradict (fin _ H0).
+  destruct H0.
+  destruct x0.
+  exists x0.
+  split; auto.
+Defined.
+
+Lemma E_unbounded_tree_has_infinite_path :
+  forall {X} (E : X -> X -> Prop), E_tree_is_fin E -> forall (x : X),
+    (forall n, exists c : E_finite_chain E x n, True) ->
+    exists f, E_is_infintie_chain E x f.
+Proof.
+  intros X E fin x H.
+  assert (infinite (E_finite_chains E x)).
+  pose proof (dcchoice _ _ H).
+  simpl in H0.
+  destruct H0.
+  exists (fun n => existT n (x0 n)).
+  intros i j e.
+  injection e; intro; auto.
+  pose proof (
+         dchoice_start (fun _ => {x & infinite (E_finite_chains E x)})
+                       (fun n p q => E (projT1 p) (projT1 q))
+                       (existT x H0)) as [f h].
+  intros.
+  destruct x0 as [y i].
+  
+  pose proof (E_infinite_finite_chains_S E fin y i) as [y' [h1 h2]].
+  exists (existT y' h2).
+  simpl.
+  auto.
+  exists (fun n => projT1 (f n)).
+  destruct h; split; auto.
+  rewrite H1; auto.
+Defined.
+
+End FinitelyBranchingTree.
+
+
+
 Lemma proves_rw_while_tot_sound :
   forall Γ Δ e c (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : (Γ ++ Δ) ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT) ϕ θ ψ, 
     wty_e |= [{rw_to_ro_pre ϕ}] e [{θ}] ->
@@ -674,6 +838,7 @@ Lemma proves_rw_while_tot_sound :
     wty ||= [{ϕ}] While e c [{fun _ => (ϕ /\\ ro_to_rw_pre (θ false))}].
 Proof.
   intros Γ Δ e c wty_e wty_c wty ϕ θ ψ BB CC chainp.
+  apply 
 Admitted.
 
 
