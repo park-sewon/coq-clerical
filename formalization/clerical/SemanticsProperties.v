@@ -428,11 +428,104 @@ Proof.
   rewrite H; auto.
 Defined.
 
-Check Case2.
 Lemma Case2_post_processing {X Y} (f : X -> Y) e1 e2 c1 c2 :
   Case2 e1 e2 (pdom_lift f c1) (pdom_lift f c2) = pdom_lift f (Case2 e1 e2 c1 c2). 
 Proof.
-Admitted.
+  unfold Case2.
+  destruct (lem (pdom_is_empty (pdom_case2 e1 e2 (pdom_lift f c1) (pdom_lift f c2)))).
+  destruct (lem (pdom_is_empty (pdom_lift f (pdom_case2 e1 e2 c1 c2)))).
+  rewrite (pdom_is_empty_is_empty _ H).
+  rewrite (pdom_is_empty_is_empty _ H0).
+  auto.
+  contradict H0.
+  apply pdom_case2_empty_2 in H.
+  apply pdom_lift_empty_1.  
+  apply pdom_case2_empty_1.
+  repeat destruct H; auto.
+  apply pdom_lift_empty_2 in H0.
+  auto.
+  apply pdom_lift_empty_2 in H0.
+  auto.
+  destruct (lem (pdom_is_empty (pdom_lift f (pdom_case2 e1 e2 c1 c2)))).
+  contradict H.
+  apply pdom_lift_empty_2 in H0.
+  apply pdom_case2_empty_1.
+  apply pdom_case2_empty_2 in H0.
+  repeat destruct H0; auto.
+  destruct H.
+  auto.
+  destruct H.
+  right.
+  right.
+  left.
+  destruct H; split; auto.
+  apply pdom_lift_empty_1; auto.
+  right.
+  right.
+  right.
+  destruct H; split; auto.
+  apply pdom_lift_empty_1; auto.
+
+  (* when both hand sides are non empty *)
+  assert (~ pdom_is_empty (pdom_case2 e1 e2 c1 c2)).
+  intro.
+  contradict H0.
+  apply pdom_lift_empty_1.
+  auto.
+  
+  apply sig_eq.
+  apply pred_ext; intros.
+  +
+    
+    destruct a.
+    
+    apply pdom_case2_bot_2 in H2.
+    apply pdom_lift_bot_1.
+    apply pdom_case2_bot_1; auto.
+    repeat destruct H2; auto.
+    apply pdom_lift_bot_2 in H3; left; split; auto.
+    apply pdom_lift_bot_2 in H3; right; left; split; auto.
+    apply pdom_case2_total_2 in H2.
+    apply pdom_lift_total_1.
+    destruct H2.
+    destruct H2.
+    apply pdom_lift_total_2 in H3.
+    destruct H3.
+    exists x.
+    destruct H3; split; auto.
+    apply pdom_case2_total_1; auto.
+    destruct H2.
+    apply pdom_lift_total_2 in H3.
+    destruct H3.
+    exists x.
+    destruct H3; split; auto.
+    apply pdom_case2_total_1; auto.
+    
+  +
+
+    destruct a.
+    apply pdom_lift_bot_2 in H2.
+    apply pdom_case2_bot_1; auto.
+    apply pdom_case2_bot_2 in H2.
+    repeat destruct H2; auto.
+    left; split; auto.
+    apply pdom_lift_bot_1; auto.
+    right; left; split; auto.
+    apply pdom_lift_bot_1; auto.
+    apply pdom_lift_total_2 in H2.
+    destruct H2.
+    destruct H2.
+    apply pdom_case2_total_1; auto.
+    apply pdom_case2_total_2 in H2.
+    destruct H2.
+    left; destruct H2; split; auto.
+    apply pdom_lift_total_1.
+    exists x; auto.
+    right; destruct H2; split; auto.
+    apply pdom_lift_total_1.
+    exists x; auto.
+Defined.
+
 
 Fixpoint p_sem_move_readonly  Γ Δ Δ' e τ (w1 : Γ ;;; (Δ ++ Δ') ||~ e : τ) (w2 : (Δ' ++ Γ) ;;; Δ ||~ e : τ) :
   forall γ δ δ', p_sem_rw_comp _ _ _ _ w1 γ (δ ; δ') =
