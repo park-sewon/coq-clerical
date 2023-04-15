@@ -15,6 +15,13 @@ Section Flatdomain.
   | total : A -> flat A.
   Arguments total {_}.
 
+  
+  Lemma total_is_injective : forall {X} {x y : X}, total x = total y -> x = y.
+  Proof.
+    intros.
+    injection H; auto.
+  Defined.
+  
   Lemma flat_ninfinite A : ninfinite A -> ninfinite (flat A).
   Proof.
     intros.
@@ -285,3 +292,281 @@ End Powerdomain.
 Notation "x ∈ S" := (proj1_sig S x) (at level 80).
 Notation "x ∉ S" := (~proj1_sig S x) (at level 85).
 Notation "⊥" := (bot _).
+
+
+
+Lemma pdom_lift_comp : forall {X Y Z} (f : X -> Y) (g : Y -> Z), forall x : pdom X, pdom_lift g (pdom_lift f x) = pdom_lift (fun y => g (f y)) x.
+Proof.
+  intros.
+  apply sig_eq.
+  simpl.
+  apply pred_ext.
+  intros.
+  destruct H.
+  destruct H.
+  destruct H.
+  exists x1.
+  destruct H; split; auto.
+  destruct x1; simpl in H1.
+  rewrite <- H1 in H0; simpl in H0.
+  simpl.
+  auto.
+  rewrite <- H1 in H0; simpl in H0.
+  simpl.
+  auto.
+  intros.
+  destruct H.
+  destruct H.
+  destruct x0.
+  simpl.
+  simpl in H0.
+  exists ⊥.
+  split; auto.
+  exists ⊥; auto.
+  simpl in H0.
+  exists (total (f x0)).
+  split; auto.
+  exists (total x0); split; auto.
+Defined.
+
+Lemma pdom_lift_id : forall {X} x, @pdom_lift X X (fun x => x) x = x.
+Proof.
+  intros.
+  apply sig_eq.
+  simpl.
+  apply pred_ext.
+  intros.
+  destruct H.
+  destruct H.
+  destruct x0.
+  simpl in H0.
+  rewrite H0 in H; auto.
+  simpl in H0.
+  rewrite H0 in H; auto.
+  intros.
+  exists a.
+  split; auto.
+  destruct a; simpl; auto.
+Defined.
+
+
+Lemma pdom_lift_empty_1 {X Y : Type} (f : X -> Y) (S : pdom X) :
+  (pdom_is_empty S) -> pdom_is_empty (pdom_lift f S).
+Proof.
+  intros p x e.
+  unfold pdom_is_empty in p.
+  destruct e.
+  destruct H.
+  apply (p _ H).
+Defined.
+
+
+
+Lemma pdom_lift_total_2 {X Y : Type} (f : X -> Y) (S : pdom X) :
+  forall y,  total y ∈ pdom_lift f S -> (exists x, total x ∈ S /\ y = f x) .
+Proof.
+  intros.
+  simpl in H.
+  destruct H.
+  destruct x.
+  destruct H.
+
+  simpl in H0.
+  contradict (flat_bot_neq_total _ H0).
+  exists x.
+  simpl in H.
+  destruct H; split; auto.
+  injection H0; intro; auto.
+Defined.
+
+
+Lemma pdom_lift_total_1 {X Y : Type} (f : X -> Y) (S : pdom X) :
+  forall y, (exists x, total x ∈ S /\ y = f x) -> total y ∈ pdom_lift f S.
+Proof.
+  intros.
+  destruct H.
+  destruct H.
+  rewrite H0.
+  simpl.
+  exists (total x).
+  simpl; auto.
+Defined.
+
+Lemma pdom_lift_bot_1 {X Y : Type} (f : X -> Y) (S : pdom X) :
+  (bot X ∈ S) -> bot Y ∈ pdom_lift f S.
+Proof.
+  intros.
+  simpl.
+  exists (bot X); split; simpl; auto.
+Defined.
+
+Lemma pdom_lift_bot_2 {X Y : Type} (f : X -> Y) (S : pdom X) :
+  bot Y ∈ pdom_lift f S -> (bot X ∈ S) .
+Proof.
+  intros.
+  destruct H.
+  destruct H.
+  simpl in H0.
+  destruct x; auto.
+  simpl in H0.
+  contradict (flat_total_neq_bot _ H0).
+Defined.  
+
+Lemma pdom_lift_empty_2 {X Y : Type} (f : X -> Y) (S : pdom X) :
+  pdom_is_empty (pdom_lift f S) -> (pdom_is_empty S).
+Proof.
+  intros p x e.
+  destruct x.
+  pose proof (p (bot Y)).
+  contradict H; apply pdom_lift_bot_1; auto.
+  pose proof (p (total (f x))).
+  contradict H.
+  apply pdom_lift_total_1; exists x; auto.
+Defined.
+
+Lemma pdom_mult_natural {X Y} (f : X -> Y) : forall x, pdom_mult (pdom_lift (pdom_lift f) x) = pdom_lift f (pdom_mult x).
+Proof.
+  intros.
+  apply sig_eq.
+  simpl.
+  apply pred_ext; intros.
+  +
+    destruct a.
+    exists ⊥.
+    split.
+    split.
+    intro.
+    destruct H.
+    unfold pdom_neg_is_empty in H.
+    contradict H.
+    apply pdom_lift_empty_1.
+    exact H0.
+    split.
+    destruct H.
+    intros y m.
+    intro.
+    destruct H0.
+    pose proof (H0 (pdom_lift f y) ).
+    destruct H3.
+    exists (total y).
+    split; auto.
+    apply pdom_lift_empty_1.
+    auto.
+    destruct H.
+    destruct H0.
+    destruct H1.
+    destruct H1.
+    destruct H2.
+    destruct x0.
+    left; destruct H2; auto.
+    destruct H2.
+    simpl in H3.
+    contradict (flat_total_neq_bot _ H3).
+    destruct H1.
+    destruct H1.
+    destruct H2.
+    destruct H2.
+    destruct x1.
+    left; auto.
+    simpl in H3.
+    apply total_is_injective in H3.
+    right.
+    exists p.
+    split; auto.
+    rewrite <- H3 in H1.
+    simpl in H1.
+    destruct H1.
+
+    destruct H1.
+    destruct x1; auto.
+    simpl in H4.
+    contradict (flat_total_neq_bot _ H4).
+
+    simpl; auto.
+    
+    destruct H.
+    destruct H0.
+    destruct H1.
+    destruct H1.
+    contradict (flat_total_neq_bot _ H1).
+    destruct H1.
+    destruct H1.
+    destruct H2.
+    destruct H2.
+    destruct x1.
+    simpl in H3.
+    contradict (flat_bot_neq_total _ H3).
+    simpl in H3.
+    apply total_is_injective in H3.
+    rewrite <- H3 in H1.
+    apply pdom_lift_total_2 in H1.
+    destruct H1.
+    exists (total x1); repeat split; auto.
+    intro.
+    unfold pdom_neg_is_empty in H.
+    contradict H.
+    apply pdom_lift_empty_1.
+    auto.
+    intros.
+    pose proof (H0 (pdom_lift f S)).
+    assert ((exists a : flat (pdom X), (a ∈ x) /\ pdom_lift' (pdom_lift f) a = total (pdom_lift f S))).
+    exists (total S).
+    split; auto.
+    apply H5 in H6.
+    intro.
+    unfold pdom_neg_is_empty in H6.
+    contradict H6.
+    apply pdom_lift_empty_1.
+    auto.
+    right.
+    exists p; auto.
+    split; destruct H1; auto.
+    simpl.
+    destruct H1; apply lp; auto.
+  +
+
+
+    destruct H.
+    destruct H.
+    destruct H.
+    destruct H1.
+    split.
+    intro.
+    unfold pdom_neg_is_empty in H.
+    contradict H.
+    apply pdom_lift_empty_2 in H3.
+    auto.
+    split.
+    intros.
+    destruct H3.
+    destruct H3.
+    destruct x1.
+    simpl in H4.
+    contradict (flat_bot_neq_total _ H4).
+    pose proof (H1 _ H3).
+    apply total_is_injective in H4.
+    rewrite <- H4.
+    intro.
+    apply pdom_lift_empty_2 in H6.
+    auto.
+
+    destruct H2.
+    destruct H2.
+    rewrite H2 in H0.
+    simpl in H0.
+    left.
+    split; auto.
+    exists ⊥.
+    split; simpl; auto.
+    destruct H2.
+    destruct H2.
+    right.
+    exists (pdom_lift f x1).
+    split.
+    rewrite <- H0.
+    simpl.
+    exists x0.
+    split; auto.
+    exists (total x1).
+    split; auto.
+Defined.

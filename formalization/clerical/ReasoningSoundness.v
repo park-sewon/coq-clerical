@@ -204,9 +204,6 @@ Proof.
   exact w.
 Defined.
 
-Ltac easy_rewrite_uip :=
-  repeat (try unfold simplification_heq; try unfold solution_left; try unfold eq_rect_r; try rewrite (prop_irrl _ (eq_sym _) eq_refl); simpl).
- 
 Fixpoint ro_access_Var_S Γ k τ σ (w : (τ :: Γ) |- Var (S k) : σ) {struct w} : forall x (γ : sem_ro_ctx Γ),
     ro_access (τ :: Γ) (S k) σ w (x, γ) = ro_access Γ k σ (has_type_ro_Var_S_inv _ _ _ _ w) γ .
 Proof.
@@ -240,60 +237,6 @@ Proof.
   rewrite (prop_irrl _ (eq_sym _) eq_refl).
   simpl.
   auto.
-Defined.
-
-Lemma pdom_lift_comp : forall {X Y Z} (f : X -> Y) (g : Y -> Z), forall x : pdom X, pdom_lift g (pdom_lift f x) = pdom_lift (fun y => g (f y)) x.
-Proof.
-  intros.
-  apply sig_eq.
-  simpl.
-  apply pred_ext.
-  intros.
-  destruct H.
-  destruct H.
-  destruct H.
-  exists x1.
-  destruct H; split; auto.
-  destruct x1; simpl in H1.
-  rewrite <- H1 in H0; simpl in H0.
-  simpl.
-  auto.
-  rewrite <- H1 in H0; simpl in H0.
-  simpl.
-  auto.
-  intros.
-  destruct H.
-  destruct H.
-  destruct x0.
-  simpl.
-  simpl in H0.
-  exists ⊥.
-  split; auto.
-  exists ⊥; auto.
-  simpl in H0.
-  exists (total (f x0)).
-  split; auto.
-  exists (total x0); split; auto.
-Defined.
-
-Lemma pdom_lift_id : forall {X} x, @pdom_lift X X (fun x => x) x = x.
-Proof.
-  intros.
-  apply sig_eq.
-  simpl.
-  apply pred_ext.
-  intros.
-  destruct H.
-  destruct H.
-  destruct x0.
-  simpl in H0.
-  rewrite H0 in H; auto.
-  simpl in H0.
-  rewrite H0 in H; auto.
-  intros.
-  exists a.
-  split; auto.
-  destruct a; simpl; auto.
 Defined.
 
 Lemma ro_access_typing_irrl k : forall Γ τ (w1 : Γ |- Var k : τ) (w2 : Γ |- Var k : τ) γ, ro_access Γ k τ w1 γ = ro_access Γ k τ w2 γ.
@@ -331,25 +274,18 @@ Proof.
   intros.
   dependent induction w.
   dependent destruction h.
-  simpl.
   easy_rewrite_uip.
   rewrite pdom_lift_comp.
   simpl.
   rewrite pdom_lift_id.
   apply Var_sem_ro_access_equiv.
-  simpl.
   easy_rewrite_uip.
   destruct γ; simpl.
   apply eq_refl.
   assert (sem_ro_comp (σ :: Γ) (VAR S k0) τ (has_type_ro_Var_S Γ σ τ k0 w) γ
           = sem_ro_comp Γ (Var k0) τ w (snd γ)).
   simpl.
-  destruct γ.
   auto.
-  simpl.
-
-  unfold has_type_ro_rect.
-  destruct w; auto.
   rewrite H.
   rewrite Var_sem_ro_access_equiv.
   destruct γ.
@@ -466,19 +402,6 @@ Proof.
   auto.
 Defined.
 
-Lemma assignable_absurd k τ (a : assignable nil τ k) : False.
-Proof.
-  inversion a.
-Defined.
-
-Fixpoint has_type_rw_Assign_absurd Γ k e (w : Γ ;;; nil ||- Assign k e : DUnit) : False.
-Proof.
-  dependent destruction w.
-  dependent destruction h.
-  apply (has_type_rw_Assign_absurd _ _ _ h).
-  apply (assignable_absurd k τ a); auto.
-Defined.
-  
 Lemma proves_rw_prt_Assign_sound
   Γ Δ e k τ ϕ0 (ψ0 :post) θ (w : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit)  :
   w |= {{(fun δγ : sem_ro_ctx (Δ ++ Γ) => ϕ0 (tedious_sem_concat Δ Γ δγ))}} e {{θ}}

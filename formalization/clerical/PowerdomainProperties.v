@@ -46,11 +46,6 @@ Proof.
   simpl; auto.
 Qed.
 
-Lemma total_is_injective : forall {X} {x y : X}, total x = total y -> x = y.
-Proof.
-  intros.
-  injection H; auto.
-Defined.
 
 Lemma pdom_unit_neg_is_empty {X} : forall x :X, pdom_neg_is_empty (pdom_unit x).
 Proof.
@@ -144,77 +139,6 @@ Proof.
   exists (total x); split; auto.
 Defined.
 
-Lemma pdom_lift_empty_1 {X Y : Type} (f : X -> Y) (S : pdom X) :
-  (pdom_is_empty S) -> pdom_is_empty (pdom_lift f S).
-Proof.
-  intros p x e.
-  unfold pdom_is_empty in p.
-  destruct e.
-  destruct H.
-  apply (p _ H).
-Defined.
-
-
-Lemma pdom_lift_total_1 {X Y : Type} (f : X -> Y) (S : pdom X) :
-  forall y, (exists x, total x ∈ S /\ y = f x) -> total y ∈ pdom_lift f S.
-Proof.
-  intros.
-  destruct H.
-  destruct H.
-  rewrite H0.
-  simpl.
-  exists (total x).
-  simpl; auto.
-Defined.
-
-Lemma pdom_lift_total_2 {X Y : Type} (f : X -> Y) (S : pdom X) :
-  forall y,  total y ∈ pdom_lift f S -> (exists x, total x ∈ S /\ y = f x) .
-Proof.
-  intros.
-  simpl in H.
-  destruct H.
-  destruct x.
-  destruct H.
-
-  simpl in H0.
-  contradict (flat_bot_neq_total _ H0).
-  exists x.
-  simpl in H.
-  destruct H; split; auto.
-  injection H0; intro; auto.
-Defined.
-
-Lemma pdom_lift_bot_1 {X Y : Type} (f : X -> Y) (S : pdom X) :
-  (bot X ∈ S) -> bot Y ∈ pdom_lift f S.
-Proof.
-  intros.
-  simpl.
-  exists (bot X); split; simpl; auto.
-Defined.
-
-Lemma pdom_lift_bot_2 {X Y : Type} (f : X -> Y) (S : pdom X) :
-  bot Y ∈ pdom_lift f S -> (bot X ∈ S) .
-Proof.
-  intros.
-  destruct H.
-  destruct H.
-  simpl in H0.
-  destruct x; auto.
-  simpl in H0.
-  contradict (flat_total_neq_bot _ H0).
-Defined.  
-
-Lemma pdom_lift_empty_2 {X Y : Type} (f : X -> Y) (S : pdom X) :
-  pdom_is_empty (pdom_lift f S) -> (pdom_is_empty S).
-Proof.
-  intros p x e.
-  destruct x.
-  pose proof (p (bot Y)).
-  contradict H; apply pdom_lift_bot_1; auto.
-  pose proof (p (total (f x))).
-  contradict H.
-  apply pdom_lift_total_1; exists x; auto.
-Defined.
 
 Lemma pdom_bind_total_1 {X Y : Type} (f : X -> pdom Y) (S : pdom X) :
   forall x, (~ pdom_is_empty (pdom_bind f S) /\ exists s, (total s) ∈ S /\ x ∈ f s) -> x ∈ pdom_bind f S.

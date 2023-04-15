@@ -52,8 +52,6 @@ Proof.
   exact (IHΓ (s1, s0)).
 Defined.
 
-
-
 Lemma tedious_equiv_1 : forall Δ Γ δ γ,  tedious_sem_concat Δ Γ (tedious_prod_sem Δ Γ (δ, γ)) = (δ, γ).
 Proof.
   intros.
@@ -243,8 +241,9 @@ Proof.
 
     (* | has_type_ro_Var_S *)
     simpl in γ.
-    exact (IHD (snd γ)).
-
+    (* exact (IHD (snd γ)). *)
+    exact (sem_ro_comp _ _ _ D (snd γ)).
+    
     (* | has_type_ro_True *)
     exact (pdom_unit true).
 
