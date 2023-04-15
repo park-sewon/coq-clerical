@@ -8,9 +8,9 @@ Require Import Lia.
 
 
 Section FixpointTheorem.  
-  Definition pdom_is_monotone {X : Type} (f : pdom X -> pdom X) := forall S T, S ⊑ T -> f S ⊑ f T.
+  Definition pdom_is_monotone {X Y : Type} (f : pdom X -> pdom Y) := forall S T, S ⊑ T -> f S ⊑ f T.
 
-  Lemma pdom_chain_monotone_chain {X : Type} (f : pdom X -> pdom X) :
+  Lemma pdom_chain_monotone_chain {X Y : Type} (f : pdom X -> pdom Y) :
     forall (s : nat -> pdom X), pdom_is_chain s -> pdom_is_monotone f -> pdom_is_chain (fun n => f (s n)).
   Proof.
     intros.
@@ -29,7 +29,7 @@ Section FixpointTheorem.
     apply (pdom_le_trans _ _ _ IHo (sc m)).
   Defined.
   
-  Definition pdom_is_continuous {X : Type} (f : pdom X -> pdom X) (m : pdom_is_monotone f) :=
+  Definition pdom_is_continuous {X Y : Type} (f : pdom X -> pdom Y) (m : pdom_is_monotone f) :=
       forall (s : nat -> pdom X) (c : pdom_is_chain s),
         f (pdom_chain_sup s c) = pdom_chain_sup (fun n => f (s n)) (pdom_chain_monotone_chain f s c m).  
 

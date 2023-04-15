@@ -526,6 +526,50 @@ Proof.
     exists x; auto.
 Defined.
 
+Lemma pdom_lifted_monotone {X Y} (f : X -> Y) : pdom_is_monotone (pdom_lift f).
+Proof.
+  intros x y o.
+  destruct o.
+  left.
+  rewrite H; auto.
+  destruct H.
+  destruct H0.
+  right; split; auto.
+  apply pdom_lift_bot_1; auto.
+  left; auto.
+  apply pdom_lift_empty_1; auto.
+  right; split; auto.
+  apply pdom_lift_bot_1; auto.
+  right; auto.
+  intros z m.
+  destruct z.
+  right; auto.
+  left.
+  apply pdom_lift_total_2 in m.
+  destruct m.
+  destruct H1.
+  pose proof (H0 _ H1).
+  destruct H3.
+  apply pdom_lift_total_1.
+  exists x0; split; auto.
+  contradict (flat_bot_neq_total _ H3).
+Defined.
+
+Lemma pdom_lifted_continuous {X Y} (f : X -> Y) : pdom_is_continuous (pdom_lift f) (pdom_lifted_monotone f).
+Admitted.
+
+Lemma p_sem_move_readonly_while X Y Z (f : X -> Z) (g : Y -> Z) x y (b1 : X -> pdom bool) (c1 : X -> pdom X) (b2 : Y -> pdom bool) (c2 : Y -> pdom Y) :
+  (forall n, 
+      pdom_lift f (pdom_fun_bot_chain (pdom_W b1 c1) (pdom_W_monotone b1 c1) n x) = 
+        pdom_lift g (pdom_fun_bot_chain (pdom_W b2 c2) (pdom_W_monotone b2 c2) n y)) ->
+  pdom_lift f (pdom_while b1 c1 x) = pdom_lift g (pdom_while b2 c2 y).
+Admitted.
+
+Lemma pdom_unit_natural {X Y} (f : X -> Y) : forall x, pdom_lift f (pdom_unit x) = pdom_unit (f x).
+Proof.
+  Admitted.
+    
+      
 
 Fixpoint p_sem_move_readonly  Γ Δ Δ' e τ (w1 : Γ ;;; (Δ ++ Δ') ||~ e : τ) (w2 : (Δ' ++ Γ) ;;; Δ ||~ e : τ) :
   forall γ δ δ', p_sem_rw_comp _ _ _ _ w1 γ (δ ; δ') =
@@ -668,9 +712,144 @@ Proof.
   rewrite (p_sem_move_readonly Γ _ _ _ _ w1_2 w2_2 γ).
   apply Case2_post_processing.
 
+
+  
   rewrite pdom_lift_comp.
   simpl.
-Admitted.
+  apply p_sem_move_readonly_while.
+  intros.
+  generalize δ, δ'.
+  induction n.
+  intros.
+  simpl.
+  unfold pdom_fun_bot.
+  apply sig_eq.
+  simpl.
+  apply pred_ext.
+  intros.
+  destruct H.
+  destruct H.
+  exists ⊥; split; auto.
+  simpl.
+  rewrite <- H in H0.
+  simpl in H0.
+  auto.
+  intros.
+  destruct H.
+  destruct H.
+  rewrite <- H in H0.
+  simpl in H0.
+  exists ⊥; split; simpl; auto.
+
+  intros.
+  simpl.
+  simpl in IHn.
+  unfold pdom_W at 1.
+  unfold pdom_bind.
+  rewrite <- pdom_mult_natural.
+  rewrite pdom_lift_comp.
+  assert (forall Y Z (f : Y -> Z) (g1 g2 :  Y),
+             (fun b : bool => f (if b then g1 else g2)) = fun b : bool => if b then f g1 else f g2).
+  {
+    intros.
+    apply dfun_ext; intro b; destruct b; auto.
+  }
+  rewrite H.
+  rewrite <- pdom_mult_natural.
+  rewrite pdom_lift_comp.
+
+  unfold pdom_W at 2.
+  unfold pdom_bind.
+  rewrite <- pdom_mult_natural.
+  rewrite pdom_lift_comp.
+  rewrite pdom_lift_comp.
+  rewrite pdom_lift_comp.
+  rewrite H.
+  rewrite <- pdom_mult_natural.
+  rewrite pdom_lift_comp.
+  apply lp.
+  rewrite (p_sem_ro_ctx_rewrite _ _ _ _ p0 p (app_assoc Δ Δ' Γ)).
+  replace  (tr (fun Γ0 : list datatype => sem_ro_ctx Γ0) (app_assoc Δ Δ' Γ) (δ0; (δ'0; γ)))
+    with  ((δ0; δ'0); γ) by (apply eq_sym, app_assoc_tr).
+  apply pl.
+  apply lp.
+  apply dfun_ext.
+  intro.
+  destruct a.
+  apply lp.
+  simpl.
+  simpl in IHn.
+  assert (
+      (fun y : sem_ro_ctx (Δ ++ Δ') * unit =>
+        pdom_lift (fun x : sem_ro_ctx (Δ ++ Δ') => (x, tt))
+                  (pdom_fun_bot_chain
+                     (pdom_W (fun d : sem_ro_ctx (Δ ++ Δ') => p_sem_ro_comp ((Δ ++ Δ') ++ Γ) e BOOL p (d; γ))
+                             (fun d : sem_ro_ctx (Δ ++ Δ') => pdom_lift fst (p_sem_rw_comp Γ (Δ ++ Δ') c UNIT w1 γ d)))
+                     (pdom_W_monotone (fun d : sem_ro_ctx (Δ ++ Δ') => p_sem_ro_comp ((Δ ++ Δ') ++ Γ) e BOOL p (d; γ))
+                                      (fun d : sem_ro_ctx (Δ ++ Δ') => pdom_lift fst (p_sem_rw_comp Γ (Δ ++ Δ') c UNIT w1 γ d))) n
+                     (fst y))) =
+          fun y : sem_ro_ctx (Δ ++ Δ') * unit =>
+            pdom_lift (fun y0 : sem_ro_ctx Δ => ((y0; snd_concat (fst y)), tt))
+                      (pdom_fun_bot_chain
+                         (pdom_W (fun d : sem_ro_ctx Δ => p_sem_ro_comp (Δ ++ Δ' ++ Γ) e BOOL p0 (d; (snd_concat (fst y); γ)))
+                                 (fun d : sem_ro_ctx Δ => pdom_lift fst (p_sem_rw_comp (Δ' ++ Γ) Δ c UNIT w2 (snd_concat (fst y); γ) d)))
+                         (pdom_W_monotone
+                            (fun d : sem_ro_ctx Δ => p_sem_ro_comp (Δ ++ Δ' ++ Γ) e BOOL p0 (d; (snd_concat (fst y); γ)))
+                            (fun d : sem_ro_ctx Δ => pdom_lift fst (p_sem_rw_comp (Δ' ++ Γ) Δ c UNIT w2 (snd_concat (fst y); γ) d))) n
+                         (fst_concat (fst y)))).
+  
+
+  apply dfun_ext; intro y.
+  pose proof (IHn (fst_concat (fst y)) (snd_concat (fst y))).
+  rewrite <- tedious_equiv_2 in H0.
+  simpl.
+  auto.
+  simpl.
+  simpl in H0.
+  rewrite H0.
+  clear H0.
+  rewrite (p_sem_move_readonly Γ _ _ _ _ w1 w2 γ).
+  rewrite pdom_lift_comp.
+  simpl.
+ assert  ((fun y : sem_ro_ctx Δ * unit =>
+     pdom_lift (fun y0 : sem_ro_ctx Δ => ((y0; snd_concat (fst y; δ'0)), tt))
+       (pdom_fun_bot_chain
+          (pdom_W (fun d : sem_ro_ctx Δ => p_sem_ro_comp (Δ ++ Δ' ++ Γ) e BOOL p0 (d; (snd_concat (fst y; δ'0); γ)))
+             (fun d : sem_ro_ctx Δ =>
+              pdom_lift fst (p_sem_rw_comp (Δ' ++ Γ) Δ c UNIT w2 (snd_concat (fst y; δ'0); γ) d)))
+          (pdom_W_monotone
+             (fun d : sem_ro_ctx Δ => p_sem_ro_comp (Δ ++ Δ' ++ Γ) e BOOL p0 (d; (snd_concat (fst y; δ'0); γ)))
+             (fun d : sem_ro_ctx Δ =>
+              pdom_lift fst (p_sem_rw_comp (Δ' ++ Γ) Δ c UNIT w2 (snd_concat (fst y; δ'0); γ) d))) n
+          (fst_concat (fst y; δ'0)))) =
+     (fun y : sem_ro_ctx Δ * unit =>
+     pdom_lift (fun y0 : sem_ro_ctx Δ => ((y0;  δ'0), tt))
+       (pdom_fun_bot_chain
+          (pdom_W (fun d : sem_ro_ctx Δ => p_sem_ro_comp (Δ ++ Δ' ++ Γ) e BOOL p0 (d; (δ'0; γ)))
+             (fun d : sem_ro_ctx Δ =>
+              pdom_lift fst (p_sem_rw_comp (Δ' ++ Γ) Δ c UNIT w2 (δ'0; γ) d)))
+          (pdom_W_monotone
+             (fun d : sem_ro_ctx Δ => p_sem_ro_comp (Δ ++ Δ' ++ Γ) e BOOL p0 (d; (δ'0; γ)))
+             (fun d : sem_ro_ctx Δ =>
+              pdom_lift fst (p_sem_rw_comp (Δ' ++ Γ) Δ c UNIT w2 (δ'0; γ) d))) n
+          (fst y)))).
+
+  apply dfun_ext.
+  intros.
+  unfold snd_concat.
+  rewrite tedious_equiv_1.
+  unfold fst_concat.
+  rewrite tedious_equiv_1.
+  auto.
+  simpl in H0.
+  simpl.
+  rewrite H0.
+  auto.
+
+  rewrite pdom_unit_natural.
+  rewrite pdom_unit_natural.
+  auto.
+Qed.
 
  
 

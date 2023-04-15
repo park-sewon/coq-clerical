@@ -5,7 +5,7 @@ Require Import Typing.
 Require Import TypingProperties.
 Require Import Powerdomain.
 Require Import List.
-
+Require Import Coq.Program.Equality.
 Definition sem_datatype (τ : datatype) : Type :=
   match τ with
   | DUnit => unit
@@ -52,6 +52,28 @@ Proof.
   exact (IHΓ (s1, s0)).
 Defined.
 
+Definition fst_concat {Γ Δ} : sem_ro_ctx (Γ ++ Δ) -> sem_ro_ctx Γ.
+Proof.
+  intro γδ.
+  destruct (tedious_sem_concat _ _ γδ) as [γ _].
+  exact γ.
+Defined.
+
+Definition snd_concat {Γ Δ} : sem_ro_ctx (Γ ++ Δ) -> sem_ro_ctx Δ.
+Proof.
+  intro γδ.
+  destruct (tedious_sem_concat _ _ γδ) as [_ δ].
+  exact δ.
+Defined.
+
+Definition pair_concat {Γ Δ} : sem_ro_ctx Γ -> sem_ro_ctx Δ -> sem_ro_ctx (Γ ++ Δ).
+Proof.
+  intros γ δ.
+  apply tedious_prod_sem.
+  exact (γ, δ).
+Defined.
+
+
 Lemma tedious_equiv_1 : forall Δ Γ δ γ,  tedious_sem_concat Δ Γ (tedious_prod_sem Δ Γ (δ, γ)) = (δ, γ).
 Proof.
   intros.
@@ -67,9 +89,49 @@ Proof.
   auto.
 Defined.
 
+
 Notation " ( γ ; δ ) " := (tedious_prod_sem _ _  (γ, δ)).
 
-                                    
+
+Lemma tedious_equiv_2_snd : forall Δ Γ τ  (γ : sem_ro_ctx ((τ :: Δ) ++ Γ)), snd_concat γ = snd_concat (snd γ).
+Proof.
+  intros.
+  unfold snd_concat.
+  simpl.
+  destruct γ.
+  simpl.
+  destruct (tedious_sem_concat Δ Γ s0); auto.
+Defined.
+
+Lemma tedious_equiv_2_fst : forall Δ Γ τ  (γ : sem_ro_ctx ((τ :: Δ) ++  Γ)), fst_concat γ = (fst γ, fst_concat (snd γ)).
+Proof.
+  intro.
+  intros.
+  unfold fst_concat.
+  simpl.
+  destruct γ.
+  simpl.  
+  destruct (tedious_sem_concat Δ Γ s0); auto.
+Defined.
+
+
+Lemma tedious_equiv_2 {Δ Γ} (γ : sem_ro_ctx (Δ ++ Γ)) : γ = (fst_concat γ; snd_concat γ). 
+Proof.
+  dependent induction Δ.
+  simpl.
+  auto.
+  simpl.
+  destruct γ.
+  simpl.
+  rewrite tedious_equiv_2_snd.
+  simpl.
+  rewrite tedious_equiv_2_fst.
+  simpl.
+  rewrite <- IHΔ.
+  auto.
+Defined.
+
+
 Definition sem_rw_ctx : rw_ctx -> Type.
 Proof.
   intros [Γ Δ].

@@ -60,27 +60,6 @@ Definition rw_to_ro_pre {Γ Δ} (ϕ : sem_ro_ctx Δ * sem_ro_ctx Γ -> Prop) :=
 
 Definition ro_to_rw_pre {Γ Δ} (ϕ : sem_ro_ctx (Δ ++ Γ) -> Prop) : sem_ro_ctx Δ * sem_ro_ctx Γ -> Prop := fun δγ => ϕ (tedious_prod_sem Δ Γ δγ) .
 
-Definition fst_concat {Γ Δ} : sem_ro_ctx (Γ ++ Δ) -> sem_ro_ctx Γ.
-Proof.
-  intro γδ.
-  destruct (tedious_sem_concat _ _ γδ) as [γ _].
-  exact γ.
-Defined.
-
-Definition snd_concat {Γ Δ} : sem_ro_ctx (Γ ++ Δ) -> sem_ro_ctx Δ.
-Proof.
-  intro γδ.
-  destruct (tedious_sem_concat _ _ γδ) as [_ δ].
-  exact δ.
-Defined.
-
-Definition pair_concat {Γ Δ} : sem_ro_ctx Γ -> sem_ro_ctx Δ -> sem_ro_ctx (Γ ++ Δ).
-Proof.
-  intros γ δ.
-  apply tedious_prod_sem.
-  exact (γ, δ).
-Defined.
-
 Definition post {X Y : Type} := X -> Y -> Prop.
 
 Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=

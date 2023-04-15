@@ -1,5 +1,6 @@
 Require Import List.
 
+
 Require Import Clerical.
 Require Import Typing.
 Require Import TypingProperties.
@@ -364,43 +365,6 @@ Proof.
   apply update_assignable_irrl.
 Defined.
 
-Lemma tedious_equiv_2_snd : forall Δ Γ τ  (γ : sem_ro_ctx ((τ :: Δ) ++ Γ)), snd_concat γ = snd_concat (snd γ).
-Proof.
-  intros.
-  unfold snd_concat.
-  simpl.
-  destruct γ.
-  simpl.
-  destruct (tedious_sem_concat Δ Γ s0); auto.
-Defined.
-
-Lemma tedious_equiv_2_fst : forall Δ Γ τ  (γ : sem_ro_ctx ((τ :: Δ) ++  Γ)), fst_concat γ = (fst γ, fst_concat (snd γ)).
-Proof.
-  intro.
-  intros.
-  unfold fst_concat.
-  simpl.
-  destruct γ.
-  simpl.  
-  destruct (tedious_sem_concat Δ Γ s0); auto.
-Defined.
-
-
-Lemma tedious_equiv_2 {Δ Γ} (γ : sem_ro_ctx (Δ ++ Γ)) : γ = (fst_concat γ; snd_concat γ). 
-Proof.
-  dependent induction Δ.
-  simpl.
-  auto.
-  simpl.
-  destruct γ.
-  simpl.
-  rewrite tedious_equiv_2_snd.
-  simpl.
-  rewrite tedious_equiv_2_fst.
-  simpl.
-  rewrite <- IHΔ.
-  auto.
-Defined.
 
 Lemma proves_rw_prt_Assign_sound
   Γ Δ e k τ ϕ0 (ψ0 :post) θ (w : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit)  :
