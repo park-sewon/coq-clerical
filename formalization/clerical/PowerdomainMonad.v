@@ -570,3 +570,28 @@ Proof.
     exists (total x1).
     split; auto.
 Defined.
+
+
+Lemma pdom_unit_natural {X Y} (f : X -> Y) : forall x, pdom_lift f (pdom_unit x) = pdom_unit (f x).
+Proof.
+  intros.
+  apply sig_eq.
+  apply pred_ext; intros y m.
+  destruct y.
+  apply pdom_lift_bot_2 in m.
+  simpl in m.
+  contradict (flat_total_neq_bot _ m).
+  apply pdom_lift_total_2 in m.
+  destruct m.
+  simpl.
+  destruct H.
+  simpl in H.
+  apply total_is_injective in H.
+  induction H.
+  rewrite H0; auto.
+  simpl.
+  simpl in m.
+  exists (total x).
+  split; auto.
+Defined.
+    

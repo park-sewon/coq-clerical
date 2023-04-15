@@ -555,20 +555,144 @@ Proof.
   contradict (flat_bot_neq_total _ H3).
 Defined.
 
-Lemma pdom_lifted_continuous {X Y} (f : X -> Y) : pdom_is_continuous (pdom_lift f) (pdom_lifted_monotone f).
-Admitted.
+(* Lemma pdom_lifted_continuous {X Y} (f : X -> Y) : pdom_is_continuous (pdom_lift f) (pdom_lifted_monotone f). *)
+(* Admitted. *)
 
 Lemma p_sem_move_readonly_while X Y Z (f : X -> Z) (g : Y -> Z) x y (b1 : X -> pdom bool) (c1 : X -> pdom X) (b2 : Y -> pdom bool) (c2 : Y -> pdom Y) :
   (forall n, 
       pdom_lift f (pdom_fun_bot_chain (pdom_W b1 c1) (pdom_W_monotone b1 c1) n x) = 
         pdom_lift g (pdom_fun_bot_chain (pdom_W b2 c2) (pdom_W_monotone b2 c2) n y)) ->
   pdom_lift f (pdom_while b1 c1 x) = pdom_lift g (pdom_while b2 c2 y).
-Admitted.
-
-Lemma pdom_unit_natural {X Y} (f : X -> Y) : forall x, pdom_lift f (pdom_unit x) = pdom_unit (f x).
 Proof.
-  Admitted.
-    
+  intro.
+
+  destruct (lem (pdom_is_empty  (pdom_while b1 c1 x)));
+    destruct (lem (pdom_is_empty ((pdom_while b2 c2 y)))).
+  assert (pdom_lift f (pdom_while b1 c1 x) = pdom_empty _ ).
+  apply pdom_is_empty_is_empty.
+  apply pdom_lift_empty_1; auto.
+  assert (pdom_lift g (pdom_while b2 c2 y) = pdom_empty _ ).
+  apply pdom_is_empty_is_empty.
+  apply pdom_lift_empty_1; auto.
+  rewrite H2, H3; auto.
+
+  contradict H1.
+  unfold pdom_while.
+  unfold pdom_fun_lfp.
+  apply pdom_fun_chain_empty_1.
+  apply pdom_fun_chain_empty_2 in H0.
+  destruct H0.
+  pose proof (pdom_lift_empty_1 f _ H0).
+  rewrite H in H1.
+  apply pdom_lift_empty_2 in H1.
+  exists x0; auto.
+
+  contradict H0.
+  unfold pdom_while.
+  unfold pdom_fun_lfp.
+  apply pdom_fun_chain_empty_1.
+  apply pdom_fun_chain_empty_2 in H1.
+  destruct H1.
+  pose proof (pdom_lift_empty_1 g _ H0).
+  rewrite <- H in H1.
+  apply pdom_lift_empty_2 in H1.
+  exists x0; auto.
+
+  rename H0 into h1.
+  rename H1 into h2.
+  
+  apply sig_eq.
+  apply pred_ext; intros p m.
+  +
+    destruct p.
+    apply pdom_lift_bot_2 in m.
+    unfold pdom_while in m.
+    apply pdom_lift_bot_1.
+    unfold pdom_while.
+    unfold pdom_fun_lfp.
+    apply pdom_fun_chain_bot_1.
+    intro.
+    unfold pdom_while in m.
+    unfold pdom_fun_lfp in m.
+    pose proof (pdom_fun_chain_bot_2 _ _ _ m n).
+    pose proof (H n).
+    apply (pdom_lift_bot_2 g).
+    rewrite <- H1.
+    apply pdom_lift_bot_1.
+    auto.
+    apply pdom_lift_total_1.
+    apply pdom_lift_total_2 in m.
+    destruct m.
+    destruct H0.
+    unfold pdom_while in H0.
+    unfold pdom_fun_lfp in H0.
+    unfold pdom_fun_chain_sup in H0.
+    apply pdom_chain_membership_2 in H0.
+    destruct H0.
+    assert (total z ∈ pdom_lift g (pdom_fun_bot_chain (pdom_W b2 c2) (pdom_W_monotone b2 c2) x1 y)).
+    rewrite <- H.
+    apply pdom_lift_total_1.
+    exists x0; auto.
+    apply pdom_lift_total_2 in H2.
+    destruct H2.
+    exists x2.
+    split.
+    unfold pdom_while.
+    unfold pdom_fun_lfp.
+    unfold pdom_fun_chain_sup.
+    apply pdom_chain_membership_1.
+    split.
+    exact h2.
+    exists x1.
+    destruct H2; auto.
+    destruct H2; auto.
+
+  +
+    destruct p.
+    apply pdom_lift_bot_2 in m.
+    unfold pdom_while in m.
+    apply pdom_lift_bot_1.
+    unfold pdom_while.
+    unfold pdom_fun_lfp.
+    apply pdom_fun_chain_bot_1.
+    intro.
+    unfold pdom_while in m.
+    unfold pdom_fun_lfp in m.
+    pose proof (pdom_fun_chain_bot_2 _ _ _ m n).
+    pose proof (H n).
+    apply (pdom_lift_bot_2 f).
+    rewrite  H1.
+    apply pdom_lift_bot_1.
+    auto.
+    apply pdom_lift_total_1.
+    apply pdom_lift_total_2 in m.
+    destruct m.
+    destruct H0.
+    unfold pdom_while in H0.
+    unfold pdom_fun_lfp in H0.
+    unfold pdom_fun_chain_sup in H0.
+    apply pdom_chain_membership_2 in H0.
+    destruct H0.
+    assert (total z ∈ pdom_lift f (pdom_fun_bot_chain (pdom_W b1 c1) (pdom_W_monotone b1 c1) x1 x)).
+    rewrite H.
+    apply pdom_lift_total_1.
+    exists x0; auto.
+    apply pdom_lift_total_2 in H2.
+    destruct H2.
+    exists x2.
+    split.
+    unfold pdom_while.
+    unfold pdom_fun_lfp.
+    unfold pdom_fun_chain_sup.
+    apply pdom_chain_membership_1.
+    split.
+    exact h1.
+    exists x1.
+    destruct H2; auto.
+    destruct H2; auto.
+Qed.
+
+
       
 
 Fixpoint p_sem_move_readonly  Γ Δ Δ' e τ (w1 : Γ ;;; (Δ ++ Δ') ||~ e : τ) (w2 : (Δ' ++ Γ) ;;; Δ ||~ e : τ) :
