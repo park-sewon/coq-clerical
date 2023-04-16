@@ -171,8 +171,6 @@ Proof.
   apply (phas_type_rw_unambiguous _ _ _ _ _ H H0).
 Qed.
 
-
-Axiom magic : forall A, A.
  
 Lemma p_has_type_ro_inv_Seq_1 Γ c1 c2 τ (w : Γ |~ (c1 ;; c2) : τ) : Γ ;;; nil ||~ c1 : DUnit.
 Proof.
@@ -359,6 +357,16 @@ Proof.
   intros [a b]; simpl; reflexivity.
 Qed.
 
+Lemma p_sem_rw_ro_ctx_rewrite : forall Γ1 Γ2 Δ e τ (w : Γ1 ;;; Δ ||~ e : τ) (p : Γ1 = Γ2) γ δ,
+    p_sem_rw_comp _ _ _ _ w γ δ =
+      (p_sem_rw_comp _ _ _ _ (tr (fun Γ => Γ ;;; Δ ||~ e : τ) p w) (tr (fun Δ => sem_ro_ctx Δ) p γ) δ).
+Proof.
+  intros.
+  destruct p.
+  simpl.
+  reflexivity.
+Qed.
+
 Definition app_assoc := 
 fun {A : Type} (l m n : list A) =>
 list_ind (fun l0 : list A => l0 ++ m ++ n = (l0 ++ m) ++ n)
@@ -420,6 +428,35 @@ Proof.
   apply app_assoc_tr.
   rewrite eq_refl_left_unit.
   reflexivity.
+Defined.
+
+Lemma eq_sym_tr_inverse_left {X} (P : X -> Type) (x y : X) (e : x = y) :
+  forall t, tr P (eq_sym e) (tr P e t) = t. 
+Proof.
+  intros.
+  destruct e.
+  simpl.
+  reflexivity.
+Defined.
+
+Lemma eq_sym_tr_inverse_right {X} (P : X -> Type) (x y : X) (e : x = y) :
+  forall t, tr P e (tr P (eq_sym e) t) = t. 
+Proof.
+  intros.
+  destruct e.
+  simpl.
+  reflexivity.
+Defined.
+
+
+Lemma eq_sym_app_assoc_tr (Γ1 Γ2 Γ3 : list datatype) : forall (γ1 : sem_ro_ctx Γ1) (γ2 : sem_ro_ctx Γ2) (γ3 : sem_ro_ctx Γ3), tr (fun Γ0 : list datatype => sem_ro_ctx Γ0) (eq_sym (app_assoc Γ1 Γ2 Γ3)) ((γ1; γ2); γ3) = (γ1; (γ2; γ3)).
+Proof.
+  intros.
+  pose proof (app_assoc_tr _ _ _ γ1 γ2 γ3).
+  pose proof (lp _ _ (fun k => tr (fun Γ0 : list datatype => sem_ro_ctx Γ0) (eq_sym (app_assoc Γ1 Γ2 Γ3)) k) _ _ H).
+  simpl in H0.
+  rewrite eq_sym_tr_inverse_left in H0.
+  rewrite H0; reflexivity.
 Defined.
 
 Lemma pl : forall {X Y} (f g: X -> Y) (x : X), f = g -> f x = g x.
@@ -693,7 +730,10 @@ Proof.
 Qed.
 
 
-      
+Lemma assign_concat_fst : 
+  forall Δ Δ' τ k (a0 :assignable Δ τ k) (a : assignable (Δ ++ Δ') τ k) a1 δ δ',
+    (update k a1 δ a0 ; δ') = (update k a1 (δ; δ') a).
+Admitted.
 
 Fixpoint p_sem_move_readonly  Γ Δ Δ' e τ (w1 : Γ ;;; (Δ ++ Δ') ||~ e : τ) (w2 : (Δ' ++ Γ) ;;; Δ ||~ e : τ) :
   forall γ δ δ', p_sem_rw_comp _ _ _ _ w1 γ (δ ; δ') =
@@ -750,7 +790,7 @@ Proof.
   apply lp, eq_sym, app_assoc_tr.
   apply dfun_ext; intro.
   assert (((update k a1 δ a0; δ') = (update k a1 (δ; δ') a))).
-  apply magic.
+  apply assign_concat_fst.
 
   rewrite H; reflexivity.
 
@@ -1391,8 +1431,267 @@ Proof.
   apply p_has_type_rw_unique.
 Qed.
 
-Lemma sem_ro_comp_auxiliary_ctx : forall Γ Γ' e τ (w : Γ |- e : τ) (w' : (Γ ++ Γ') |- e : τ) γ γ', sem_ro_comp Γ e τ w γ = sem_ro_comp (Γ ++ Γ') e τ w' (γ; γ')
-with sem_rw_comp_auxiliary_ctx : forall Γ Γ' Δ e τ (w : Γ ;;; Δ ||- e : τ) (w' : (Γ ++ Γ') ;;; Δ ||- e : τ) γ γ' δ, sem_rw_comp Γ Δ e τ w γ δ = sem_rw_comp (Γ ++ Γ') Δ e τ w' (γ ; γ') δ.
+Fixpoint p_has_type_ro_add_auxiliaries Γ e τ (w : Γ |~ e : τ) : forall Γ', (Γ ++ Γ') |~ e : τ
+with p_has_type_rw_add_auxiliaries Γ Δ e τ (w : Γ ;;; Δ ||~ e : τ) : forall Γ', (Γ ++ Γ') ;;; Δ ||~ e : τ.
 Proof.
-Admitted.
+  +
+    
+    intros.
+    dependent destruction w.
+
+    (* commands *)
+    constructor.
+    exact (p_has_type_rw_add_auxiliaries _ _ _ _ p Γ').
+    constructor.
+    exact (p_has_type_rw_add_auxiliaries _ _ _ _ p Γ').
+    constructor.
+    exact (p_has_type_rw_add_auxiliaries _ _ _ _ p Γ').
+    constructor.
+    exact (p_has_type_rw_add_auxiliaries _ _ _ _ p Γ').
+    constructor.
+    exact (p_has_type_rw_add_auxiliaries _ _ _ _ p Γ').
+    constructor.
+    exact (p_has_type_rw_add_auxiliaries _ _ _ _ p Γ').
+
+    (* variables *)
+    constructor.
+
+    simpl.
+    pose proof (p_has_type_ro_add_auxiliaries _ _ _ w Γ').
+    exact (phas_type_ro_Var_S (Γ++ Γ') σ τ k H).
+
+    (* constants *)
+    constructor.
+    constructor.
+    constructor.
+    constructor.
+
+    (* unary *)
+    constructor.
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w Γ').
+    constructor.
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w Γ').
+    constructor.
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w Γ').
+
+    constructor.
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+
+    constructor.
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+
+    constructor.
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+
+    constructor.
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+
+    constructor.
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+
+    constructor.
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+
+    constructor.
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+
+    constructor.
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+
+    constructor.
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+
+    constructor.
+    exact (p_has_type_ro_add_auxiliaries _ _ _ w Γ').
+  +
+
+    intros.
+    dependent destruction w.
+    
+    constructor.
+    induction (eq_sym (app_assoc Δ Γ Γ')). 
+    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+
+    constructor.
+    induction (eq_sym (app_assoc Δ Γ Γ')). 
+    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+
+    constructor.
+    induction (eq_sym (app_assoc Δ Γ Γ')). 
+    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+
+    constructor.
+    induction (eq_sym (app_assoc Δ Γ Γ')). 
+    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+
+    constructor.
+    induction (eq_sym (app_assoc Δ Γ Γ')). 
+    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+
+    constructor.
+    induction (eq_sym (app_assoc Δ Γ Γ')). 
+    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+
+    constructor.
+    induction (eq_sym (app_assoc Δ Γ Γ')). 
+    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+
+    constructor.
+    exact (p_has_type_rw_add_auxiliaries _ _ _ _ w1 Γ').
+    exact (p_has_type_rw_add_auxiliaries _ _ _ _ w2 Γ').
+
+    apply (phas_type_rw_Assign _ _ _ τ).
+    exact a.
+    induction (eq_sym (app_assoc Δ Γ Γ')).     
+    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+    
+
+    apply (phas_type_rw_Newvar _ _ _ _ σ).
+    induction (eq_sym (app_assoc Δ Γ Γ')).     
+    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+    exact (p_has_type_rw_add_auxiliaries _ _ _ _ w Γ').
+
+    constructor.
+    induction (eq_sym (app_assoc Δ Γ Γ')). 
+    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+    exact (p_has_type_rw_add_auxiliaries _ _ _ _ w1 Γ').
+    exact (p_has_type_rw_add_auxiliaries _ _ _ _ w2 Γ').
+
+    
+    constructor.
+    induction (eq_sym (app_assoc Δ Γ Γ')). 
+    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+    exact (p_has_type_rw_add_auxiliaries _ _ _ _ w1 Γ').
+    induction (eq_sym (app_assoc Δ Γ Γ')). 
+    exact (p_has_type_ro_add_auxiliaries _ _ _ p0 Γ').
+    exact (p_has_type_rw_add_auxiliaries _ _ _ _ w2 Γ').
+
+    constructor.
+    induction (eq_sym (app_assoc Δ Γ Γ')). 
+    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+    exact (p_has_type_rw_add_auxiliaries _ _ _ _ w Γ').
+
+Defined.
+
+Fixpoint p_sem_ro_comp_auxiliary_ctx Γ Γ' e τ (w : Γ |~ e : τ) :
+forall γ γ', p_sem_ro_comp Γ e τ w γ = p_sem_ro_comp (Γ ++ Γ') e τ (p_has_type_ro_add_auxiliaries _ _ _ w Γ') (γ; γ')
+with p_sem_rw_comp_auxiliary_ctx Γ Γ' Δ e τ (w : Γ ;;; Δ ||~ e : τ) :
+  forall γ γ' δ, p_sem_rw_comp Γ Δ e τ w γ δ = p_sem_rw_comp (Γ ++ Γ') Δ e τ (p_has_type_rw_add_auxiliaries _ _ _ _ w Γ') (γ ; γ') δ.
+Proof.
+  +
+    intros.
+    dependent destruction w; easy_rewrite_uip;
+      try (rewrite (p_sem_rw_comp_auxiliary_ctx _ _ _ _ _ p γ γ' tt); reflexivity);
+      try (rewrite (p_sem_ro_comp_auxiliary_ctx _ _ _ _ w γ γ'); reflexivity);
+      try (rewrite (p_sem_ro_comp_auxiliary_ctx _ _ _ _ w1 γ γ');
+           rewrite (p_sem_ro_comp_auxiliary_ctx _ _ _ _ w2 γ γ'); reflexivity);
+      try reflexivity.
+    
+    destruct γ.
+    simpl; reflexivity.
+
+    destruct γ.
+    simpl.
+    rewrite (p_sem_ro_comp_auxiliary_ctx _ _ _ _ w s0 γ'). 
+    reflexivity.
+
+    apply lp.
+    apply dfun_ext; intro.
+    rewrite (p_sem_ro_comp_auxiliary_ctx _ _ _ _ w (a, γ) γ'). 
+    reflexivity.
+   
+  +
+    intros.
+    dependent destruction w; easy_rewrite_uip; try apply lp;
+      try (rewrite <- eq_sym_app_assoc_tr;
+           rewrite <- (p_sem_ro_ctx_rewrite _ _ _ _ (p_has_type_ro_add_auxiliaries _ _ _ p Γ'));
+           rewrite (p_sem_ro_comp_auxiliary_ctx _ _ _ _ p _ γ');
+           reflexivity).
+    
+    rewrite <- (p_sem_rw_comp_auxiliary_ctx _ _ _ _ _ w1 _ γ').
+    apply pl.
+    apply lp.
+    apply dfun_ext; intro d.
+    rewrite <- (p_sem_rw_comp_auxiliary_ctx _ _ _ _ _ w2 _ γ').
+    reflexivity.
+
+    rewrite <- eq_sym_app_assoc_tr.
+    rewrite <- (p_sem_ro_ctx_rewrite _ _ _ _ (p_has_type_ro_add_auxiliaries _ _ _ p Γ')).
+    rewrite (p_sem_ro_comp_auxiliary_ctx _ _ _ _ p _ γ').
+    apply pl.
+    apply lp.
+    apply dfun_ext; intro.
+    rewrite (p_sem_rw_comp_auxiliary_ctx _ _ _ _ _ w _ γ' a).
+    reflexivity.
+
+    
+    rewrite <- eq_sym_app_assoc_tr.
+    rewrite <- (p_sem_ro_ctx_rewrite _ _ _ _ (p_has_type_ro_add_auxiliaries _ _ _ p Γ')).
+    rewrite (p_sem_ro_comp_auxiliary_ctx _ _ _ _ p _ γ').
+    apply pl.
+    apply lp.
+    apply dfun_ext; intro.
+    rewrite (p_sem_rw_comp_auxiliary_ctx _ _ _ _ _ w1 _ γ').
+    rewrite (p_sem_rw_comp_auxiliary_ctx _ _ _ _ _ w2 _ γ').
+    reflexivity.
+
+    rewrite <- eq_sym_app_assoc_tr.
+    rewrite <- (p_sem_ro_ctx_rewrite _ _ _ _ (p_has_type_ro_add_auxiliaries _ _ _ p Γ')).
+    rewrite <- (p_sem_ro_comp_auxiliary_ctx _ _ _ _ p _ γ').
+    rewrite <- (p_sem_ro_ctx_rewrite _ _ _ _ (p_has_type_ro_add_auxiliaries _ _ _ p0 Γ')).
+    rewrite <- (p_sem_ro_comp_auxiliary_ctx _ _ _ _ p0 _ γ').
+    rewrite (p_sem_rw_comp_auxiliary_ctx _ _ _ _ _ w1 _ γ').
+    rewrite (p_sem_rw_comp_auxiliary_ctx _ _ _ _ _ w2 _ γ').
+    reflexivity.
+
+    apply pl.
+
+    assert (forall X Y Z (f : X -> Y -> Z) a b c d, a = b -> c = d -> f a c = f b d).
+    intros.
+    destruct H, H0; reflexivity.
+    apply H.
+
+    apply dfun_ext.
+    intros.
+    rewrite <- eq_sym_app_assoc_tr.
+    rewrite <- (p_sem_ro_ctx_rewrite _ _ _ _ (p_has_type_ro_add_auxiliaries _ _ _ p Γ')).
+    rewrite <- (p_sem_ro_comp_auxiliary_ctx _ _ _ _ p _ γ').
+    reflexivity.
+
+    apply dfun_ext.
+    intros.
+    rewrite (p_sem_rw_comp_auxiliary_ctx _ _ _ _ _ w _ γ').
+    reflexivity.    
+Qed.
+
+
+
+Lemma sem_ro_comp_auxiliary_ctx :
+  forall Γ Γ' e τ (w : Γ |- e : τ) (w' : (Γ ++ Γ') |- e : τ) γ γ', sem_ro_comp Γ e τ w γ = sem_ro_comp (Γ ++ Γ') e τ w' (γ; γ').
+Proof.
+  intros.
+  rewrite (sem_ro_p_sem_ro _ _ _ _ (has_type_ro_phas_type_ro _ _ _ w)).
+  rewrite (sem_ro_p_sem_ro _ _ _ _ (has_type_ro_phas_type_ro _ _ _ w')).
+  rewrite <- (p_has_type_ro_unique _ _ _ (p_has_type_ro_add_auxiliaries _ _ _ (has_type_ro_phas_type_ro Γ e τ w) Γ') (has_type_ro_phas_type_ro (Γ ++ Γ') e τ w')).
+  apply p_sem_ro_comp_auxiliary_ctx.
+Defined.
+
+
+Lemma sem_rw_comp_auxiliary_ctx : forall Γ Γ' Δ e τ (w : Γ ;;; Δ ||- e : τ) (w' : (Γ ++ Γ') ;;; Δ ||- e : τ) γ γ' δ, sem_rw_comp Γ Δ e τ w γ δ = sem_rw_comp (Γ ++ Γ') Δ e τ w' (γ ; γ') δ.
+Proof.
+  intros.
+  rewrite (sem_rw_p_sem_rw _ _ _ _ _ (has_type_rw_phas_type_rw _ _ _ _ w)).
+  rewrite (sem_rw_p_sem_rw _ _ _ _ _ (has_type_rw_phas_type_rw _ _ _ _ w')).
+  rewrite <- (p_has_type_rw_unique _ _ _ _ (p_has_type_rw_add_auxiliaries _ _ _ _ (has_type_rw_phas_type_rw Γ Δ e τ w) Γ') (has_type_rw_phas_type_rw (Γ ++ Γ') Δ e τ w')).
+  apply p_sem_rw_comp_auxiliary_ctx.
+Defined.
   
