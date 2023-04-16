@@ -592,9 +592,6 @@ Proof.
   contradict (flat_bot_neq_total _ H3).
 Defined.
 
-(* Lemma pdom_lifted_continuous {X Y} (f : X -> Y) : pdom_is_continuous (pdom_lift f) (pdom_lifted_monotone f). *)
-(* Admitted. *)
-
 Lemma p_sem_move_readonly_while X Y Z (f : X -> Z) (g : Y -> Z) x y (b1 : X -> pdom bool) (c1 : X -> pdom X) (b2 : Y -> pdom bool) (c2 : Y -> pdom Y) :
   (forall n, 
       pdom_lift f (pdom_fun_bot_chain (pdom_W b1 c1) (pdom_W_monotone b1 c1) n x) = 
@@ -729,11 +726,48 @@ Proof.
     destruct H2; auto.
 Qed.
 
+Lemma tedious_eq {Γ Δ} : forall (γ1 γ2 : sem_ro_ctx Γ) (δ1 δ2 : sem_ro_ctx Δ), γ1 = γ2 -> δ1 = δ2 -> (γ1 ; δ1) = (γ2 ; δ2).
+Proof.
+  intros.
+  destruct H.
+  destruct H0.
+  reflexivity.
+Defined.
+
+
+Fixpoint assign_concat_fst' Δ Δ' τ k (a :assignable Δ τ k) x δ δ' {struct a} : 
+    (update k x δ a ; δ') = (update k x (δ; δ') (assignable_push_back Δ Δ' τ k a)).
+Proof.
+  dependent destruction a.
+  simpl.
+  destruct δ.
+  simpl.
+  reflexivity.
+  destruct δ.
+  replace (tedious_prod_sem (@cons datatype σ Δ) Δ'
+       (@pair (sem_list_datatype (@cons datatype σ Δ)) (sem_ro_ctx Δ')
+          (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_list_datatype Δ) s s0)
+                   (assignable_S Δ τ σ k a)) δ'))
+    with
+    (s, (update k x s0 a; δ')).
+
+  simpl.
+  apply lp.
+  rewrite assign_concat_fst'.
+  destruct a; auto.
+  simpl.
+  destruct a; auto.
+Defined.
 
 Lemma assign_concat_fst : 
   forall Δ Δ' τ k (a0 :assignable Δ τ k) (a : assignable (Δ ++ Δ') τ k) a1 δ δ',
     (update k a1 δ a0 ; δ') = (update k a1 (δ; δ') a).
-Admitted.
+Proof.
+  intros.
+  rewrite (assign_concat_fst' Δ Δ' τ k a0).
+  apply lp.
+  apply assignable_unique. 
+Defined.
 
 Fixpoint p_sem_move_readonly  Γ Δ Δ' e τ (w1 : Γ ;;; (Δ ++ Δ') ||~ e : τ) (w2 : (Δ' ++ Γ) ;;; Δ ||~ e : τ) :
   forall γ δ δ', p_sem_rw_comp _ _ _ _ w1 γ (δ ; δ') =
