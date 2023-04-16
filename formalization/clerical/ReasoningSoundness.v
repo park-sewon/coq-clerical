@@ -1894,6 +1894,10 @@ Proof.
         unfold Rlim_def.
         exists y; split; auto.
         intros.
+        split.
+        destruct (H x); auto.
+        
+        intros.
         destruct z.
         destruct (H x) as [_ h].
         pose proof (h (bot R) H0).
@@ -1916,6 +1920,8 @@ Proof.
       exists y.
       split; auto.
       intros.
+      split; intros.
+      destruct (H x); auto. 
       destruct z.
       destruct (H x) as [_ h].
       pose proof (h (bot R) H2).
@@ -2850,7 +2856,8 @@ Proof.
         apply (pdom_is_neg_empty_by_evidence _ (total y)).
         simpl.
         unfold Rlim_def.
-        exists y; split; auto.
+        exists y; repeat split; intros; auto.
+        destruct (H x); auto.
         intros.
         destruct z.
         destruct (H x) as [_ h].
@@ -2879,19 +2886,23 @@ Proof.
       exists y.
       split; auto.
       intros.
+      destruct (H x); auto.
+      split.
+      auto.
+      intros.
       destruct z.
       destruct (H x) as [_ h].
-      pose proof (h (bot R) H1).
-      destruct H2.
-      destruct H2.
-      contradict (flat_bot_neq_total _ H2).
+      pose proof (h (bot R) H3).
+      destruct H4.
+      destruct H4.
+      contradict (flat_bot_neq_total _ H4).
       exists r0; split; auto.
       destruct (H x) as [_ h].
-      pose proof (h _ H1).
-      destruct H2.
-      destruct H2.
+      pose proof (h _ H3).
+      destruct H4.
+      destruct H4.
       apply h2.
-      injection H2; intro j; rewrite j; auto.
+      injection H4; intro j; rewrite j; auto.
       
   + (*  partial correctness triple for read write expressions *)
     intros Γ Δ e τ w ϕ ψ trip.

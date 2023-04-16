@@ -212,37 +212,57 @@ Definition Rltb : R -> R -> pdom bool := fun x y => flat_to_pdom (Rltb' x y).
 Definition Rlim_def (f : Z -> pdom R) : flat R -> Prop :=
   (fun y : flat R =>
      exists y' : R, y = total y' /\                            
-                      forall x : Z,
-                      forall z : flat R,
-                        proj1_sig (f x) z ->
-                        exists z' : R, z = total z' /\ Rabs (z' - y') < powerRZ 2 (- x))%R.
+                 forall x : Z,
+                   ~ pdom_is_empty (f x) /\ 
+                 forall z : flat R,
+                   proj1_sig (f x) z ->
+                   exists z' : R, z = total z' /\ Rabs (z' - y') < powerRZ 2 (- x))%R.
+
+Search (_ < _).
 
 
-Lemma Rlim_def_unique f : forall x y, Rlim_def f x -> Rlim_def f y -> x = y.
-Proof.
-  intros x y H H0.
-  destruct H as [x' [tx hx]].
-  destruct H0 as [y' [ty hy]].
-Admitted.
-
-Lemma Rlim_def_never_bot : forall f, ~ (Rlim_def f (bot R)).
-Proof.
-Admitted.
+Section RealsFacts.
+  Open Scope R_scope.
+  Require Import Lra.
   
-Definition Rlim : (Z -> pdom R) -> pdom R.
-Proof.
-  intro f.
-  exists (Rlim_def f).
-  intro H.
-  apply pset_infinite_subset_infinite in H.
-  contradict H.
-  apply hprop_ninfinite.
-  intros.
-  destruct x, y.
-  apply sig_eq.
-  simpl.
-  apply (Rlim_def_unique f); auto.
-Defined.
+  Require Import Coq.Reals.DiscrR.
+  Lemma Rlim_def_unique f : forall x y, Rlim_def f x -> Rlim_def f y -> x = y.
+  Proof.
+    intros x y H H0.
+    destruct H as [x' [tx hx]].
+    destruct H0 as [y' [ty hy]].
+    rewrite tx, ty; apply lp.
+    clear tx ty.
+
+    destruct (lem (x' = y')); auto.
+    destruct (Rdichotomy _ _ H).
+    (* when x' < y' *)
+    clear H.
+    assert (0 < y' - x') by lra.
+    pose proof (archimed_cor1 _ H).
+  Admitted.
+
+  Lemma Rlim_def_never_bot : forall f, ~ (Rlim_def f (bot R)).
+  Proof.
+  Admitted.
+  
+  Definition Rlim : (Z -> pdom R) -> pdom R.
+  Proof.
+    intro f.
+    exists (Rlim_def f).
+    intro H.
+    apply pset_infinite_subset_infinite in H.
+    contradict H.
+    apply hprop_ninfinite.
+    intros.
+    destruct x, y.
+    apply sig_eq.
+    simpl.
+    apply (Rlim_def_unique f); auto.
+  Defined.
+
+End RealsFacts.
+
 
 (* Definition Case2' {X : Type} : flat bool -> flat bool -> pdom X -> pdom X -> pdom X. *)
 (* Proof. *)
