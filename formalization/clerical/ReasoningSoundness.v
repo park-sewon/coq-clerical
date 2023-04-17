@@ -4027,7 +4027,8 @@ Proof.
         destruct H0.
         clear H wty.
         dependent induction f.
-        simpl in H0.destruct H0.
+        simpl in H0.
+        destruct H0.
         contradict H.
         simpl in H0.
         destruct p.
