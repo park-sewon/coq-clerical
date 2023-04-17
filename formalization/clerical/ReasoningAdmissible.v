@@ -69,6 +69,27 @@ Proof.
     apply (rw_assign_prt _ _ _ _ _ _ _ _ _ _ (proves_admissible_ro_tot_prt _ _ _ _ _ _ p) ψ0).
     apply (rw_cond_prt _ _ _ _ _ _ _ _ _ _ _ _ _ (proves_admissible_ro_tot_prt _ _ _ _ _ _ p) (proves_admissible_rw_tot_prt _ _ _ _ _ _ _ X1) (proves_admissible_rw_tot_prt _ _ _ _ _ _ _ X2)).
     apply (rw_case_prt _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ p p0 (proves_admissible_rw_tot_prt _ _ _ _ _ _ _ X1) (proves_admissible_rw_tot_prt _ _ _ _ _ _ _ X2)).
+
+
+
+    {
+      (* case list *)
+      apply (rw_case_list_prt _ _ _ _ wty_l wty θ).
+      clear f0 wty.
+      dependent induction f.
+      simpl.
+      apply ForallT2_nil.
+      apply ForallT2_cons.
+      apply IHf.
+      destruct j.
+      destruct p0.
+      split.
+      exact p0.
+      exact ((proves_admissible_rw_tot_prt _ _ _ _ _ _ _ p2)).      
+    }
+
+
+    
     {
       pose proof (has_type_while_inv_body _ _ _ _ wty).
       apply (rw_while_prt _ _ _ _ wty_e H wty ϕ _ (

@@ -14,6 +14,28 @@ Reserved Notation " w |- [{ P }] e [{ y | Q }] " (at level 50, P, e, y, Q at nex
 Reserved Notation " w ||- {{ P }} e {{ y | Q }} " (at level 50, P, e, y, Q at next level).
 Reserved Notation " w ||- [{ P }] e [{ y | Q }] " (at level 50, P, e, y, Q at next level).
 
+Require Import Coq.Program.Equality.
+
+
+(* some list functions to help dealing with list cases *)
+Fixpoint ForallT_disj {A} (P : A -> Type) (Q : forall a, P a -> Prop) l (t : ForallT P l) : Prop.
+Proof.
+  dependent destruction t.
+  exact False.
+  exact (Q x p \/ ForallT_disj A P Q l t).
+Defined.
+ 
+Inductive ForallT2 {A} (P Q: A -> Type) (R : forall a, P a -> Q a -> Type) : forall l, ForallT P l -> ForallT Q l -> Type :=
+  ForallT2_nil : ForallT2 P Q R nil (ForallT_nil P) (ForallT_nil Q)
+| ForallT2_cons :forall l a t1 t2 p q,  ForallT2 P Q R l t1 t2 -> R a p q -> ForallT2 P Q R (a :: l) (ForallT_cons P a l p t1) (ForallT_cons Q a l q t2)
+.
+
+Inductive ForallT3 {A} (P Q R: A -> Type) (J : forall a, P a -> Q a -> R a -> Type) : forall l, ForallT P l -> ForallT Q l -> ForallT R l -> Type :=
+  ForallT3_nil : ForallT3 P Q R J nil (ForallT_nil P) (ForallT_nil Q) (ForallT_nil R)
+| ForallT3_cons :forall l a t1 t2 t3 p q r,  ForallT3 P Q R J l t1 t2 t3 -> J a p q r -> ForallT3 P Q R J (a :: l) (ForallT_cons P a l p t1) (ForallT_cons Q a l q t2) (ForallT_cons R a l r t3)
+.
+
+  
 
 Definition ro_asrt_imp {Γ} (P Q : sem_ro_ctx Γ -> Prop) : Prop :=
   forall γ, P γ -> Q γ.
@@ -498,7 +520,22 @@ with proves_rw_prt : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_prt w -> T
     wty_c2 ||- {{ro_to_rw_pre (θ2 true)}} c2 {{ψ}} ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     wty ||- {{ϕ}} Case e1 c1 e2 c2 {{ψ}}
-                                  
+
+| rw_case_list_prt : forall Γ Δ l τ
+                            (wty_l : ForallT (fun ec => ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))%type l)
+                            (wty : Γ ;;; Δ ||- CaseList l : τ)
+                            (θ : ForallT (fun _ => bool -> sem_ro_ctx (Δ ++ Γ) -> Prop) l)
+                            ϕ ψ,
+    ForallT2 _ _ 
+    (fun ec (wty_l : ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))  (θ : bool -> sem_ro_ctx (Δ ++ Γ) -> Prop)  =>
+         
+    (fst (wty_l) |- {{rw_to_ro_pre ϕ}} fst ec {{θ}}) *
+    (snd (wty_l) ||- {{ro_to_rw_pre (θ true)}} snd ec {{ψ}}))%type l wty_l θ ->
+    (*——————————-——————————-——————————-——————————-——————————-*)
+    wty ||- {{ϕ}} CaseList l {{ψ}}
+
+
+        
 | rw_while_prt : forall Γ Δ e c (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : Γ ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT)  ϕ θ,
 
     wty_e |- {{rw_to_ro_pre ϕ}} e {{θ}} -> 
@@ -592,7 +629,25 @@ with proves_rw_tot : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_tot w -> T
     (forall x, (rw_to_ro_pre ϕ x) -> (ϕ1 x \/ ϕ2 x)) -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
     wty ||- [{ϕ}] Case e1 c1 e2 c2 [{ψ}]
-                                                                                         
+
+
+| rw_case_list_tot : forall Γ Δ l τ
+                            (wty_l : ForallT (fun ec => ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))%type l)
+                            (wty : Γ ;;; Δ ||- CaseList l : τ)
+                            (θ : ForallT (fun _ => bool -> sem_ro_ctx (Δ ++ Γ) -> Prop) l)
+                            (ϕi : ForallT (fun _ => sem_ro_ctx (Δ ++ Γ) -> Prop) l)
+                            ϕ ψ,
+    ForallT3 _ _ _
+    (fun ec (wty_l : ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))  (θ : bool -> sem_ro_ctx (Δ ++ Γ) -> Prop) (ϕi : sem_ro_ctx (Δ ++ Γ) -> Prop)  =>
+         
+    (fst (wty_l) |- {{rw_to_ro_pre ϕ}} fst ec {{θ}}) *
+    (snd (wty_l) ||- [{ro_to_rw_pre (θ true)}] snd ec [{ψ}]) * 
+    (fst (wty_l) |- [{ϕi}] fst ec [{b | fun _ => b = true}])) %type l wty_l θ ϕi ->
+    (forall x, (rw_to_ro_pre ϕ x) -> ForallT_disj _ (fun _ ϕi => ϕi x) l ϕi) ->
+    (*——————————-——————————-——————————-——————————-——————————-*)
+    wty ||- [{ϕ}] CaseList l [{ψ}]
+
+        
 | rw_while_tot : forall Γ Δ e c (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : (Γ ++ Δ) ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT) ϕ θ ψ,
     
     wty_e |- [{rw_to_ro_pre ϕ}] e [{θ}] ->
