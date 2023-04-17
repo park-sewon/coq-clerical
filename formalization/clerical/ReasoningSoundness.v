@@ -1,4 +1,6 @@
 Require Import List.
+Require Import Reals.
+Require Import Coq.Program.Equality.
 
 
 Require Import Clerical.
@@ -10,8 +12,6 @@ Require Import SemanticsProperties.
 Require Import Specification.
 Require Import ReasoningRules.
 Require Import ReasoningAdmissible.
-Require Import Reals.
-Require Import Coq.Program.Equality.
 
   
 Lemma sem_ro_prt_excludes_bot_is_tot : forall Γ e τ ϕ ψ (w : Γ |- e : τ), 
@@ -619,163 +619,163 @@ Defined.
 
 Section FinitelyBranchingTree.
 
-Definition E_tree_is_fin {X} (E : X -> X -> Prop) :=
-  forall x, ~ infinite {y | E x y}.
+  Definition E_tree_is_fin {X} (E : X -> X -> Prop) :=
+    forall x, ~ infinite {y | E x y}.
 
-Inductive E_finite_chain {X} (E : X -> X -> Prop) x : nat -> Type :=
-  nil_chain : E_finite_chain E x 0
-| cons_chain : forall n y, E x y -> E_finite_chain E y n -> E_finite_chain E x (S n).
+  Inductive E_finite_chain {X} (E : X -> X -> Prop) x : nat -> Type :=
+    nil_chain : E_finite_chain E x 0
+  | cons_chain : forall n y, E x y -> E_finite_chain E y n -> E_finite_chain E x (S n).
 
-Definition E_is_infinite_chain {X} (E : X -> X -> Prop) x f : Prop
-  := f 0 = x /\ forall n, E (f n) (f (S n)).
+  Definition E_is_infinite_chain {X} (E : X -> X -> Prop) x f : Prop
+    := f 0 = x /\ forall n, E (f n) (f (S n)).
 
-Definition E_finite_chains {X} (E : X -> X -> Prop) x := {n : nat & E_finite_chain E x n}.
+  Definition E_finite_chains {X} (E : X -> X -> Prop) x := {n : nat & E_finite_chain E x n}.
 
-Definition E_finite_chains_next {X} (E : X -> X -> Prop) x (c : E_finite_chains E x) :
-  projT1 c <> 0 -> {y & (E x y * E_finite_chains E y)%type}.
-Proof.
-  intros.
-  destruct c.
-  destruct x0.
-  dependent destruction e.
-  simpl in H; contradict H; auto.
-  dependent destruction e.
-  exists y.
-  split; auto.
-  exists x0.
-  auto.
-Defined.
-
-Lemma E_infinite_finite_chains_S_aux1 :   forall {X} (E : X -> X -> Prop) (x : X),
-    {y' : {y : X | E x y} &  (E_finite_chains E (proj1_sig y'))} ->
-    E_finite_chains E x.
-Proof.
-  intros.
-  destruct X0.
-  destruct x0.
-  simpl in e.
-  destruct e.
-  exists (S x1).
-  exact (cons_chain _ _ _ _ e0 e).
-Defined.
-
-Lemma E_infinite_finite_chains_S_aux2 :forall {X} (E : X -> X -> Prop) (x : X),
-    {y' : {y : X | E x y} & E_finite_chains E (proj1_sig y')} -> {c : E_finite_chains E x | projT1 c <> 0}.
-Proof.
-  intros.
-  destruct X0.
-  destruct x0.
-  simpl in e.
-  destruct e.
-  exists (existT (S x1) (cons_chain _ _ _ _ e0 e)).
-  simpl.
-  auto.
-Defined.
-  
-(* Definition E_infinite_finite_chains_S_aux2 : forall {X} (E : X -> X -> Prop) (x : X), *)
-(*     infinite (E_finite_chains E x) -> nat -> {c : E_finite_chains E x | projT1 c <> 0}. *)
-(* Proof. *)
-(*   intros. *)
-(*   destruct H. *)
-  
-
-Lemma E_infinite_finite_chains_S :
-  forall {X} (E : X -> X -> Prop), E_tree_is_fin E -> forall (x : X),  
-    infinite (E_finite_chains E x) -> exists y, E x y /\ infinite (E_finite_chains E y).
-Proof.
-  intros X E fin x H.
-  assert (infinite {y' : {y | E x y} & (E_finite_chains E (proj1_sig y'))}).
-  {
-    assert (infinite {c : E_finite_chains E x | projT1 c <> 0}).
-    {
-      assert (infinite {c : E_finite_chains E x | projT1 c = 0 \/ projT1 c <> 0}).
-      {
-        destruct H.
-        exists (fun n => exist _ (x0 n) (lem _)).
-        intros i j e.
-        injection e; intros.
-        apply H; auto.
-      }
-      apply Pigeon2' in H0.
-      destruct H0; auto.
-      destruct H0 as [f i].
-      case_eq (f 0); intros.
-      case_eq (f 1); intros.
-      assert (x0 = x1).
-      destruct x0.
-      destruct x1.
-      simpl in e, e0.
-      clear H0.
-      clear H1.
-      induction (eq_sym e0).
-      induction (eq_sym e).
-      dependent destruction e1.
-      dependent destruction e2.
-      auto.
-      induction H2.
-      assert (f 0 = f 1).
-      rewrite H0, H1.
-      apply sig_eq.
-      simpl; auto.
-      apply i in H2.
-      contradict H2; auto.
-    }
-    apply (fun f => surjection_infinite2 f H0).
-    exists (E_infinite_finite_chains_S_aux2 E x).
-    intro.
-    destruct b.
+  Definition E_finite_chains_next {X} (E : X -> X -> Prop) x (c : E_finite_chains E x) :
+    projT1 c <> 0 -> {y & (E x y * E_finite_chains E y)%type}.
+  Proof.
+    intros.
+    destruct c.
     destruct x0.
-    simpl in n.
-    
-    assert (exists n, S n = x0).
-    exists (pred x0).
-    apply Nat.succ_pred; auto.
-    destruct H1.
-    induction H1.
     dependent destruction e.
-    exists (existT (exist _ y e) (existT x1 e1)).
-    simpl.
-    apply sig_eq.
+    simpl in H; contradict H; auto.
+    dependent destruction e.
+    exists y.
+    split; auto.
+    exists x0.
+    auto.
+  Defined.
+
+  Lemma E_infinite_finite_chains_S_aux1 :   forall {X} (E : X -> X -> Prop) (x : X),
+      {y' : {y : X | E x y} &  (E_finite_chains E (proj1_sig y'))} ->
+      E_finite_chains E x.
+  Proof.
+    intros.
+    destruct X0.
+    destruct x0.
+    simpl in e.
+    destruct e.
+    exists (S x1).
+    exact (cons_chain _ _ _ _ e0 e).
+  Defined.
+
+  Lemma E_infinite_finite_chains_S_aux2 :forall {X} (E : X -> X -> Prop) (x : X),
+      {y' : {y : X | E x y} & E_finite_chains E (proj1_sig y')} -> {c : E_finite_chains E x | projT1 c <> 0}.
+  Proof.
+    intros.
+    destruct X0.
+    destruct x0.
+    simpl in e.
+    destruct e.
+    exists (existT (S x1) (cons_chain _ _ _ _ e0 e)).
     simpl.
     auto.
-  }
-  apply Pigeon in  H0.
-  destruct H0.
-  contradict (fin _ H0).
-  destruct H0.
-  destruct x0.
-  exists x0.
-  split; auto.
-Defined.
-
-Lemma E_unbounded_tree_has_infinite_path :
-  forall {X} (E : X -> X -> Prop), E_tree_is_fin E -> forall (x : X),
-    (forall n, exists c : E_finite_chain E x n, True) ->
-    exists f, E_is_infinite_chain E x f.
-Proof.
-  intros X E fin x H.
-  assert (infinite (E_finite_chains E x)).
-  pose proof (dcchoice _ _ H).
-  simpl in H0.
-  destruct H0.
-  exists (fun n => existT n (x0 n)).
-  intros i j e.
-  injection e; intro; auto.
-  pose proof (
-         dchoice_start (fun _ => {x & infinite (E_finite_chains E x)})
-                       (fun n p q => E (projT1 p) (projT1 q))
-                       (existT x H0)) as [f h].
-  intros.
-  destruct x0 as [y i].
+  Defined.
   
-  pose proof (E_infinite_finite_chains_S E fin y i) as [y' [h1 h2]].
-  exists (existT y' h2).
-  simpl.
-  auto.
-  exists (fun n => projT1 (f n)).
-  destruct h; split; auto.
-  rewrite H1; auto.
-Defined.
+  (* Definition E_infinite_finite_chains_S_aux2 : forall {X} (E : X -> X -> Prop) (x : X), *)
+  (*     infinite (E_finite_chains E x) -> nat -> {c : E_finite_chains E x | projT1 c <> 0}. *)
+  (* Proof. *)
+  (*   intros. *)
+  (*   destruct H. *)
+  
+
+  Lemma E_infinite_finite_chains_S :
+    forall {X} (E : X -> X -> Prop), E_tree_is_fin E -> forall (x : X),  
+        infinite (E_finite_chains E x) -> exists y, E x y /\ infinite (E_finite_chains E y).
+  Proof.
+    intros X E fin x H.
+    assert (infinite {y' : {y | E x y} & (E_finite_chains E (proj1_sig y'))}).
+    {
+      assert (infinite {c : E_finite_chains E x | projT1 c <> 0}).
+      {
+        assert (infinite {c : E_finite_chains E x | projT1 c = 0 \/ projT1 c <> 0}).
+        {
+          destruct H.
+          exists (fun n => exist _ (x0 n) (lem _)).
+          intros i j e.
+          injection e; intros.
+          apply H; auto.
+        }
+        apply Pigeon2' in H0.
+        destruct H0; auto.
+        destruct H0 as [f i].
+        case_eq (f 0); intros.
+        case_eq (f 1); intros.
+        assert (x0 = x1).
+        destruct x0.
+        destruct x1.
+        simpl in e, e0.
+        clear H0.
+        clear H1.
+        induction (eq_sym e0).
+        induction (eq_sym e).
+        dependent destruction e1.
+        dependent destruction e2.
+        auto.
+        induction H2.
+        assert (f 0 = f 1).
+        rewrite H0, H1.
+        apply sig_eq.
+        simpl; auto.
+        apply i in H2.
+        contradict H2; auto.
+      }
+      apply (fun f => surjection_infinite2 f H0).
+      exists (E_infinite_finite_chains_S_aux2 E x).
+      intro.
+      destruct b.
+      destruct x0.
+      simpl in n.
+      
+      assert (exists n, S n = x0).
+      exists (pred x0).
+      apply Nat.succ_pred; auto.
+      destruct H1.
+      induction H1.
+      dependent destruction e.
+      exists (existT (exist _ y e) (existT x1 e1)).
+      simpl.
+      apply sig_eq.
+      simpl.
+      auto.
+    }
+    apply Pigeon in  H0.
+    destruct H0.
+    contradict (fin _ H0).
+    destruct H0.
+    destruct x0.
+    exists x0.
+    split; auto.
+  Defined.
+
+  Lemma E_unbounded_tree_has_infinite_path :
+    forall {X} (E : X -> X -> Prop), E_tree_is_fin E -> forall (x : X),
+        (forall n, exists c : E_finite_chain E x n, True) ->
+        exists f, E_is_infinite_chain E x f.
+  Proof.
+    intros X E fin x H.
+    assert (infinite (E_finite_chains E x)).
+    pose proof (dcchoice _ _ H).
+    simpl in H0.
+    destruct H0.
+    exists (fun n => existT n (x0 n)).
+    intros i j e.
+    injection e; intro; auto.
+    pose proof (
+           dchoice_start (fun _ => {x & infinite (E_finite_chains E x)})
+                         (fun n p q => E (projT1 p) (projT1 q))
+                         (existT x H0)) as [f h].
+    intros.
+    destruct x0 as [y i].
+    
+    pose proof (E_infinite_finite_chains_S E fin y i) as [y' [h1 h2]].
+    exists (existT y' h2).
+    simpl.
+    auto.
+    exists (fun n => projT1 (f n)).
+    destruct h; split; auto.
+    rewrite H1; auto.
+  Defined.
 
 End FinitelyBranchingTree.
 
@@ -1042,6 +1042,9 @@ Proof.
   exists f.
   split; auto.
 Defined.
+
+
+Axiom magic : forall X, X.
 
 Lemma proves_ro_prt_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, w |- {{ϕ}} e {{ψ}} -> w |= {{ϕ}} e {{ψ}}
 with proves_ro_tot_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, w |- [{ϕ}] e [{ψ}] -> w |= [{ϕ}] e [{ψ}]
@@ -3223,8 +3226,111 @@ Proof.
       pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip2 _ _ m'') as [_ r2].
       apply (r2 _ h4 _ (eq_refl)).
 
+
     ++
-      (* | rw_while_prt : forall Γ Δ e c (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : Γ ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT)  ϕ θ, *)
+      (* | Rw_case_list_prt *)
+      intros γ δ m; simpl in m; simpl.
+      assert (1 <= length l).
+      pose proof (has_type_rw_phas_type_rw _ _ _ _ wty).
+      dependent destruction H; auto.
+      
+      rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_CaseList _ _ l _ H wty_l)).
+      simpl.
+      easy_rewrite_uip.
+      split.
+      {
+        (* nonempty *)
+        intro.
+        apply pdom_case_list_empty_2 in H0.
+        apply Exists_exists in H0.
+        destruct H0.
+        destruct H0.
+
+        clear H wty.
+        
+        dependent induction f.
+        simpl in H0.
+        exact H0.
+
+        simpl in H0.
+        destruct p.
+        simpl in H0.
+        destruct H0.
+        rewrite <- H in H1; simpl in H1.
+        destruct r.
+        assert (rw_to_ro_pre ϕ0 (δ; γ)) as m'.
+        unfold rw_to_ro_pre.
+        rewrite tedious_equiv_1.
+        auto.
+        pose proof (proves_ro_prt_sound _ _ _ _ _ _ p _ m').
+        (* pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p0). *)
+        destruct H1.
+        destruct H0 as [H0 _]; auto.
+        destruct H1.
+        destruct H0 as [_ H0].
+        pose proof (H0 _ H1 _ eq_refl).
+        simpl in H3.
+        assert (ro_to_rw_pre (q true) (δ, γ)).
+        unfold ro_to_rw_pre.
+        auto.
+        pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p0 _ _ H4) as [H5 _].
+        auto.
+        apply (IHf γ δ m x H).
+        exact H1.
+      }
+
+      intros.
+      destruct H0.
+      destruct H2.
+      clear H0.
+      apply Exists_exists in H2.
+      destruct H2.
+      clear H wty.
+      dependent induction f.
+      simpl in H0.
+      destruct H0.
+      contradict H.
+      simpl in H0.
+      destruct p.
+      simpl in H0.
+      destruct H0.
+      destruct H.
+      assert (rw_to_ro_pre ϕ0 (δ; γ)) as m'.
+      unfold rw_to_ro_pre.
+      rewrite tedious_equiv_1.
+      auto.
+      destruct r.
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ p _ m').
+      (* pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p0). *)
+      destruct H0.
+      destruct H2 as [_ H2].
+      simpl in H2.
+      rewrite <- H in H0.
+      simpl in H0.
+      pose proof (H2 _ H0 _ eq_refl).
+      assert (ro_to_rw_pre (q true) (δ, γ)).
+      unfold ro_to_rw_pre.
+      auto.
+      pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p0 _ _ H5) as [_ H6].
+      simpl in H6.
+      rewrite <- H in H3.
+      simpl in H3.
+      pose proof (H6 _ H3 _ H1).
+      exact H7.
+      apply (IHf γ δ m v x).
+      split.
+      exact H.
+
+      exact H0.
+      exact H1.
+      destruct H2.
+      rewrite H2 in H1.
+      contradict (flat_bot_neq_total _ H1).
+
+  
+      
+    ++
+      (* | Rw_while_prt : forall Γ Δ e c (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : Γ ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT)  ϕ θ, *)
 
       (*     wty_e |- {{rw_to_ro_pre ϕ}} e {{θ}} ->  *)
       (*     wty_c ||- {{ro_to_rw_pre (θ true)}} c {{fun _ => ϕ}} ->  *)
@@ -3862,7 +3968,196 @@ Proof.
       exists h2'.
       split; auto.
       
+    ++
+      (* case_list *)
+      apply sem_rw_prt_excludes_bot_is_tot.
+      +++
+        clear f0.      
+        intros γ δ m; simpl in m; simpl.
+        assert (rw_to_ro_pre ϕ0 (δ; γ)) as m' by (unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
+        assert (1 <= length l).
+        {
+          pose proof (has_type_rw_phas_type_rw _ _ _ _ wty).
+          dependent destruction H; auto.
+        }
+        rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_CaseList _ _ l _ H wty_l)).
+        easy_rewrite_uip.
+        split.
+        {
+          (* nonempty *)
+          intro.
+          apply pdom_case_list_empty_2 in H0.
+          apply Exists_exists in H0.
+          destruct H0.
+          destruct H0.
 
+          clear H wty.
+          dependent induction f.
+          simpl in H0.
+          exact H0.
+
+          simpl in H0.
+          destruct p.
+          simpl in H0.
+          destruct H0.
+          rewrite <- H in H1; simpl in H1.
+          destruct j.
+          destruct p.
+          pose proof (proves_ro_prt_sound _ _ _ _ _ _ p _ m').
+          (* pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p0). *)
+          destruct H1.
+          destruct H0 as [H0 _]; auto.
+          destruct H1.
+          destruct H0 as [_ H0].
+          pose proof (H0 _ H1 _ eq_refl).
+          simpl in H3.
+          assert (ro_to_rw_pre (q true) (δ, γ)).
+          unfold ro_to_rw_pre.
+          auto.
+          pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ p1 _ _ H4) as [H5 _].
+          auto.
+          apply (IHf γ δ m m' x H).
+          exact H1.
+        }
+        intros.
+        destruct H0.
+        clear H0.
+        destruct H2.
+        apply Exists_exists in H0.
+        destruct H0.
+        clear H wty.
+        dependent induction f.
+        simpl in H0.destruct H0.
+        contradict H.
+        simpl in H0.
+        destruct p.
+        simpl in H0.
+        destruct H0.
+        destruct H.
+        destruct j.
+        destruct p.
+        pose proof (proves_ro_prt_sound _ _ _ _ _ _ p _ m').
+        (* pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p0). *)
+        destruct H0.
+        destruct H2 as [_ H2].
+        simpl in H2.
+        rewrite <- H in H0.
+        simpl in H0.
+        pose proof (H2 _ H0 _ eq_refl).
+        assert (ro_to_rw_pre (q true) (δ, γ)).
+        unfold ro_to_rw_pre.
+        auto.
+        pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ p1 _ _ H5) as [_ H6].
+        simpl in H6.
+        rewrite <- H in H3.
+        simpl in H3.
+        pose proof (H6 _ H3).
+        destruct H7.
+        destruct H7.
+        rewrite H1 in H7.
+        apply total_is_injective in H7.
+        rewrite H7.
+        exact H8.
+
+        apply (IHf γ δ m m' v x); auto.
+
+        destruct H0.
+        rewrite H0 in H1.
+        contradict (flat_bot_neq_total _ H1).
+
+      +++
+        (* not bot *)
+        intros γ δ m.
+        assert (rw_to_ro_pre ϕ0 (δ; γ)) as m' by (unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
+        assert (1 <= length l).
+        {
+          pose proof (has_type_rw_phas_type_rw _ _ _ _ wty).
+          dependent destruction H; auto.
+        }
+        rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_CaseList _ _ l _ H wty_l)).
+        easy_rewrite_uip.
+        intro.
+        destruct H0 as [_ H0].
+        destruct H0.
+
+        {
+          (* when c yields bot *)
+
+          apply Exists_exists in H0.
+          destruct H0.
+          clear H wty f0.
+          dependent induction f.
+          simpl in H0.
+          destruct H0; auto. 
+
+          simpl in H0.
+          destruct p.
+          simpl in H0.
+          destruct H0.
+          destruct H.
+          rewrite <- H in H0; simpl in H0.
+          destruct j.
+          destruct p.
+          pose proof (proves_ro_prt_sound _ _ _ _ _ _ p _ m').
+          (* pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p0). *)
+          destruct H0.
+          destruct H1 as [_ H1].
+          pose proof (H1 _ H0 _ eq_refl).
+          simpl in H3.
+          assert (ro_to_rw_pre (q true) (δ, γ)).
+          unfold ro_to_rw_pre.
+          auto.
+          pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ p1 _ _ H4) as [_ H5].
+          pose proof (H5 _ H2).
+          destruct H6.
+          destruct H6.
+          contradict (flat_bot_neq_total _ H6).
+          apply (IHf γ δ m m' x); auto.          
+        }
+
+        {
+          (* when there is no guard *)
+          destruct H0 as [_ H0].
+          pose proof (Forall_to_forall _ _ H0); clear H0.
+          pose proof (f0 _ m').
+          clear H wty f0.
+          dependent induction f.
+          simpl in H0.
+          auto.
+          simpl in H0.
+          simpl in H1.
+
+          destruct H0.
+          destruct j.
+          pose proof (proves_ro_tot_sound _ _ _ _ _ _  p1 _ H) as [_ H2].
+          simpl in H2.
+          destruct p; simpl in H1.
+               
+          pose proof (H1  (sem_ro_exp (Δ ++ Γ) (fst a) BOOL h (δ; γ), sem_rw_exp Γ Δ (snd a) τ h0 γ δ) ( or_introl eq_refl )) as hh.
+          simpl in hh.
+          destruct hh.
+          pose proof (H2 _ H0).
+          destruct H3.
+          destruct H3.
+          rewrite H4 in H3.
+          apply total_is_injective in H3.
+          contradict H3; auto.
+          pose proof (H2 _ H0).
+          destruct H3.
+          destruct H3.
+          contradict (flat_bot_neq_total _ H3).
+          apply (IHf γ δ m m').
+          intros.
+          apply H1.
+          simpl.
+          auto.
+          destruct p.
+          simpl.
+          right; auto.
+          auto.
+        }
+        
+      
     ++
       (* | rw_while_tot : forall Γ Δ e c (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : (Γ ++ Δ) ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT) ϕ θ ψ, *)
       
