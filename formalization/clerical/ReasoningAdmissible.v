@@ -1,3 +1,4 @@
+Require Import List.
 Require Import Clerical.
 Require Import Typing.
 Require Import TypingProperties.
@@ -6,7 +7,6 @@ Require Import Specification.
 Require Import ReasoningRules.
 Arguments existT {_} {_}.
 Require Import Coq.Program.Equality.
-
 Fixpoint proves_admissible_ro_tot_prt Γ e τ (w : Γ |- e : τ) ϕ ψ (X : w |- [{ϕ}] e [{ψ}]) {struct X} : w |- {{ϕ}} e {{ψ}}
 with proves_admissible_rw_tot_prt Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ (X : w ||- [{ϕ}] e [{ψ}]) {struct X} : w ||- {{ϕ}} e {{ψ}}.
 Proof.

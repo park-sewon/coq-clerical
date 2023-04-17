@@ -6,21 +6,25 @@ Require Import List.
 (* A typing context. *)
 Definition ro_ctx := list datatype.
 Structure rw_ctx := {
-  ctx_rw : list datatype ;
-  ctx_ro : list datatype
+  ctx_rw : ro_ctx ;
+  ctx_ro : ro_ctx
 }.
 
 Definition mk_rw_ctx Γ Δ := {| ctx_ro := Γ ; ctx_rw := Δ|}.
 
-Inductive assignable : list datatype -> datatype -> nat -> Type :=
+Inductive assignable : ro_ctx -> datatype -> nat -> Type :=
   assignable_0 : forall Δ τ, assignable (τ :: Δ) τ 0
 | assignable_S : forall Δ τ σ k, assignable Δ τ k -> assignable (σ :: Δ) τ (S k). 
 
 Reserved Notation " Γ |- t : T " (at level 50, t, T at next level). 
 Reserved Notation " Γ ;;; Δ ||- t : T " (at level 50, Δ, t, T at next level). 
 
+(* list forall in Type level *)
+Inductive ForallT {A} (P : A -> Type): list A -> Type :=
+| ForallT_nil : ForallT P nil
+| ForallT_cons : forall x l, P x -> ForallT P l -> ForallT P (x::l).
 
-Inductive has_type_ro : ro_ctx -> comp -> datatype -> Type :=
+Inductive has_type_ro : ro_ctx -> exp -> datatype -> Type :=
 (* from readwrite *)
 | has_type_ro_rw : forall Γ e τ, Γ ;;; nil ||- e : τ -> Γ |- e : τ 
 
@@ -53,7 +57,7 @@ Inductive has_type_ro : ro_ctx -> comp -> datatype -> Type :=
 (* limit *)
 | has_type_ro_Lim : forall Γ e, (DInteger :: Γ) |- e : DReal -> Γ |- Lim e : DReal
                                                                                                          
-with has_type_rw : rw_ctx -> comp -> datatype -> Type :=
+with has_type_rw : rw_ctx -> exp -> datatype -> Type :=
 (* from readonly *)
 | has_type_rw_ro : forall Γ Δ e τ, (Δ ++ Γ) |- e : τ -> Γ ;;; Δ ||- e : τ
 
@@ -72,6 +76,20 @@ with has_type_rw : rw_ctx -> comp -> datatype -> Type :=
 (* case *)
 | has_type_rw_Case : forall Γ Δ e1 c1 e2 c2 τ, (Δ ++ Γ) |- e1 : DBoolean -> Γ ;;; Δ ||- c1 : τ -> (Δ ++ Γ) |- e2 : DBoolean -> Γ ;;; Δ ||- c2 : τ -> Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ
 
+(* case list *)
+| has_type_rw_CaseList : forall Γ Δ l τ,
+    (1 <= length l)%nat -> 
+    ForallT (fun ec => ((Δ ++ Γ) |- fst ec : DBoolean) * (Γ ;;; Δ ||- snd ec : τ))%type l ->
+    Γ ;;; Δ ||- CaseList l : τ
+                                                                                                                                                           
+(* (* case list one guard *) *)
+(* | has_type_rw_Case_1 : forall Γ Δ e c τ, *)
+(*     (Δ ++ Γ) |- e : DBoolean -> Γ ;;; Δ ||- c : τ -> Γ ;;; Δ ||- CaseList ((e, c) :: nil) : τ   *)
+
+(* (* case list appending guarded command *) *)
+(* | has_type_rw_Case_S : forall Γ Δ l e c τ, *)
+(*     Γ ;;; Δ ||- (CaseList l) : τ -> (Δ ++ Γ) |- e : DBoolean -> Γ ;;; Δ ||- c : τ -> Γ ;;; Δ ||- CaseList ((e, c) :: l) : τ   *)
+    
 (* while *)
 | has_type_rw_While : forall Γ Δ e c, (Δ ++ Γ) |- e : DBoolean -> Γ ;;; Δ ||- c : DUnit -> Γ ;;; Δ ||- While e c : DUnit
                                                                                                                                                                  

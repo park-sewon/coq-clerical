@@ -38,7 +38,7 @@ Reserved Notation " Γ |~ t : T " (at level 50, t, T at next level).
 Reserved Notation " Γ ;;; Δ ||~ t : T " (at level 50, Δ, t, T at next level). 
 
 
-Inductive phas_type_ro : ro_ctx -> comp -> datatype -> Type :=
+Inductive phas_type_ro : ro_ctx -> exp -> datatype -> Type :=
 (* from readwrite *)
 | phas_type_ro_rw_Seq : forall Γ c1 c2 τ, Γ ;;; nil ||~ (c1 ;; c2) : τ -> Γ |~ (c1 ;; c2) : τ 
 
@@ -50,7 +50,10 @@ Inductive phas_type_ro : ro_ctx -> comp -> datatype -> Type :=
 
 | phas_type_ro_rw_Case : forall Γ e1 c1 e2 c2 τ,
     Γ ;;; nil ||~ (Case e1 c1 e2 c2) : τ -> Γ |~ (Case e1 c1 e2 c2) : τ
-                                                                        
+
+| phas_type_ro_rw_CaseList : forall Γ l τ,
+    Γ ;;; nil ||~ CaseList l : τ -> Γ |~ (CaseList l) : τ
+                                                          
 | phas_type_ro_rw_While : forall Γ e c, Γ ;;; nil ||~ (While e c) : DUnit -> Γ |~ (While e c) : DUnit
                                                                                                   
 (* variables *)
@@ -82,7 +85,7 @@ Inductive phas_type_ro : ro_ctx -> comp -> datatype -> Type :=
 (* limit *)
 | phas_type_ro_Lim : forall Γ e, (DInteger :: Γ) |~ e : DReal -> Γ |~ Lim e : DReal
                                                                                 
-with phas_type_rw : rw_ctx -> comp -> datatype -> Type :=
+with phas_type_rw : rw_ctx -> exp -> datatype -> Type :=
 (* from readonly *)
 | phas_type_rw_ro_Var :
   forall Γ Δ k τ,
@@ -122,6 +125,20 @@ with phas_type_rw : rw_ctx -> comp -> datatype -> Type :=
 (* case *)
 | phas_type_rw_Case : forall Γ Δ e1 c1 e2 c2 τ, (Δ ++ Γ) |~ e1 : DBoolean -> Γ ;;; Δ ||~ c1 : τ -> (Δ ++ Γ) |~ e2 : DBoolean -> Γ ;;; Δ ||~ c2 : τ -> Γ ;;; Δ ||~ Case e1 c1 e2 c2 : τ
 
+| phas_type_rw_CaseList : forall Γ Δ l τ,
+    (1 <= length l)%nat -> 
+    ForallT (fun ec => ((Δ ++ Γ) |~ fst ec : DBoolean) * (Γ ;;; Δ ||~ snd ec : τ))%type l ->
+    Γ ;;; Δ ||~ CaseList l : τ
+
+                                                                                                                                                                                       
+(* (* case list one guard *) *)
+(* | phas_type_rw_Case_1 : forall Γ Δ e c τ, *)
+(*     (Δ ++ Γ) |~ e : DBoolean -> Γ ;;; Δ ||~ c : τ -> Γ ;;; Δ ||~ CaseList ((e, c) :: nil) : τ   *)
+
+(* (* case list appending guarded command *) *)
+(* | phas_type_rw_Case_S : forall Γ Δ l e c τ, *)
+(*     Γ ;;; Δ ||~ (CaseList l) : τ -> (Δ ++ Γ) |~ e : DBoolean -> Γ ;;; Δ ||~ c : τ -> Γ ;;; Δ ||~ CaseList ((e, c) :: l) : τ   *)
+                                                                                                                            
 (* while *)
 | phas_type_rw_While : forall Γ Δ e c, (Δ ++ Γ) |~ e : DBoolean -> Γ ;;; Δ ||~ c : DUnit -> Γ ;;; Δ ||~ While e c : DUnit
                                                                                                                       
@@ -137,7 +154,7 @@ Proof.
   exact IHt.
 Defined.
 
-Fixpoint phas_type_rw_move Γ Δ1 Δ2 e τ (w : (Δ2 ++ Γ) ;;; Δ1 ||~ e : τ) : Γ ;;; (Δ1 ++ Δ2) ||~ e : τ.
+Fixpoint phas_type_rw_move Γ Δ1 Δ2 e τ (w : (Δ2 ++ Γ) ;;; Δ1 ||~ e : τ) {struct w}: Γ ;;; (Δ1 ++ Δ2) ||~ e : τ.
 Proof.
   inversion w.
   apply phas_type_rw_ro_Var; auto.
@@ -166,14 +183,33 @@ Proof.
   apply phas_type_rw_move; auto.
   apply (phas_type_rw_Cond _ _ _ _ _); auto.
   replace ((Δ1 ++ Δ2) ++ Γ) with (Δ1 ++ Δ2 ++ Γ) by apply app_assoc; auto.
+  {
   apply (phas_type_rw_Case _ _ _ _ _); auto.
   replace ((Δ1 ++ Δ2) ++ Γ) with (Δ1 ++ Δ2 ++ Γ) by apply app_assoc; auto.
   replace ((Δ1 ++ Δ2) ++ Γ) with (Δ1 ++ Δ2 ++ Γ) by apply app_assoc; auto.
+  }
+  
+  apply (phas_type_rw_CaseList _ _ _ _); auto.
+  replace ((Δ1 ++ Δ2) ++ Γ) with (Δ1 ++ Δ2 ++ Γ) by apply app_assoc; auto.
+  clear H H0 H2 H3 H1.
+  induction H4.
+  apply ForallT_nil.
+  apply ForallT_cons.
+  destruct p.
+  split.
+  exact p.
+  exact (phas_type_rw_move _ _ _ _ _ p0).
+  apply IHForallT.
+
+  (* apply (phas_type_rw_Case_1 _ _ _ _ _); auto. *)
+  (* replace ((Δ1 ++ Δ2) ++ Γ) with (Δ1 ++ Δ2 ++ Γ) by apply app_assoc; auto. *)
+
+  (* apply (phas_type_rw_Case_S _ _ _ _ _); auto. *)
+  (* replace ((Δ1 ++ Δ2) ++ Γ) with (Δ1 ++ Δ2 ++ Γ) by apply app_assoc; auto. *)
+  
   apply (phas_type_rw_While _ _ _ _); auto.
   replace ((Δ1 ++ Δ2) ++ Γ) with (Δ1 ++ Δ2 ++ Γ) by apply app_assoc; auto.
 Qed.
-
-
 
 Fixpoint unamb_Var_0' Γ τ σ (w : (σ :: Γ) |~ Var 0 : τ) : σ = τ.
 Proof.
@@ -229,8 +265,34 @@ Proof.
     apply (phas_type_rw_Newvar _ _ _ _ σ); auto.
     apply phas_type_ro_rw_Cond.
     apply (phas_type_rw_Cond _ _ _ _ _ τ); auto.
-    apply phas_type_ro_rw_Case.
-    apply (phas_type_rw_Case _ _ _ _ _ _ τ); auto.
+    {
+      (* binary case will be deleted later *)
+      apply phas_type_ro_rw_Case.
+      apply (phas_type_rw_Case _ _ _ _ _ _ τ); auto.
+    }
+
+    {
+      apply phas_type_ro_rw_CaseList.
+      apply phas_type_rw_CaseList; auto.
+      clear H5 H3 H4 H6 H7.
+      induction H8.
+      apply ForallT_nil.
+      apply ForallT_cons.
+      destruct p.
+      split.
+      exact (has_type_ro_phas_type_ro _ _ _ h).
+      exact (has_type_rw_phas_type_rw _ _ _ _ h0).
+      apply IHForallT.      
+    }
+    (* { *)
+    (*   apply phas_type_ro_rw_CaseList. *)
+    (*   apply (phas_type_rw_Case_1 _ _ _ _  τ); auto. *)
+    (* } *)
+    (* { *)
+    (*   apply phas_type_ro_rw_CaseList. *)
+    (*   apply (phas_type_rw_Case_S _ _ _ _ _ τ); auto. *)
+    (* } *)
+    
     apply phas_type_ro_rw_While.
     apply (phas_type_rw_While _ _ _ _); auto.
     apply phas_type_ro_Var_0; auto.
@@ -337,9 +399,34 @@ Proof.
       apply has_type_rw_phas_type_rw in w1;
       apply has_type_rw_phas_type_rw in w2.
     apply (phas_type_rw_Case); auto.
+    {
+      apply phas_type_rw_CaseList.
+      apply l0.
+      clear l0.
+      induction f.
+      apply ForallT_nil.
+      apply ForallT_cons.
+      destruct p.
+      split.
+      exact (has_type_ro_phas_type_ro _ _ _ h).
+      exact (has_type_rw_phas_type_rw _ _ _ _ h0).
+      apply IHf.
+    }
+    
+
+    (* apply has_type_ro_phas_type_ro in h; *)
+    (*   apply has_type_rw_phas_type_rw in w. *)
+    (* apply (phas_type_rw_Case_1); auto. *)
+
+    (* apply has_type_ro_phas_type_ro in h; *)
+    (*   apply has_type_rw_phas_type_rw in w1; *)
+    (*   apply has_type_rw_phas_type_rw in w2. *)
+    (* apply (phas_type_rw_Case_S); auto. *)
+    
     apply has_type_ro_phas_type_ro in h;
       apply has_type_rw_phas_type_rw in w.
     apply (phas_type_rw_While); auto.
+
 Defined.
 
 Fixpoint phas_type_ro_has_type_ro Γ e τ (w : Γ |~ e : τ) {struct w}: Γ |- e : τ
@@ -411,6 +498,29 @@ Proof.
     apply phas_type_rw_has_type_rw in w1; auto.
     apply phas_type_ro_has_type_ro in p0; auto.
     apply phas_type_rw_has_type_rw in w2; auto.
+
+    {
+      apply has_type_rw_CaseList.
+      apply l0.
+      clear l0.
+      induction f.
+      apply ForallT_nil.
+      apply ForallT_cons.
+      destruct p.
+      split.
+      exact (phas_type_ro_has_type_ro _ _ _ p).
+      exact (phas_type_rw_has_type_rw _ _ _ _ p0).
+      apply IHf.
+      }
+
+    (* apply (has_type_rw_Case_1). *)
+    (* apply phas_type_ro_has_type_ro in p; auto. *)
+    (* apply phas_type_rw_has_type_rw in w; auto. *)
+    (* apply (has_type_rw_Case_S). *)
+    (* apply phas_type_ro_has_type_ro in p; auto. *)
+    (* apply phas_type_rw_has_type_rw in w1; auto. *)
+    (* apply phas_type_rw_has_type_rw in w2; auto. *)
+
     apply (has_type_rw_While).
     apply phas_type_ro_has_type_ro in p; auto.
     apply phas_type_rw_has_type_rw in w; auto.
@@ -424,6 +534,25 @@ Proof.
   apply phas_type_rw_has_type_rw in H4.
   exact H4.
 Defined.  
+
+Fixpoint has_type_rw_CaseList_nil_absurd Γ Δ τ (w : Γ ;;; Δ ||- CaseList nil : τ) : False.
+Proof.
+  
+  dependent destruction w.
+  dependent destruction h.
+  apply (has_type_rw_CaseList_nil_absurd _ _ _ h); auto.
+  contradict l0.
+  simpl; apply PeanoNat.Nat.nle_succ_0.
+Qed.
+    
+
+Lemma phas_type_rw_CaseList_nil_absurd : forall Γ Δ τ, Γ ;;; Δ ||~ CaseList nil : τ -> False.
+Proof.
+  intros.
+  dependent destruction H.
+  contradict l0.
+  simpl; apply PeanoNat.Nat.nle_succ_0.
+Qed.
 
 Fixpoint phas_type_ro_unambiguous Γ e τ σ (w1 : Γ |~ e : τ){struct w1} : (Γ |~ e : σ) -> τ = σ
 with phas_type_rw_unambiguous Γ Δ e τ σ (w1 : Γ ;;; Δ ||~ e : τ){struct w1} : ( Γ ;;; Δ ||~ e  : σ)  -> τ = σ.
@@ -445,6 +574,7 @@ Proof.
     dependent destruction p.
     dependent destruction p0.
     apply (phas_type_rw_unambiguous _ _ _ _ _ p2 p0_1).
+    apply (phas_type_rw_unambiguous _ _ _ _ _ p p0).
     apply (unamb_Var' _ _ _ _ w1 w2).
   +
     intro w2.
@@ -460,6 +590,25 @@ Proof.
     apply (phas_type_rw_unambiguous _ _ _ _ _ w1 w2).
     apply (phas_type_rw_unambiguous _ _ _ _ _ w1_1 w2_1).
     apply (phas_type_rw_unambiguous _ _ _ _ _ w1_1 w2_1).
+
+    {
+      destruct l.
+      
+      contradict l0.
+      simpl; apply PeanoNat.Nat.nle_succ_0.
+
+      dependent destruction f.
+      dependent destruction f0.
+      
+      destruct p0.
+      destruct p1.
+      apply (phas_type_rw_unambiguous _ _ _ _ _ p2 p3).
+    }
+
+    (* apply (phas_type_rw_unambiguous _ _ _ _ _ w1 w2). *)
+    (* contradict (phas_type_rw_CaseList_nil_absurd _ _ _  w2_1). *)
+    (* contradict (phas_type_rw_CaseList_nil_absurd _ _ _  w1_1). *)
+    (* apply (phas_type_rw_unambiguous _ _ _ _ _ w1_2 w2_2). *)
 Defined.
 
 Lemma has_type_ro_unambiguous Γ e τ σ :  Γ |- e : τ -> Γ |- e : σ -> τ = σ.
@@ -477,8 +626,6 @@ Proof.
   apply has_type_rw_phas_type_rw in w2.
   apply (phas_type_rw_unambiguous _ _ _ _ _ w1 w2).
 Defined.
-
-
 
 Lemma assignable_absurd k τ (a : assignable nil τ k) : False.
 Proof.

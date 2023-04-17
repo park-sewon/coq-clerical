@@ -16,7 +16,7 @@ Require Import Coq.Program.Equality.
   
 Lemma sem_ro_prt_excludes_bot_is_tot : forall Γ e τ ϕ ψ (w : Γ |- e : τ), 
     w |= {{ϕ}} e {{ψ}} -> 
-    (forall γ, ϕ γ -> ⊥ ∉ sem_ro_comp _ _ _ w γ) ->
+    (forall γ, ϕ γ -> ⊥ ∉ sem_ro_exp _ _ _ w γ) ->
     w |= [{ϕ}] e [{ψ}].
 Proof.
   intros Γ e τ ϕ ψ w h1 h2 γ m; simpl; simpl in m.
@@ -30,7 +30,7 @@ Qed.
 
 Lemma sem_rw_prt_excludes_bot_is_tot : forall Γ Δ e τ ϕ ψ (w : Γ ;;; Δ ||- e : τ), 
     w ||= {{ϕ}} e {{ψ}} -> 
-    (forall γ δ, ϕ (δ, γ) -> ⊥ ∉ sem_rw_comp _ _ _ _ w γ δ) ->
+    (forall γ δ, ϕ (δ, γ) -> ⊥ ∉ sem_rw_exp _ _ _ _ w γ δ) ->
     w ||= [{ϕ}] e [{ψ}].
 Proof.
   intros Γ Δ e τ ϕ ψ w h1 h2 γ δ m; simpl; simpl in m.
@@ -45,7 +45,7 @@ Qed.
 Lemma sem_ro_tot_is_prt_excludes_bot : forall Γ e τ ϕ ψ (w : Γ |- e : τ), 
     w |= [{ϕ}] e [{ψ}] ->
     w |= {{ϕ}} e {{ψ}} /\ 
-    (forall γ, ϕ γ -> ⊥ ∉ sem_ro_comp _ _ _ w γ).
+    (forall γ, ϕ γ -> ⊥ ∉ sem_ro_exp _ _ _ w γ).
 Proof.
   intros Γ e τ ϕ ψ w h1.
   split.
@@ -67,7 +67,7 @@ Qed.
 
 Lemma sem_ro_tot_excludes_bot : forall Γ e τ ϕ ψ (w : Γ |- e : τ), 
     w |= [{ϕ}] e [{ψ}] ->
-    (forall γ, ϕ γ -> ⊥ ∉ sem_ro_comp _ _ _ w γ).
+    (forall γ, ϕ γ -> ⊥ ∉ sem_ro_exp _ _ _ w γ).
 Proof.
   apply sem_ro_tot_is_prt_excludes_bot.
 Defined.
@@ -75,7 +75,7 @@ Defined.
 Lemma sem_rw_tot_is_prt_excludes_bot : forall Γ Δ e τ ϕ ψ (w : Γ ;;; Δ ||- e : τ), 
     w ||= [{ϕ}] e [{ψ}] ->
     w ||= {{ϕ}} e {{ψ}} /\ 
-    (forall γ δ, ϕ (δ, γ) -> ⊥ ∉ sem_rw_comp _ _ _ _ w γ δ).
+    (forall γ δ, ϕ (δ, γ) -> ⊥ ∉ sem_rw_exp _ _ _ _ w γ δ).
 Proof.
   intros Γ Δ e τ ϕ ψ w h1.
   split.
@@ -97,7 +97,7 @@ Qed.
 
 Lemma sem_rw_tot_excludes_bot : forall Γ Δ e τ ϕ ψ (w : Γ ;;; Δ ||- e : τ), 
     w ||= [{ϕ}] e [{ψ}] ->
-    (forall γ δ, ϕ (δ, γ) -> ⊥ ∉ sem_rw_comp _ _ _ _ w γ δ).
+    (forall γ δ, ϕ (δ, γ) -> ⊥ ∉ sem_rw_exp _ _ _ _ w γ δ).
 Proof.
   apply sem_rw_tot_is_prt_excludes_bot.
 Defined.
@@ -106,7 +106,7 @@ Defined.
 Lemma ro_prt_post_pre : forall Γ e τ ϕ ψ (w : Γ |- e : τ),
     (w |= {{ϕ}} e {{ψ}}) ->
     forall y,
-    forall γ, ϕ γ -> total y ∈ sem_ro_comp _ _ _ w γ -> ψ y γ.
+    forall γ, ϕ γ -> total y ∈ sem_ro_exp _ _ _ w γ -> ψ y γ.
 Proof.
   intros.
   pose proof (H γ H0) as [H2 H3].
@@ -116,7 +116,7 @@ Defined.
 Lemma ro_tot_post_pre : forall Γ e τ ϕ ψ (w : Γ |- e : τ),
     (w |= [{ϕ}] e [{ψ}]) ->
     forall y,
-    forall γ, ϕ γ -> total y ∈ sem_ro_comp _ _ _ w γ -> ψ y γ.
+    forall γ, ϕ γ -> total y ∈ sem_ro_exp _ _ _ w γ -> ψ y γ.
 Proof.
   intros.
   pose proof (H γ H0) as [H3 H4].
@@ -129,7 +129,7 @@ Lemma trip_ro_prt_sem_typing_irrl : forall Γ e τ ϕ ψ (w1 w2 : Γ |- e : τ),
 Proof.
   intros.
   intros γ m.
-  rewrite (sem_ro_comp_unique _ _ _ w2 w1).
+  rewrite (sem_ro_exp_unique _ _ _ w2 w1).
   apply H; auto.
 Defined.
 
@@ -137,7 +137,7 @@ Lemma trip_rw_prt_sem_typing_irrl : forall Γ Δ e τ ϕ ψ (w1 w2 : Γ ;;; Δ |
 Proof.
   intros.
   intros γ m.
-  rewrite (sem_rw_comp_unique _ _ _ _ w2 w1).
+  rewrite (sem_rw_exp_unique _ _ _ _ w2 w1).
   apply H; auto.
 Defined.
 
@@ -145,7 +145,7 @@ Lemma trip_ro_tot_sem_typing_irrl : forall Γ e τ ϕ ψ (w1 w2 : Γ |- e : τ),
 Proof.
   intros.
   intros γ m.
-  rewrite (sem_ro_comp_unique _ _ _ w2 w1).
+  rewrite (sem_ro_exp_unique _ _ _ w2 w1).
   apply H; auto.
 Defined.
 
@@ -153,7 +153,7 @@ Lemma trip_rw_tot_sem_typing_irrl : forall Γ Δ e τ ϕ ψ (w1 w2 : Γ ;;; Δ |
 Proof.
   intros.
   intros γ m.
-  rewrite (sem_rw_comp_unique _ _ _ _ w2 w1).
+  rewrite (sem_rw_exp_unique _ _ _ _ w2 w1).
   apply H; auto.
 Defined.
 
@@ -270,7 +270,7 @@ Proof.
 Defined.
 
 Fixpoint Var_sem_ro_access_equiv k Γ τ (w : Γ |- Var k : τ) γ {struct w}: 
-    sem_ro_comp _ _ _ w γ = pdom_unit (ro_access _ _ _ w γ).
+    sem_ro_exp _ _ _ w γ = pdom_unit (ro_access _ _ _ w γ).
 Proof.
   intros.
   dependent induction w.
@@ -283,8 +283,8 @@ Proof.
   easy_rewrite_uip.
   destruct γ; simpl.
   apply eq_refl.
-  assert (sem_ro_comp (σ :: Γ) (VAR S k0) τ (has_type_ro_Var_S Γ σ τ k0 w) γ
-          = sem_ro_comp Γ (Var k0) τ w (snd γ)).
+  assert (sem_ro_exp (σ :: Γ) (VAR S k0) τ (has_type_ro_Var_S Γ σ τ k0 w) γ
+          = sem_ro_exp Γ (Var k0) τ w (snd γ)).
   simpl.
   auto.
   rewrite H.
@@ -389,7 +389,7 @@ Proof.
   destruct H3.
   pose proof (has_type_ro_unambiguous _ _ _ _ h w).
   induction H4.
-  rewrite  (sem_ro_comp_unique _ _ _ h w) in H1.
+  rewrite  (sem_ro_exp_unique _ _ _ h w) in H1.
   auto.
   intros h1 h2 h3 h4.
   destruct h2.
@@ -416,7 +416,7 @@ Proof.
   destruct H5 as [_ H5].
   pose proof (has_type_ro_unambiguous _ _ _ _ h w).
   induction H4.
-  rewrite <- (sem_ro_comp_unique _ _ _ h w) in H5.
+  rewrite <- (sem_ro_exp_unique _ _ _ h w) in H5.
   pose proof (H5 (total s) H1 _ eq_refl).
   pose proof (H0 s γ δ H4).
   unfold update' in H6.
@@ -452,14 +452,14 @@ Proof.
 
   pose proof (has_type_ro_unambiguous _ _ _ _ h w).
   induction H4.
-  rewrite  (sem_ro_comp_unique _ _ _ h w) in H1.
+  rewrite  (sem_ro_exp_unique _ _ _ h w) in H1.
   pose proof (h2 (δ; γ)).
   rewrite tedious_equiv_1 in H4.
   apply (H4 H H1).
   
   pose proof (has_type_ro_unambiguous _ _ _ _ h w).
   induction H4.
-  rewrite  (sem_ro_comp_unique _ _ _ h w) in H1.
+  rewrite  (sem_ro_exp_unique _ _ _ h w) in H1.
   simpl in H3.
   rewrite <- H3 in H2.
   simpl in H2.
@@ -474,11 +474,11 @@ Lemma proves_rw_while_prt_sound : forall Γ Δ  e c (wty_e : (Δ ++ Γ) |- e : B
 Proof.
   intros Γ Δ e c wty_e wty_c wty ϕ θ BB CC.
   intros γ δ m; simpl; simpl in m.
-  pose (fun d => sem_ro_comp _ _ _ wty_e (d; γ)) as B.
-  pose (fun d => pdom_lift fst (sem_rw_comp _ _ _ _ wty_c γ d)) as C.
-      replace (sem_rw_comp Γ Δ (WHILE e DO c END) UNIT wty γ δ) with
+  pose (fun d => sem_ro_exp _ _ _ wty_e (d; γ)) as B.
+  pose (fun d => pdom_lift fst (sem_rw_exp _ _ _ _ wty_c γ d)) as C.
+      replace (sem_rw_exp Γ Δ (WHILE e DO c END) UNIT wty γ δ) with
         (pdom_lift (fun x => (x, tt)) (pdom_while B C δ))
-        by (rewrite (sem_rw_comp_unique _ _ _ _ wty (has_type_rw_While _ _ _ _ wty_e  wty_c)); simpl; auto).
+        by (rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_While _ _ _ _ wty_e  wty_c)); simpl; auto).
       assert ( (rw_to_ro_pre ϕ) (δ; γ)) as m'
           by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
       pose proof (BB _ m') as [p1 p2].
@@ -515,7 +515,7 @@ Proof.
         pose proof (ro_prt_post_pre _ _ _ _ _ _ ((BB)) true (δ1 ; γ) H0 H3) as m''.
         pose proof (CC _ _ m'') as [_ r2].
         simpl in r2.
-        assert (total (d, tt) ∈  sem_rw_comp Γ Δ c UNIT wty_c γ δ1).
+        assert (total (d, tt) ∈  sem_rw_exp Γ Δ c UNIT wty_c γ δ1).
         {
           unfold C in hh1.
           apply pdom_lift_total_2 in hh1.
@@ -940,7 +940,7 @@ Proof.
 
   intros γ δ m; simpl; simpl in m.
   rewrite
-    (sem_rw_comp_auxiliary_ctx _ _ _ _ _ _ wty_c γ δ δ).
+    (sem_rw_exp_auxiliary_ctx _ _ _ _ _ _ wty_c γ δ δ).
   pose proof (CC (γ; δ) δ).
   simpl in H.
   assert (ro_to_rw_pre (θ true) (δ, fst_concat (γ; δ)) /\ δ = snd_concat (γ; δ)).
@@ -965,12 +965,12 @@ Proof.
 
 
   (* non empty *)
-  pose (fun d => sem_ro_comp _ _ _ wty_e (d ; γ)) as B.
-  pose (fun d => pdom_lift fst (sem_rw_comp _ _ _ _ (has_type_while_inv_body _ _ _ _ wty) γ d)) as C.
-  replace (sem_rw_comp Γ Δ (WHILE e DO c END) UNIT wty γ δ) with
+  pose (fun d => sem_ro_exp _ _ _ wty_e (d ; γ)) as B.
+  pose (fun d => pdom_lift fst (sem_rw_exp _ _ _ _ (has_type_while_inv_body _ _ _ _ wty) γ d)) as C.
+  replace (sem_rw_exp Γ Δ (WHILE e DO c END) UNIT wty γ δ) with
     (pdom_lift (fun x => (x, tt)) (pdom_while B C δ))
   by (
-  rewrite (sem_rw_comp_unique _ _ _ _ wty (has_type_rw_While _ _ _ _ wty_e
+  rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_While _ _ _ _ wty_e
                                                              (has_type_while_inv_body _ _ _ _ wty))); simpl; auto).
   intro p.
   pose proof
@@ -1002,7 +1002,7 @@ Proof.
   unfold C in H3.
   apply pdom_lift_empty_2 in H3.
   rewrite
-    (sem_rw_comp_auxiliary_ctx _ _ _ _ _ _ wty_c γ x x) in H3.
+    (sem_rw_exp_auxiliary_ctx _ _ _ _ _ _ wty_c γ x x) in H3.
   auto.
   
   
@@ -1011,7 +1011,7 @@ Proof.
   unfold C in H3.
   apply pdom_lift_bot_2 in H3.
   rewrite
-    (sem_rw_comp_auxiliary_ctx _ _ _ _ _ _ wty_c γ x x) in H3.
+    (sem_rw_exp_auxiliary_ctx _ _ _ _ _ _ wty_c γ x x) in H3.
   pose proof (H2 _ H3).
   destruct H4 as [t1 [t2 t3]].
   contradict (flat_bot_neq_total _ t2).
@@ -1024,7 +1024,7 @@ Proof.
   simpl in H4.
   induction H4.
   rewrite
-    (sem_rw_comp_auxiliary_ctx _ _ _ _ _ _ wty_c γ x x) in H3.
+    (sem_rw_exp_auxiliary_ctx _ _ _ _ _ _ wty_c γ x x) in H3.
   pose proof (H2 _ H3).
   destruct H4 as [t1 [t2 [t3 t4]]].
   apply total_is_injective in t2.
@@ -1126,7 +1126,7 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w |- {{Q tt}} SKIP {{Q}} *)
       intros γ m; simpl in m; simpl.
-      rewrite (sem_ro_comp_unique Γ SKIP UNIT w (has_type_ro_Skip _)).
+      rewrite (sem_ro_exp_unique Γ SKIP UNIT w (has_type_ro_Skip _)).
       simpl.
       split.
       apply pdom_unit_neg_is_empty.
@@ -1140,7 +1140,7 @@ Proof.
       (*     w |- {{Q true}} TRUE {{Q}} *)
       
       intros γ m; simpl in m; simpl.
-      rewrite (sem_ro_comp_unique _ _ _ w (has_type_ro_True _)).
+      rewrite (sem_ro_exp_unique _ _ _ w (has_type_ro_True _)).
       simpl.
       split.
       apply pdom_unit_neg_is_empty.
@@ -1155,7 +1155,7 @@ Proof.
 
 
       intros γ m; simpl in m; simpl.
-      rewrite (sem_ro_comp_unique _ _ _ w (has_type_ro_False _)).
+      rewrite (sem_ro_exp_unique _ _ _ w (has_type_ro_False _)).
       simpl.
       split.
       apply pdom_unit_neg_is_empty.
@@ -1170,7 +1170,7 @@ Proof.
 
 
       intros γ m; simpl in m; simpl.
-      rewrite (sem_ro_comp_unique _ _ _ w (has_type_ro_Int _ _)).
+      rewrite (sem_ro_exp_unique _ _ _ w (has_type_ro_Int _ _)).
       simpl.
       split.
       apply pdom_unit_neg_is_empty.
@@ -1187,7 +1187,7 @@ Proof.
 
       intros γ m; simpl in m; simpl.
       pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p γ tt m) as [p1 p2].
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_rw _ _ _ w)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_rw _ _ _ w)).
       simpl.
       split.
       intro h.
@@ -1215,10 +1215,10 @@ Proof.
       
       pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip (γ; γ')  m) as [p1 p2].
       split.
-      rewrite <- (sem_ro_comp_auxiliary_ctx _ _ _ _ w) in p1; auto.
+      rewrite <- (sem_ro_exp_auxiliary_ctx _ _ _ _ w) in p1; auto.
       intros h1 h2 h3 h4.
       exists γ'.
-      rewrite <- (sem_ro_comp_auxiliary_ctx _ _ _ _ w) in p2; auto.
+      rewrite <- (sem_ro_exp_auxiliary_ctx _ _ _ _ w) in p2; auto.
       pose proof (p2 h1 h2 _ h4).
       simpl in H; auto.
       
@@ -1233,7 +1233,7 @@ Proof.
 
       intros γ m; simpl in m; simpl.
       pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip γ m) as [p1 p2].
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZRcoerce  _ _ w)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZRcoerce  _ _ w)).
       simpl.
       split.
       {
@@ -1266,7 +1266,7 @@ Proof.
 
       intros γ m; simpl in m; simpl.
       pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip γ m) as [p1 p2].
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZRexp  _ _ w)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZRexp  _ _ w)).
       simpl.
       split.
       {
@@ -1306,7 +1306,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZplus _ _ _ w1 w2)); simpl.      
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZplus _ _ _ w1 w2)); simpl.      
         intro.
         apply pdom_lift_empty_2 in H.
         unfold pdom_prod in H.
@@ -1318,10 +1318,10 @@ Proof.
         apply (p1 H3).        
       }
       intros.
-      assert (sem_ro_comp Γ (e1 :+: e2) INTEGER w' γ
+      assert (sem_ro_exp Γ (e1 :+: e2) INTEGER w' γ
               =
-                pdom_lift2 (BinInt.Z.add) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ)).
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZplus _ _ _ w1 w2)); simpl.      
+                pdom_lift2 (BinInt.Z.add) (sem_ro_exp _ _ _ w1 γ) (sem_ro_exp _ _ _ w2 γ)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZplus _ _ _ w1 w2)); simpl.      
       auto.
       rewrite H1 in H.
       clear H1.
@@ -1362,7 +1362,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZmult _ _ _ w1 w2)); simpl.      
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZmult _ _ _ w1 w2)); simpl.      
         intro.
         apply pdom_lift_empty_2 in H.
         unfold pdom_prod in H.
@@ -1374,10 +1374,10 @@ Proof.
         apply (p1 H3).        
       }
       intros.
-      assert (sem_ro_comp Γ (e1 :*: e2) INTEGER w' γ
+      assert (sem_ro_exp Γ (e1 :*: e2) INTEGER w' γ
               =
-                pdom_lift2 (BinInt.Zmult) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ)).
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZmult _ _ _ w1 w2)); simpl.      
+                pdom_lift2 (BinInt.Zmult) (sem_ro_exp _ _ _ w1 γ) (sem_ro_exp _ _ _ w2 γ)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZmult _ _ _ w1 w2)); simpl.      
       auto.
       rewrite H1 in H.
       clear H1.
@@ -1417,7 +1417,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZminus _ _ _ w1 w2)); simpl.      
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZminus _ _ _ w1 w2)); simpl.      
         intro.
         apply pdom_lift_empty_2 in H.
         unfold pdom_prod in H.
@@ -1429,10 +1429,10 @@ Proof.
         apply (p1 H3).        
       }
       intros.
-      assert (sem_ro_comp Γ (e1 :-: e2) INTEGER w' γ
+      assert (sem_ro_exp Γ (e1 :-: e2) INTEGER w' γ
               =
-                pdom_lift2 (BinInt.Zminus) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ)).
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZminus _ _ _ w1 w2)); simpl.      
+                pdom_lift2 (BinInt.Zminus) (sem_ro_exp _ _ _ w1 γ) (sem_ro_exp _ _ _ w2 γ)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZminus _ _ _ w1 w2)); simpl.      
       auto.
       rewrite H1 in H.
       clear H1.
@@ -1473,7 +1473,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRplus _ _ _ w1 w2)); simpl.      
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRplus _ _ _ w1 w2)); simpl.      
         intro.
         apply pdom_lift_empty_2 in H.
         unfold pdom_prod in H.
@@ -1485,10 +1485,10 @@ Proof.
         apply (p1 H3).        
       }
       intros.
-      assert (sem_ro_comp Γ (e1 ;+; e2) REAL w' γ
+      assert (sem_ro_exp Γ (e1 ;+; e2) REAL w' γ
               =
-                pdom_lift2 (Rplus) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ)).
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRplus _ _ _ w1 w2)); simpl.      
+                pdom_lift2 (Rplus) (sem_ro_exp _ _ _ w1 γ) (sem_ro_exp _ _ _ w2 γ)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRplus _ _ _ w1 w2)); simpl.      
       auto.
       rewrite H1 in H.
       clear H1.
@@ -1528,7 +1528,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRmult _ _ _ w1 w2)); simpl.      
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRmult _ _ _ w1 w2)); simpl.      
         intro.
         apply pdom_lift_empty_2 in H.
         unfold pdom_prod in H.
@@ -1540,10 +1540,10 @@ Proof.
         apply (p1 H3).        
       }
       intros.
-      assert (sem_ro_comp Γ _ _ w' γ
+      assert (sem_ro_exp Γ _ _ w' γ
               =
-                pdom_lift2 (Rmult) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ)).
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRmult _ _ _ w1 w2)); simpl.      
+                pdom_lift2 (Rmult) (sem_ro_exp _ _ _ w1 γ) (sem_ro_exp _ _ _ w2 γ)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRmult _ _ _ w1 w2)); simpl.      
       auto.
       rewrite H1 in H.
       clear H1.
@@ -1583,7 +1583,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRminus _ _ _ w1 w2)); simpl.      
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRminus _ _ _ w1 w2)); simpl.      
         intro.
         apply pdom_lift_empty_2 in H.
         unfold pdom_prod in H.
@@ -1595,10 +1595,10 @@ Proof.
         apply (p1 H3).        
       }
       intros.
-      assert (sem_ro_comp Γ _ _ w' γ
+      assert (sem_ro_exp Γ _ _ w' γ
               =
-                pdom_lift2 (Rminus) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ)).
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRminus _ _ _ w1 w2)); simpl.      
+                pdom_lift2 (Rminus) (sem_ro_exp _ _ _ w1 γ) (sem_ro_exp _ _ _ w2 γ)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRminus _ _ _ w1 w2)); simpl.      
       auto.
       rewrite H1 in H.
       clear H1.
@@ -1634,7 +1634,7 @@ Proof.
       pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip γ m) as [p1 p2].
       split.
       {
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRrecip  _ _ w)).
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRrecip  _ _ w)).
         simpl.
         intro.
         apply pdom_bind_empty_2 in H.
@@ -1649,9 +1649,9 @@ Proof.
         apply (pdom_is_neg_empty_by_evidence _ (total r)); simpl; auto.
       }
       intros v h1 h2 h3.
-      assert (sem_ro_comp Γ (;/; e) REAL w' γ =
-                pdom_bind Rrecip (sem_ro_comp Γ e REAL w γ)).
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRrecip  _ _ w)); simpl; auto.
+      assert (sem_ro_exp Γ (;/; e) REAL w' γ =
+                pdom_bind Rrecip (sem_ro_exp Γ e REAL w γ)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRrecip  _ _ w)); simpl; auto.
       rewrite H in h1; clear H.
       simpl in p2.
       rewrite h3 in h1; rename h3 into j.
@@ -1686,8 +1686,8 @@ Proof.
       }
 
     ++
-      (* (** integer comparison  *) *)
-      (* | ro_int_comp_eq_prt : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2  (w' : Γ |- (e1 :=: e2) : BOOL) (ψ : post), *)
+      (* (** integer exparison  *) *)
+      (* | ro_int_exp_eq_prt : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2  (w' : Γ |- (e1 :=: e2) : BOOL) (ψ : post), *)
 
       (*     w1 |- {{ϕ}} e1 {{ψ1}} ->  *)
       (*     w2 |- {{ϕ}} e2 {{ψ2}} ->  *)
@@ -1703,7 +1703,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZeq _ _ _ w1 w2)); simpl.      
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZeq _ _ _ w1 w2)); simpl.      
         intro.
         apply pdom_lift_empty_2 in H.
         unfold pdom_prod in H.
@@ -1715,10 +1715,10 @@ Proof.
         apply (p1 H3).        
       }
       intros.
-      assert (sem_ro_comp Γ _ _ w' γ
+      assert (sem_ro_exp Γ _ _ w' γ
               =
-                pdom_lift2 (BinInt.Z.eqb) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ)).
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZeq _ _ _ w1 w2)); simpl.      
+                pdom_lift2 (BinInt.Z.eqb) (sem_ro_exp _ _ _ w1 γ) (sem_ro_exp _ _ _ w2 γ)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZeq _ _ _ w1 w2)); simpl.      
       auto.
       rewrite H1 in H.
       clear H1.
@@ -1742,7 +1742,7 @@ Proof.
       rewrite H1; apply (ψ3 x1 x0 _ (p2 _ H2 _ eq_refl) (q2 _ H _ eq_refl)).
 
     ++
-      (* | ro_int_comp_lt_prt : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) P ψ1 ψ2 (w' : Γ |- (e1 :<: e2) : BOOL) (ψ : post), *)
+      (* | ro_int_exp_lt_prt : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) P ψ1 ψ2 (w' : Γ |- (e1 :<: e2) : BOOL) (ψ : post), *)
 
       (*     w1 |- {{P}} e1 {{ψ1}} ->  *)
       (*     w2 |- {{P}} e2 {{ψ2}} ->  *)
@@ -1758,7 +1758,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZlt _ _ _ w1 w2)); simpl.      
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZlt _ _ _ w1 w2)); simpl.      
         intro.
         apply pdom_lift_empty_2 in H.
         unfold pdom_prod in H.
@@ -1770,10 +1770,10 @@ Proof.
         apply (p1 H3).        
       }
       intros.
-      assert (sem_ro_comp Γ _ _ w' γ
+      assert (sem_ro_exp Γ _ _ w' γ
               =
-                pdom_lift2 (BinInt.Z.ltb) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ)).
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZlt _ _ _ w1 w2)); simpl.      
+                pdom_lift2 (BinInt.Z.ltb) (sem_ro_exp _ _ _ w1 γ) (sem_ro_exp _ _ _ w2 γ)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZlt _ _ _ w1 w2)); simpl.      
       auto.
       rewrite H1 in H.
       clear H1.
@@ -1797,7 +1797,7 @@ Proof.
       rewrite H1; apply (ψ3 x1 x0 _ (p2 _ H2 _ eq_refl) (q2 _ H _ eq_refl)).
 
     ++
-      (* (** real comparison  *) *)
+      (* (** real exparison  *) *)
       (* | ro_real_lt_prt : forall Γ e1 e2 (w1 : Γ |- e1 : REAL) (w2 : Γ |- e2 : REAL) P ψ1 ψ2 (w' : Γ |- (e1 ;<; e2) : BOOL) (ψ : post), *)
       
       (*     w1 |- {{P}} e1 {{ψ1}} ->  *)
@@ -1813,7 +1813,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRlt _ _ _ w1 w2)); simpl.      
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRlt _ _ _ w1 w2)); simpl.      
         intro.
         unfold pdom_bind2 in H.
         apply pdom_bind_empty_2 in H.
@@ -1834,8 +1834,8 @@ Proof.
       }
       
       intros v h1 h2 h3.
-      assert (sem_ro_comp Γ _ _ w' γ  = pdom_bind2 Rltb (sem_ro_comp Γ e1 REAL w1 γ) (sem_ro_comp Γ e2 REAL w2 γ)).
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRlt _ _ _ w1 w2)); simpl; auto.
+      assert (sem_ro_exp Γ _ _ w' γ  = pdom_bind2 Rltb (sem_ro_exp Γ e1 REAL w1 γ) (sem_ro_exp Γ e2 REAL w2 γ)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRlt _ _ _ w1 w2)); simpl; auto.
       rewrite H in h1; clear H.
       rewrite h3 in h1.
       unfold pdom_bind2 in h1.
@@ -1880,7 +1880,7 @@ Proof.
       (*     w' |- {{ϕ}} Lim e {{ψ}} *)
 
       intros γ m; simpl; simpl in m.
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_Lim _ _ w)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_Lim _ _ w)).
       simpl.
       pose proof (fun z => proves_ro_tot_sound _ _ _ w (fun zγ => ϕ0 (snd zγ)) θ p (z, γ) m).
       simpl in H.
@@ -1915,7 +1915,7 @@ Proof.
       }
       intros.
       assert (total y = total v').
-      apply (Rlim_def_unique ((fun x : Z => sem_ro_comp (INTEGER :: Γ) e REAL w (x, γ)))); auto.
+      apply (Rlim_def_unique ((fun x : Z => sem_ro_exp (INTEGER :: Γ) e REAL w (x, γ)))); auto.
       unfold Rlim_def.
       exists y.
       split; auto.
@@ -2024,7 +2024,7 @@ Proof.
       (*     w |- [{Q tt}] SKIP [{Q}] *)
 
       intros γ m; simpl in m; simpl.
-      rewrite (sem_ro_comp_unique Γ SKIP UNIT w (has_type_ro_Skip _)).
+      rewrite (sem_ro_exp_unique Γ SKIP UNIT w (has_type_ro_Skip _)).
       simpl.
       split.
       apply pdom_unit_neg_is_empty.
@@ -2038,7 +2038,7 @@ Proof.
       (*     w |- [{Q true}] TRUE [{Q}] *)
 
       intros γ m; simpl in m; simpl.
-      rewrite (sem_ro_comp_unique Γ _ _ w (has_type_ro_True _)).
+      rewrite (sem_ro_exp_unique Γ _ _ w (has_type_ro_True _)).
       simpl.
       split.
       apply pdom_unit_neg_is_empty.
@@ -2052,7 +2052,7 @@ Proof.
       (*     w |- [{Q false}] FALSE [{Q}] *)
 
       intros γ m; simpl in m; simpl.
-      rewrite (sem_ro_comp_unique Γ _ _ w (has_type_ro_False _)).
+      rewrite (sem_ro_exp_unique Γ _ _ w (has_type_ro_False _)).
       simpl.
       split.
       apply pdom_unit_neg_is_empty.
@@ -2066,7 +2066,7 @@ Proof.
       (*     w |- [{Q k}] INT k [{Q}] *)
 
       intros γ m; simpl in m; simpl.
-      rewrite (sem_ro_comp_unique Γ _ _ w (has_type_ro_Int _ _)).
+      rewrite (sem_ro_exp_unique Γ _ _ w (has_type_ro_Int _ _)).
       simpl.
       split.
       apply pdom_unit_neg_is_empty.
@@ -2083,7 +2083,7 @@ Proof.
       
       intros γ m; simpl in m; simpl.
       pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ p γ tt m) as [p1 p2].
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_rw _ _ _ w)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_rw _ _ _ w)).
       simpl.
       split.
       intro h.
@@ -2105,9 +2105,9 @@ Proof.
       
       pose proof (proves_ro_tot_sound _ _ _ _ _ _ trip (γ; γ')  m) as [p1 p2].
       split.
-      rewrite <- (sem_ro_comp_auxiliary_ctx _ _ _ _ w) in p1; auto.
+      rewrite <- (sem_ro_exp_auxiliary_ctx _ _ _ _ w) in p1; auto.
       intros h1 h2. 
-      rewrite <- (sem_ro_comp_auxiliary_ctx _ _ _ _ w) in p2; auto.
+      rewrite <- (sem_ro_exp_auxiliary_ctx _ _ _ _ w) in p2; auto.
       pose proof (p2 _ h2) as [p3 [p4 p5]].
       exists p3; split; auto.
       exists γ'; auto.
@@ -2123,7 +2123,7 @@ Proof.
 
       intros γ m; simpl in m; simpl.
       pose proof (proves_ro_tot_sound _ _ _ _ _ _ trip γ m) as [p1 p2].
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZRcoerce  _ _ w)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZRcoerce  _ _ w)).
       simpl.
       split.
       {
@@ -2147,7 +2147,7 @@ Proof.
 
       intros γ m; simpl in m; simpl.
       pose proof (proves_ro_tot_sound _ _ _ _ _ _ trip γ m) as [p1 p2].
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZRexp  _ _ w)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZRexp  _ _ w)).
       simpl.
       split.
       {
@@ -2177,7 +2177,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZplus _  _ _ w1 w2)).
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZplus _  _ _ w1 w2)).
         intro.
         apply pdom_lift_empty_2 in H.
         unfold pdom_prod in H.
@@ -2188,9 +2188,9 @@ Proof.
         apply pdom_lift_empty_2 in h3.
         apply (p1 h3).
       }
-      replace (sem_ro_comp Γ (e1 :+: e2) INTEGER w' γ) with
-        (pdom_lift2 (BinInt.Z.add) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ))
-        by (rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZplus _ _ _ w1 w2)); simpl; auto).
+      replace (sem_ro_exp Γ (e1 :+: e2) INTEGER w' γ) with
+        (pdom_lift2 (BinInt.Z.add) (sem_ro_exp _ _ _ w1 γ) (sem_ro_exp _ _ _ w2 γ))
+        by (rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZplus _ _ _ w1 w2)); simpl; auto).
       intros v H.
       unfold pdom_lift2 in H.
       unfold pdom_prod in H.
@@ -2238,7 +2238,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZmult _  _ _ w1 w2)).
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZmult _  _ _ w1 w2)).
         intro.
         apply pdom_lift_empty_2 in H.
         unfold pdom_prod in H.
@@ -2249,9 +2249,9 @@ Proof.
         apply pdom_lift_empty_2 in h3.
         apply (p1 h3).
       }
-      replace (sem_ro_comp Γ (e1 :*: e2) INTEGER w' γ) with
-        (pdom_lift2 (BinInt.Zmult) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ))
-        by (rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZmult _ _ _ w1 w2)); simpl; auto).
+      replace (sem_ro_exp Γ (e1 :*: e2) INTEGER w' γ) with
+        (pdom_lift2 (BinInt.Zmult) (sem_ro_exp _ _ _ w1 γ) (sem_ro_exp _ _ _ w2 γ))
+        by (rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZmult _ _ _ w1 w2)); simpl; auto).
       intros v H.
       unfold pdom_lift2 in H.
       unfold pdom_prod in H.
@@ -2298,7 +2298,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZminus _  _ _ w1 w2)).
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZminus _  _ _ w1 w2)).
         intro.
         apply pdom_lift_empty_2 in H.
         unfold pdom_prod in H.
@@ -2309,9 +2309,9 @@ Proof.
         apply pdom_lift_empty_2 in h3.
         apply (p1 h3).
       }
-      replace (sem_ro_comp Γ (e1 :-: e2) INTEGER w' γ) with
-        (pdom_lift2 (BinInt.Zminus) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ))
-        by (rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZminus _ _ _ w1 w2)); simpl; auto).
+      replace (sem_ro_exp Γ (e1 :-: e2) INTEGER w' γ) with
+        (pdom_lift2 (BinInt.Zminus) (sem_ro_exp _ _ _ w1 γ) (sem_ro_exp _ _ _ w2 γ))
+        by (rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZminus _ _ _ w1 w2)); simpl; auto).
       intros v H.
       unfold pdom_lift2 in H.
       unfold pdom_prod in H.
@@ -2358,7 +2358,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRplus _  _ _ w1 w2)).
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRplus _  _ _ w1 w2)).
         intro.
         apply pdom_lift_empty_2 in H.
         unfold pdom_prod in H.
@@ -2369,9 +2369,9 @@ Proof.
         apply pdom_lift_empty_2 in h3.
         apply (p1 h3).
       }
-      replace (sem_ro_comp _ _ _ w' γ) with
-        (pdom_lift2 (Rplus) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ))
-        by (rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRplus _ _ _ w1 w2)); simpl; auto).
+      replace (sem_ro_exp _ _ _ w' γ) with
+        (pdom_lift2 (Rplus) (sem_ro_exp _ _ _ w1 γ) (sem_ro_exp _ _ _ w2 γ))
+        by (rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRplus _ _ _ w1 w2)); simpl; auto).
       intros v H.
       unfold pdom_lift2 in H.
       unfold pdom_prod in H.
@@ -2417,7 +2417,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRmult _  _ _ w1 w2)).
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRmult _  _ _ w1 w2)).
         intro.
         apply pdom_lift_empty_2 in H.
         unfold pdom_prod in H.
@@ -2428,9 +2428,9 @@ Proof.
         apply pdom_lift_empty_2 in h3.
         apply (p1 h3).
       }
-      replace (sem_ro_comp _ _ _ w' γ) with
-        (pdom_lift2 (Rmult) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ))
-        by (rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRmult _ _ _ w1 w2)); simpl; auto).
+      replace (sem_ro_exp _ _ _ w' γ) with
+        (pdom_lift2 (Rmult) (sem_ro_exp _ _ _ w1 γ) (sem_ro_exp _ _ _ w2 γ))
+        by (rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRmult _ _ _ w1 w2)); simpl; auto).
       intros v H.
       unfold pdom_lift2 in H.
       unfold pdom_prod in H.
@@ -2478,7 +2478,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRminus _  _ _ w1 w2)).
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRminus _  _ _ w1 w2)).
         intro.
         apply pdom_lift_empty_2 in H.
         unfold pdom_prod in H.
@@ -2489,9 +2489,9 @@ Proof.
         apply pdom_lift_empty_2 in h3.
         apply (p1 h3).
       }
-      replace (sem_ro_comp _ _ _ w' γ) with
-        (pdom_lift2 (Rminus) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ))
-        by (rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRminus _ _ _ w1 w2)); simpl; auto).
+      replace (sem_ro_exp _ _ _ w' γ) with
+        (pdom_lift2 (Rminus) (sem_ro_exp _ _ _ w1 γ) (sem_ro_exp _ _ _ w2 γ))
+        by (rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRminus _ _ _ w1 w2)); simpl; auto).
       intros v H.
       unfold pdom_lift2 in H.
       unfold pdom_prod in H.
@@ -2538,7 +2538,7 @@ Proof.
       pose proof (proves_ro_tot_sound _ _ _ _ _ _ trip γ m) as [p1 p2].
       split.
       {
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRrecip  _ _ w)).
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRrecip  _ _ w)).
         simpl.
         intro.
         apply pdom_bind_empty_2 in H.
@@ -2553,9 +2553,9 @@ Proof.
         apply (pdom_is_neg_empty_by_evidence _ (total r)); simpl; auto.
       }
       intros v h1.
-      assert (sem_ro_comp Γ (;/; e) REAL w' γ =
-                pdom_bind Rrecip (sem_ro_comp Γ e REAL w γ)).
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRrecip  _ _ w)); simpl; auto.
+      assert (sem_ro_exp Γ (;/; e) REAL w' γ =
+                pdom_bind Rrecip (sem_ro_exp Γ e REAL w γ)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRrecip  _ _ w)); simpl; auto.
       rewrite H in h1; clear H.
       simpl in p2.
 
@@ -2628,8 +2628,8 @@ Proof.
 
 
     ++
-      (* (** integer comparison  *) *)
-      (* | ro_int_comp_eq_tot : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2  (w' : Γ |- (e1 :=: e2) : BOOL) (ψ : post), *)
+      (* (** integer exparison  *) *)
+      (* | ro_int_exp_eq_tot : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2  (w' : Γ |- (e1 :=: e2) : BOOL) (ψ : post), *)
 
       (*     w1 |- [{ϕ}] e1 [{ψ1}] ->  *)
       (*     w2 |- [{ϕ}] e2 [{ψ2}] ->  *)
@@ -2642,7 +2642,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZeq _  _ _ w1 w2)).
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZeq _  _ _ w1 w2)).
         intro.
         apply pdom_lift_empty_2 in H.
         unfold pdom_prod in H.
@@ -2653,9 +2653,9 @@ Proof.
         apply pdom_lift_empty_2 in h3.
         apply (p1 h3).
       }
-      replace (sem_ro_comp _ _ _ w' γ) with
-        (pdom_lift2 (Z.eqb) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ))
-        by (rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZeq _ _ _ w1 w2)); simpl; auto).
+      replace (sem_ro_exp _ _ _ w' γ) with
+        (pdom_lift2 (Z.eqb) (sem_ro_exp _ _ _ w1 γ) (sem_ro_exp _ _ _ w2 γ))
+        by (rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZeq _ _ _ w1 w2)); simpl; auto).
       intros v H.
       unfold pdom_lift2 in H.
       unfold pdom_prod in H.
@@ -2690,7 +2690,7 @@ Proof.
 
 
     ++
-      (* | ro_int_comp_lt_tot : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) P ψ1 ψ2 (w' : Γ |- (e1 :<: e2) : BOOL) (ψ : post), *)
+      (* | ro_int_exp_lt_tot : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) P ψ1 ψ2 (w' : Γ |- (e1 :<: e2) : BOOL) (ψ : post), *)
 
       (*     w1 |- [{P}] e1 [{ψ1}] ->  *)
       (*     w2 |- [{P}] e2 [{ψ2}] ->  *)
@@ -2703,7 +2703,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZlt _  _ _ w1 w2)).
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZlt _  _ _ w1 w2)).
         intro.
         apply pdom_lift_empty_2 in H.
         unfold pdom_prod in H.
@@ -2714,9 +2714,9 @@ Proof.
         apply pdom_lift_empty_2 in h3.
         apply (p1 h3).
       }
-      replace (sem_ro_comp _ _ _ w' γ) with
-        (pdom_lift2 (Z.ltb) (sem_ro_comp _ _ _ w1 γ) (sem_ro_comp _ _ _ w2 γ))
-        by (rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpZlt _ _ _ w1 w2)); simpl; auto).
+      replace (sem_ro_exp _ _ _ w' γ) with
+        (pdom_lift2 (Z.ltb) (sem_ro_exp _ _ _ w1 γ) (sem_ro_exp _ _ _ w2 γ))
+        by (rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZlt _ _ _ w1 w2)); simpl; auto).
       intros v H.
       unfold pdom_lift2 in H.
       unfold pdom_prod in H.
@@ -2749,7 +2749,7 @@ Proof.
       simpl in h2.
       rewrite h2; auto.
     ++
-      (* (** real comparison  *) *)
+      (* (** real exparison  *) *)
       (* | ro_real_lt_tot : forall Γ e1 e2 (w1 : Γ |- e1 : REAL) (w2 : Γ |- e2 : REAL) ϕ ψ1 ψ2  (w' : Γ |- (e1 ;<; e2) : BOOL) (ψ : post), *)
       
       (*     w1 |- [{ϕ}] e1 [{ψ1}] ->  *)
@@ -2763,7 +2763,7 @@ Proof.
       split.
       {
         (* nonemptiness *)
-        rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRlt _  _ _ w1 w2)); simpl.
+        rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRlt _  _ _ w1 w2)); simpl.
         intro.
         unfold pdom_bind2 in H.
         apply pdom_bind_empty_2 in H.
@@ -2780,9 +2780,9 @@ Proof.
         apply flat_to_pdom_neg_empty in h2.
         auto.
       }
-      replace (sem_ro_comp _ _ _ w' γ) with
-        (pdom_bind2 Rltb (sem_ro_comp Γ e1 REAL w1 γ) (sem_ro_comp Γ e2 REAL w2 γ))
-        by (rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_OpRlt _ _ _ w1 w2)); simpl; auto).
+      replace (sem_ro_exp _ _ _ w' γ) with
+        (pdom_bind2 Rltb (sem_ro_exp Γ e1 REAL w1 γ) (sem_ro_exp Γ e2 REAL w2 γ))
+        by (rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpRlt _ _ _ w1 w2)); simpl; auto).
       intros v H.
       unfold pdom_bind2 in H.
       unfold pdom_prod in H.
@@ -2844,7 +2844,7 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' |- [{ϕ}] Lim e [{ψ}] *)
       intros γ m; simpl; simpl in m.
-      rewrite (sem_ro_comp_unique _ _ _ w' (has_type_ro_Lim _ _ w)).
+      rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_Lim _ _ w)).
       simpl.
       pose proof (fun z => proves_ro_tot_sound _ _ _ w (fun zγ => ϕ0 (snd zγ)) θ trip (z, γ) m).
       simpl in H.
@@ -2880,7 +2880,7 @@ Proof.
       exists r; split; auto.      
       replace r with y; auto.
       apply total_is_injective.
-      apply (Rlim_def_unique ((fun x : Z => sem_ro_comp (INTEGER :: Γ) e REAL w (x, γ)))); auto.
+      apply (Rlim_def_unique ((fun x : Z => sem_ro_exp (INTEGER :: Γ) e REAL w (x, γ)))); auto.
       
       unfold Rlim_def.
       exists y.
@@ -2969,7 +2969,7 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- {{fun γδ => ϕ (tedious_prod_sem _ _ γδ)}} e {{fun v γδ => ψ v (tedious_prod_sem _ _ γδ)}} *)
       intros γ δ m; simpl; simpl in m.
-      rewrite (sem_rw_comp_unique _ _ _ _ w' (has_type_rw_ro _ _ _ _ w)); simpl.
+      rewrite (sem_rw_exp_unique _ _ _ _ w' (has_type_rw_ro _ _ _ _ w)); simpl.
       pose proof (proves_ro_prt_sound _ _ _ _ _ _  p (tedious_prod_sem _ _ (δ, γ)) m) as [p1 p2].
       split.
       auto.
@@ -3001,10 +3001,10 @@ Proof.
       
       pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip (γ; γ') δ  m) as [p1 p2].
       split.
-      rewrite <- (sem_rw_comp_auxiliary_ctx _ _ _ _ _ w) in p1; auto.
+      rewrite <- (sem_rw_exp_auxiliary_ctx _ _ _ _ _ w) in p1; auto.
       intros h1 h2 h3 h4.
       exists γ'.
-      rewrite <- (sem_rw_comp_auxiliary_ctx _ _ _ _ _ w) in p2; auto.
+      rewrite <- (sem_rw_exp_auxiliary_ctx _ _ _ _ _ w) in p2; auto.
       pose proof (p2 h1 h2 _ h4).
       simpl in H; auto.
       
@@ -3017,11 +3017,11 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- {{ϕ}} c1 ;; c2 {{ψ}} *)
       intros γ δ m; simpl; simpl in m.
-      pose (sem_rw_comp _ _ _ _ w1 γ) as C1.
-      pose (sem_rw_comp _ _ _ _ w2 γ) as C2.
-      replace (sem_rw_comp Γ Δ (c1;; c2) τ w' γ δ) with
+      pose (sem_rw_exp _ _ _ _ w1 γ) as C1.
+      pose (sem_rw_exp _ _ _ _ w2 γ) as C2.
+      replace (sem_rw_exp Γ Δ (c1;; c2) τ w' γ δ) with
         (pdom_bind C2 ((pdom_lift (@fst _ (sem_datatype DUnit)) (C1 δ))))
-        by  (rewrite (sem_rw_comp_unique _ _ _ _ w' (has_type_rw_Seq _ _ _ _ _ w1 w2)); simpl; auto).
+        by  (rewrite (sem_rw_exp_unique _ _ _ _ w' (has_type_rw_Seq _ _ _ _ _ w1 w2)); simpl; auto).
       pose proof (proves_rw_prt_sound _ _ _ _ _ _ _  trip1 γ δ m) as [p1 p2]; auto.
       unfold C1, C2.
       split.
@@ -3031,7 +3031,7 @@ Proof.
         apply pdom_bind_empty_2 in h.
         destruct h as [h|[δ' [h1 h2]]].
         apply pdom_lift_empty_2 in h; auto.
-        assert (total (δ', tt) ∈ sem_rw_comp Γ Δ c1 UNIT w1 γ δ).
+        assert (total (δ', tt) ∈ sem_rw_exp Γ Δ c1 UNIT w1 γ δ).
         apply pdom_lift_total_2 in h1.
         destruct h1.
         destruct H.
@@ -3064,12 +3064,12 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- {{ϕ}} NEWVAR e IN c {{ψ}} *)
       intros γ δ m; simpl; simpl in m.
-      pose (sem_ro_comp _ _ _ w1 (tedious_prod_sem _ _ (δ, γ))) as V.
-      pose (sem_rw_comp _ _ _ _ w2 γ) as f.
+      pose (sem_ro_exp _ _ _ w1 (tedious_prod_sem _ _ (δ, γ))) as V.
+      pose (sem_rw_exp _ _ _ _ w2 γ) as f.
       pose (pdom_bind f (pdom_lift (fun v => (v, δ)) V)) as res.
-      replace (sem_rw_comp Γ Δ (NEWVAR e IN c) τ w' γ δ) with
+      replace (sem_rw_exp Γ Δ (NEWVAR e IN c) τ w' γ δ) with
         (pdom_lift (fun x => (snd (fst x), snd x)) res) by
-        (rewrite (sem_rw_comp_unique _ _ _ _ w' (has_type_rw_Newvar _ _ _ _ _ _ w1 w2)); simpl; auto).
+        (rewrite (sem_rw_exp_unique _ _ _ _ w' (has_type_rw_Newvar _ _ _ _ _ _ w1 w2)); simpl; auto).
       unfold V, f, res.
       pose proof (proves_ro_prt_sound _ _ _ _ _ _ p (tedious_prod_sem Δ Γ (δ, γ))).
       simpl in H.
@@ -3138,12 +3138,12 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- {{ϕ}} Cond e c1 c2 {{ψ}} *)
       intros γ δ m; simpl; simpl in m.
-      pose (sem_ro_comp _ _ _ w (δ; γ)) as B.
-      pose (sem_rw_comp _ _ _ _ w1 γ δ) as X.
-      pose (sem_rw_comp _ _ _ _ w2 γ δ) as Y.
-      replace (sem_rw_comp Γ Δ (IF e THEN c1 ELSE c2 END) τ w' γ δ)
+      pose (sem_ro_exp _ _ _ w (δ; γ)) as B.
+      pose (sem_rw_exp _ _ _ _ w1 γ δ) as X.
+      pose (sem_rw_exp _ _ _ _ w2 γ δ) as Y.
+      replace (sem_rw_exp Γ Δ (IF e THEN c1 ELSE c2 END) τ w' γ δ)
         with (pdom_bind (fun b : bool => if b then X else Y) B)
-        by  (rewrite (sem_rw_comp_unique _ _ _ _ w' (has_type_rw_Cond _ _ _ _ _ _ w w1 w2)); simpl; auto).
+        by  (rewrite (sem_rw_exp_unique _ _ _ _ w' (has_type_rw_Cond _ _ _ _ _ _ w w1 w2)); simpl; auto).
       assert (ro_prt_pre w (mk_ro_prt w (rw_to_ro_pre ϕ0) θ) (δ; γ)) as m'
           by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
        
@@ -3185,13 +3185,13 @@ Proof.
       intros γ δ m; simpl; simpl in m.
 
 
-      pose (sem_ro_comp _ _ _ wty_e1 (δ; γ)) as B1.
-      pose (sem_ro_comp _ _ _ wty_e2 (δ; γ)) as B2.
-      pose (sem_rw_comp _ _ _ _ wty_c1 γ δ) as X.
-      pose (sem_rw_comp _ _ _ _ wty_c2 γ δ) as Y.
-      replace (sem_rw_comp Γ Δ (CASE e1 ==> c1 OR e2 ==> c2 END) τ wty γ δ) with
+      pose (sem_ro_exp _ _ _ wty_e1 (δ; γ)) as B1.
+      pose (sem_ro_exp _ _ _ wty_e2 (δ; γ)) as B2.
+      pose (sem_rw_exp _ _ _ _ wty_c1 γ δ) as X.
+      pose (sem_rw_exp _ _ _ _ wty_c2 γ δ) as Y.
+      replace (sem_rw_exp Γ Δ (CASE e1 ==> c1 OR e2 ==> c2 END) τ wty γ δ) with
         (Case2 B1 B2 X Y) 
-        by  (rewrite (sem_rw_comp_unique _ _ _ _ wty (has_type_rw_Case _ _ _ _ _ _ _ wty_e1  wty_c1 wty_e2 wty_c2)); simpl; auto).
+        by  (rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_Case _ _ _ _ _ _ _ wty_e1  wty_c1 wty_e2 wty_c2)); simpl; auto).
       assert ( (rw_to_ro_pre ϕ0) (δ; γ)) as m'
           by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
       pose proof (proves_ro_prt_sound _ _ _ _ _ _ p _ m') as [p1 p2].
@@ -3232,11 +3232,11 @@ Proof.
       (*     wty ||- {{ϕ}} While e c {{fun _ => (ϕ /\\ ro_to_rw_pre (θ false))}} *)
       
       intros γ δ m; simpl; simpl in m.
-      pose (fun d => sem_ro_comp _ _ _ wty_e (d; γ)) as B.
-      pose (fun d => pdom_lift fst (sem_rw_comp _ _ _ _ wty_c γ d)) as C.
-      replace (sem_rw_comp Γ Δ (WHILE e DO c END) UNIT wty γ δ) with
+      pose (fun d => sem_ro_exp _ _ _ wty_e (d; γ)) as B.
+      pose (fun d => pdom_lift fst (sem_rw_exp _ _ _ _ wty_c γ d)) as C.
+      replace (sem_rw_exp Γ Δ (WHILE e DO c END) UNIT wty γ δ) with
         (pdom_lift (fun x => (x, tt)) (pdom_while B C δ))
-        by (rewrite (sem_rw_comp_unique _ _ _ _ wty (has_type_rw_While _ _ _ _ wty_e  wty_c)); simpl; auto).
+        by (rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_While _ _ _ _ wty_e  wty_c)); simpl; auto).
       assert ( (rw_to_ro_pre ϕ0) (δ; γ)) as m'
           by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
       pose proof (proves_ro_prt_sound _ _ _ _ _ _ p _ m') as [p1 p2].
@@ -3273,7 +3273,7 @@ Proof.
         pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p)) true (δ1 ; γ) H0 H3) as m''.
         pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip _ _ m'') as [_ r2].
         simpl in r2.
-        assert (total (d, tt) ∈  sem_rw_comp Γ Δ c UNIT wty_c γ δ1).
+        assert (total (d, tt) ∈  sem_rw_exp Γ Δ c UNIT wty_c γ δ1).
         {
           unfold C in hh1.
           apply pdom_lift_total_2 in hh1.
@@ -3450,7 +3450,7 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- [{fun γδ => ϕ (tedious_prod_sem _ _ γδ)}] e [{fun v γδ => ψ v (tedious_prod_sem _ _ γδ)}] *)
       intros γ δ m; simpl; simpl in m.
-      rewrite (sem_rw_comp_unique _ _ _ _ w' (has_type_rw_ro _ _ _ _ w)); simpl.
+      rewrite (sem_rw_exp_unique _ _ _ _ w' (has_type_rw_ro _ _ _ _ w)); simpl.
       pose proof (proves_ro_tot_sound _ _ _ _ _ _  p (tedious_prod_sem _ _ (δ, γ)) m) as [p1 p2].
       split.
       auto.
@@ -3478,9 +3478,9 @@ Proof.
       
       pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip (γ; γ') δ m) as [p1 p2].
       split.
-      rewrite <- (sem_rw_comp_auxiliary_ctx _ _ _ _ _ w) in p1; auto.
+      rewrite <- (sem_rw_exp_auxiliary_ctx _ _ _ _ _ w) in p1; auto.
       intros h1 h2. 
-      rewrite <- (sem_rw_comp_auxiliary_ctx _ _ _ _ _ w) in p2; auto.
+      rewrite <- (sem_rw_exp_auxiliary_ctx _ _ _ _ _ w) in p2; auto.
       pose proof (p2 _ h2) as [p3 [p4 p5]].
       exists p3; split; auto.
       exists γ'; auto.
@@ -3495,11 +3495,11 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- [{ϕ}] c1 ;; c2 [{ψ}] *)
       intros γ δ m; simpl; simpl in m.
-      pose (sem_rw_comp _ _ _ _ w1 γ) as C1.
-      pose (sem_rw_comp _ _ _ _ w2 γ) as C2.
-      replace (sem_rw_comp Γ Δ (c1;; c2) τ w' γ δ) with
+      pose (sem_rw_exp _ _ _ _ w1 γ) as C1.
+      pose (sem_rw_exp _ _ _ _ w2 γ) as C2.
+      replace (sem_rw_exp Γ Δ (c1;; c2) τ w' γ δ) with
         (pdom_bind C2 ((pdom_lift (@fst _ (sem_datatype DUnit)) (C1 δ))))
-        by  (rewrite (sem_rw_comp_unique _ _ _ _ w' (has_type_rw_Seq _ _ _ _ _ w1 w2)); simpl; auto).
+        by  (rewrite (sem_rw_exp_unique _ _ _ _ w' (has_type_rw_Seq _ _ _ _ _ w1 w2)); simpl; auto).
       pose proof (proves_rw_tot_sound _ _ _ _ _ _ _  trip1 γ δ m) as [p1 p2]; auto.
       unfold C1, C2.
       split.
@@ -3509,7 +3509,7 @@ Proof.
         apply pdom_bind_empty_2 in h.
         destruct h as [h|[δ' [h1 h2]]].
         apply pdom_lift_empty_2 in h; auto.
-        assert (total (δ', tt) ∈ sem_rw_comp Γ Δ c1 UNIT w1 γ δ).
+        assert (total (δ', tt) ∈ sem_rw_exp Γ Δ c1 UNIT w1 γ δ).
         apply pdom_lift_total_2 in h1.
         destruct h1.
         destruct H.
@@ -3568,12 +3568,12 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- [{ϕ}] NEWVAR e IN c [{ψ}] *)
       intros γ δ m; simpl; simpl in m.
-      pose (sem_ro_comp _ _ _ w1 (δ; γ)) as V.
-      pose (sem_rw_comp _ _ _ _ w2 γ) as f.
+      pose (sem_ro_exp _ _ _ w1 (δ; γ)) as V.
+      pose (sem_rw_exp _ _ _ _ w2 γ) as f.
       pose (pdom_bind f (pdom_lift (fun v => (v, δ)) V)) as res.
-      replace (sem_rw_comp Γ Δ (NEWVAR e IN c) τ w' γ δ) with
+      replace (sem_rw_exp Γ Δ (NEWVAR e IN c) τ w' γ δ) with
         (pdom_lift (fun x => (snd (fst x), snd x)) res) by
-        (rewrite (sem_rw_comp_unique _ _ _ _ w' (has_type_rw_Newvar _ _ _ _ _ _ w1 w2)); simpl; auto).
+        (rewrite (sem_rw_exp_unique _ _ _ _ w' (has_type_rw_Newvar _ _ _ _ _ _ w1 w2)); simpl; auto).
       unfold V, f, res.
       pose proof (proves_ro_tot_sound _ _ _ _ _ _ p (tedious_prod_sem Δ Γ (δ, γ))).
       simpl in H.
@@ -3695,12 +3695,12 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- [{ϕ}] Cond e c1 c2 [{ψ}] *)
       intros γ δ m; simpl; simpl in m.
-      pose (sem_ro_comp _ _ _ w (δ; γ)) as B.
-      pose (sem_rw_comp _ _ _ _ w1 γ δ) as X.
-      pose (sem_rw_comp _ _ _ _ w2 γ δ) as Y.
-      replace (sem_rw_comp Γ Δ (IF e THEN c1 ELSE c2 END) τ w' γ δ)
+      pose (sem_ro_exp _ _ _ w (δ; γ)) as B.
+      pose (sem_rw_exp _ _ _ _ w1 γ δ) as X.
+      pose (sem_rw_exp _ _ _ _ w2 γ δ) as Y.
+      replace (sem_rw_exp Γ Δ (IF e THEN c1 ELSE c2 END) τ w' γ δ)
         with (pdom_bind (fun b : bool => if b then X else Y) B)
-        by  (rewrite (sem_rw_comp_unique _ _ _ _ w' (has_type_rw_Cond _ _ _ _ _ _ w w1 w2)); simpl; auto).
+        by  (rewrite (sem_rw_exp_unique _ _ _ _ w' (has_type_rw_Cond _ _ _ _ _ _ w w1 w2)); simpl; auto).
       assert (ro_prt_pre w (mk_ro_prt w (rw_to_ro_pre ϕ0) θ) (δ; γ)) as m'
           by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
       
@@ -3780,15 +3780,15 @@ Proof.
       intros γ δ m; simpl; simpl in m.
       rename p1 into t1.
       rename p2 into t2.
-      pose (sem_ro_comp _ _ _ wty_e1 (δ; γ)) as B1.
-      pose (sem_ro_comp _ _ _ wty_e2 (δ; γ)) as B2.
-      pose (sem_rw_comp _ _ _ _ wty_c1 γ δ) as X.
-      pose (sem_rw_comp _ _ _ _ wty_c2 γ δ) as Y.
+      pose (sem_ro_exp _ _ _ wty_e1 (δ; γ)) as B1.
+      pose (sem_ro_exp _ _ _ wty_e2 (δ; γ)) as B2.
+      pose (sem_rw_exp _ _ _ _ wty_c1 γ δ) as X.
+      pose (sem_rw_exp _ _ _ _ wty_c2 γ δ) as Y.
      
 
-      replace (sem_rw_comp Γ Δ (CASE e1 ==> c1 OR e2 ==> c2 END) τ wty γ δ) with
+      replace (sem_rw_exp Γ Δ (CASE e1 ==> c1 OR e2 ==> c2 END) τ wty γ δ) with
         (Case2 B1 B2 X Y) 
-        by  (rewrite (sem_rw_comp_unique _ _ _ _ wty (has_type_rw_Case _ _ _ _ _ _ _ wty_e1  wty_c1 wty_e2 wty_c2)); simpl; auto).
+        by  (rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_Case _ _ _ _ _ _ _ wty_e1  wty_c1 wty_e2 wty_c2)); simpl; auto).
       assert ( (rw_to_ro_pre ϕ0) (δ; γ)) as m'
           by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
       pose proof (proves_ro_prt_sound _ _ _ _ _ _ p _ m') as [p1 p2].

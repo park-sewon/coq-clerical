@@ -1,8 +1,6 @@
-(* An initial attempt at defining a language for real number comptuations, based on
-   converstations with Sewon Park and Alex Simspon *)
-
-(* This version is just a simple command language, to get us started. *)
-
+(* A formalization of the Clerical language a joint project
+   by Andrej Bauer, Sewon Park, and Alex Simpson. *)
+   
 Require Import ZArith.
 Require Import List.
 
@@ -15,20 +13,21 @@ Inductive unary_op :=
   OpRrecip | OpZRcoerce | OpZRexp.
 
 (* Computations *)
-Inductive comp :=
-  Var : nat -> comp
-| Boolean : bool -> comp
-| Integer : Z -> comp
-| BinOp : binary_op -> comp -> comp -> comp
-| UniOp : unary_op -> comp -> comp
-| Skip : comp
-| Seq : comp -> comp -> comp
-| Cond : comp -> comp -> comp -> comp
-| Case : comp -> comp -> comp -> comp -> comp
-| While : comp -> comp -> comp
-| Newvar : comp -> comp -> comp
-| Assign : nat -> comp -> comp
-| Lim : comp -> comp.
+Inductive exp :=
+  Var : nat -> exp
+| Boolean : bool -> exp
+| Integer : Z -> exp
+| BinOp : binary_op -> exp -> exp -> exp
+| UniOp : unary_op -> exp -> exp
+| Skip : exp
+| Seq : exp -> exp -> exp
+| Cond : exp -> exp -> exp -> exp
+| Case : exp -> exp -> exp -> exp -> exp
+| CaseList : list (exp * exp) -> exp
+| While : exp -> exp -> exp
+| Newvar : exp -> exp -> exp
+| Assign : nat -> exp -> exp
+| Lim : exp -> exp.
                   
 (* Datatypes *)
 Inductive datatype :=
@@ -57,7 +56,6 @@ Notation "e1 ':-:' e2" := (BinOp OpZminus e1 e2) (at level 60, right associativi
 Notation "e1 ':<:' e2" := (BinOp OpZlt e1 e2) (at level 60, right associativity) : clerical_scope.
 
 Notation "e1 ':=:' e2" := (BinOp OpZeq e1 e2) (at level 60, right associativity) : clerical_scope.
-
 
 Notation "e1 ';+;' e2" := (BinOp OpRplus e1 e2) (at level 60, right associativity) : clerical_scope.
 
