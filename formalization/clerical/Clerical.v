@@ -4,11 +4,13 @@
 Require Import ZArith.
 Require Import List.
 
+(* Binary operations *)
 Inductive binary_op :=
 | OpZplus | OpZminus | OpZmult | OpZlt | OpZeq 
 | OpRplus | OpRminus | OpRlt | OpRmult
 .
 
+(* Unary operations *)
 Inductive unary_op :=
   OpRrecip | OpZRcoerce | OpZRexp.
 

@@ -8,21 +8,31 @@ Require Import TypingProperties.
 Require Import Powerdomain.
 Require Import Semantics.
 
+(* In this file, we prove some properties of the semantics of Clerical.
+   The main theorems here are that 1) the semantics is irrelevnet to the welltypedness
+   and that 2) the semantics does not change for us adding auxiliary variables at the end of the readonly contexts.
 
-Fixpoint p_sem_ro_exp (Γ : ro_ctx) (e : exp) (τ : datatype) (D : Γ |~ e : τ) {struct D} :
-  sem_ro_ctx Γ -> pdom (sem_datatype τ)
-with p_sem_rw_exp (Γ Δ : ro_ctx) (c : exp) (τ : datatype) (D : Γ ;;; Δ ||~ c : τ) {struct D} :
-  sem_ro_ctx Γ -> sem_ro_ctx Δ -> pdom (sem_ro_ctx Δ * sem_datatype τ).
+   Putting it more formally,
+   1) forall (w1 w2 : Γ |- e : τ), sem_ro_exp Γ e τ w1 = sem_ro_exp Γ e τ w2
+   1') forall (w1 w2 : Γ ;;; Δ ||- e : τ), sem_rw_exp Γ Δ e τ w1 = sem_rw_exp Γ Δ e τ w2
+   and
+   2) forall Γ' (w1 : Γ ;;; Δ ||- e : τ) (w2 : (Γ ++ Γ') ;;; Δ ||- e : τ), forall γ δ γ', sem_rw_exp Γ Δ e τ w1 γ δ = sem_rw_exp (Γ ++ Γ') Δ e τ w2 (γ ; γ') δ
+
+   To prove it, again we define a semantics to restricted typing rules, proving the properties on the restricted semantics and transfer the result back.
+ *)
+
+Fixpoint r_sem_ro_exp (Γ : ro_ctx) (e : exp) (τ : datatype) (D : Γ |~ e : τ) {struct D} : sem_ro_ctx Γ -> pdom (sem_datatype τ)
+with r_sem_rw_exp (Γ Δ : ro_ctx) (c : exp) (τ : datatype) (D : Γ ;;; Δ ||~ c : τ) {struct D} : sem_ro_ctx Γ -> sem_ro_ctx Δ -> pdom (sem_ro_ctx Δ * sem_datatype τ).
 Proof.
   - (* read only expressions *)
     induction D; intro γ.
-    exact (pdom_lift snd (p_sem_rw_exp _ _ _ _ p γ tt)).
-    exact (pdom_lift snd (p_sem_rw_exp _ _ _ _ p γ tt)).
-    exact (pdom_lift snd (p_sem_rw_exp _ _ _ _ p γ tt)).
-    exact (pdom_lift snd (p_sem_rw_exp _ _ _ _ p γ tt)).
-    exact (pdom_lift snd (p_sem_rw_exp _ _ _ _ p γ tt)).
-    exact (pdom_lift snd (p_sem_rw_exp _ _ _ _ p γ tt)).
-    exact (pdom_lift snd (p_sem_rw_exp _ _ _ _ p γ tt)).
+    exact (pdom_lift snd (r_sem_rw_exp _ _ _ _ r γ tt)).
+    exact (pdom_lift snd (r_sem_rw_exp _ _ _ _ r γ tt)).
+    exact (pdom_lift snd (r_sem_rw_exp _ _ _ _ r γ tt)).
+    exact (pdom_lift snd (r_sem_rw_exp _ _ _ _ r γ tt)).
+    exact (pdom_lift snd (r_sem_rw_exp _ _ _ _ r γ tt)).
+    exact (pdom_lift snd (r_sem_rw_exp _ _ _ _ r γ tt)).
+    exact (pdom_lift snd (r_sem_rw_exp _ _ _ _ r γ tt)).
 
     (* | has_type_ro_Var_0 *)
     simpl in γ.
@@ -31,10 +41,9 @@ Proof.
     (* | has_type_ro_Var_S *)
     simpl in γ.
     (* exact (IHD (snd γ)). *)
-    exact (p_sem_ro_exp _ _ _ D (snd γ)).
+    exact (r_sem_ro_exp _ _ _ D (snd γ)).
 
-
-      (* | has_type_ro_True *)
+    (* | has_type_ro_True *)
     exact (pdom_unit true).
 
     (* | has_type_ro_False *)
@@ -47,106 +56,105 @@ Proof.
     exact (pdom_unit k).
 
     (* | has_type_ro_OpRrecip *)
-    pose proof (p_sem_ro_exp _ _ _ D γ).
+    pose proof (r_sem_ro_exp _ _ _ D γ).
     exact (pdom_bind Rrecip X). 
     
     (* | has_type_ro_OpZRcoerce *)
-    pose proof (p_sem_ro_exp _ _ _ D γ).
+    pose proof (r_sem_ro_exp _ _ _ D γ).
     exact (pdom_lift IZR X).
     
     (* | has_type_ro_OpZRexp *)
-    pose proof (p_sem_ro_exp _ _ _ D γ).
+    pose proof (r_sem_ro_exp _ _ _ D γ).
     exact (pdom_lift (powerRZ 2) X).
 
     (* | has_type_ro_OpZplus *)
-    pose proof (p_sem_ro_exp _ _ _ D1 γ) as x.
-    pose proof (p_sem_ro_exp _ _ _ D2 γ) as y.
+    pose proof (r_sem_ro_exp _ _ _ D1 γ) as x.
+    pose proof (r_sem_ro_exp _ _ _ D2 γ) as y.
     exact (pdom_lift2 Zplus x y).
     
     (* | has_type_ro_OpZminus *)
-    pose proof (p_sem_ro_exp _ _ _ D1 γ) as x.
-    pose proof (p_sem_ro_exp _ _ _ D2 γ) as y.
+    pose proof (r_sem_ro_exp _ _ _ D1 γ) as x.
+    pose proof (r_sem_ro_exp _ _ _ D2 γ) as y.
     exact (pdom_lift2 Zminus x y).
     
     (* | has_type_ro_OpZmult *)
-    pose proof (p_sem_ro_exp _ _ _ D1 γ) as x.
-    pose proof (p_sem_ro_exp _ _ _ D2 γ) as y.
+    pose proof (r_sem_ro_exp _ _ _ D1 γ) as x.
+    pose proof (r_sem_ro_exp _ _ _ D2 γ) as y.
     exact (pdom_lift2 Zmult x y).
     
     (* | has_type_ro_OpZlt *)
-    pose proof (p_sem_ro_exp _ _ _ D1 γ) as x.
-    pose proof (p_sem_ro_exp _ _ _ D2 γ) as y.
+    pose proof (r_sem_ro_exp _ _ _ D1 γ) as x.
+    pose proof (r_sem_ro_exp _ _ _ D2 γ) as y.
     exact (pdom_lift2 Z.ltb x y).
 
     (* | has_type_ro_OpZeq *)
-    pose proof (p_sem_ro_exp _ _ _ D1 γ) as x.
-    pose proof (p_sem_ro_exp _ _ _ D2 γ) as y.
+    pose proof (r_sem_ro_exp _ _ _ D1 γ) as x.
+    pose proof (r_sem_ro_exp _ _ _ D2 γ) as y.
     exact (pdom_lift2 Z.eqb x y).
 
     (* | has_type_ro_OpRplus *)
-    pose proof (p_sem_ro_exp _ _ _ D1 γ) as x.
-    pose proof (p_sem_ro_exp _ _ _ D2 γ) as y.
+    pose proof (r_sem_ro_exp _ _ _ D1 γ) as x.
+    pose proof (r_sem_ro_exp _ _ _ D2 γ) as y.
     exact (pdom_lift2 Rplus x y).
 
     (* | has_type_ro_OpRminus *)
-    pose proof (p_sem_ro_exp _ _ _ D1 γ) as x.
-    pose proof (p_sem_ro_exp _ _ _ D2 γ) as y.
+    pose proof (r_sem_ro_exp _ _ _ D1 γ) as x.
+    pose proof (r_sem_ro_exp _ _ _ D2 γ) as y.
     exact (pdom_lift2 Rminus x y).
 
     (* | has_type_ro_OpRmult *)
-    pose proof (p_sem_ro_exp _ _ _ D1 γ) as x.
-    pose proof (p_sem_ro_exp _ _ _ D2 γ) as y.
+    pose proof (r_sem_ro_exp _ _ _ D1 γ) as x.
+    pose proof (r_sem_ro_exp _ _ _ D2 γ) as y.
     exact (pdom_lift2 Rmult x y).
 
     (* | has_type_ro_OpRlt *)
-    pose proof (p_sem_ro_exp _ _ _ D1 γ) as x.
-    pose proof (p_sem_ro_exp _ _ _ D2 γ) as y.
+    pose proof (r_sem_ro_exp _ _ _ D1 γ) as x.
+    pose proof (r_sem_ro_exp _ _ _ D2 γ) as y.
     exact (pdom_bind2 Rltb x y).
 
     (* | has_type_ro_Lim *)
-    exact (Rlim (fun x : Z => p_sem_ro_exp _ _ _ D (x, γ))). 
+    exact (Rlim (fun x : Z => r_sem_ro_exp _ _ _ D (x, γ))). 
 
-
-  - (* read write commands*)
+  - (* read write commands *)
     dependent destruction D; intros γ δ.
 
-    exact (pdom_lift (fun x => (δ, x)) (p_sem_ro_exp _ _ _ p (δ ; γ))).
-    exact (pdom_lift (fun x => (δ, x)) (p_sem_ro_exp _ _ _ p (δ ; γ))).
-    exact (pdom_lift (fun x => (δ, x)) (p_sem_ro_exp _ _ _ p (δ ; γ))).
-    exact (pdom_lift (fun x => (δ, x)) (p_sem_ro_exp _ _ _ p (δ ; γ))).
-    exact (pdom_lift (fun x => (δ, x)) (p_sem_ro_exp _ _ _ p (δ ; γ))).
-    exact (pdom_lift (fun x => (δ, x)) (p_sem_ro_exp _ _ _ p (δ ; γ))).
-    exact (pdom_lift (fun x => (δ, x)) (p_sem_ro_exp _ _ _ p (δ ; γ))).
+    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (δ ; γ))).
+    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (δ ; γ))).
+    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (δ ; γ))).
+    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (δ ; γ))).
+    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (δ ; γ))).
+    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (δ ; γ))).
+    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (δ ; γ))).
 
     (* has_type_rw_Seq *)
-    pose proof (p_sem_rw_exp _ _ _ _ D1 γ) as C1.
-    pose proof (p_sem_rw_exp _ _ _ _ D2 γ) as C2.
+    pose proof (r_sem_rw_exp _ _ _ _ D1 γ) as C1.
+    pose proof (r_sem_rw_exp _ _ _ _ D2 γ) as C2.
     apply (pdom_bind C2).
     apply (pdom_lift (@fst _ (sem_datatype DUnit))).
     apply C1.
     exact δ.
 
     (* has_type_rw_Assign *)
-    pose proof (pdom_lift (fun v => update k v δ a) (p_sem_ro_exp _ _ _ p (tedious_prod_sem _ _ (δ, γ)))) as V.
+    pose proof (pdom_lift (fun v => update k v δ a) (r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (δ, γ)))) as V.
     exact (pdom_lift (fun x => (x, tt)) V).
     
     (* has_type_rw_Newvar *)
-    pose proof (p_sem_ro_exp _ _ _ p (tedious_prod_sem _ _ (δ, γ))) as V.
-    pose proof (p_sem_rw_exp _ _ _ _ D γ) as f.
+    pose proof (r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (δ, γ))) as V.
+    pose proof (r_sem_rw_exp _ _ _ _ D γ) as f.
     pose proof (pdom_bind f (pdom_lift (fun v => (v, δ)) V)) as res.
     exact (pdom_lift (fun x => (snd (fst x), snd x)) res).
 
     (* has_type_rw_Cond *)
-    pose proof (p_sem_ro_exp _ _ _ p (tedious_prod_sem _ _ (δ, γ))) as B.
-    pose proof (p_sem_rw_exp _ _ _ _ D1 γ δ) as X.
-    pose proof (p_sem_rw_exp _ _ _ _ D2 γ δ) as Y.
+    pose proof (r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (δ, γ))) as B.
+    pose proof (r_sem_rw_exp _ _ _ _ D1 γ δ) as X.
+    pose proof (r_sem_rw_exp _ _ _ _ D2 γ δ) as Y.
     exact (pdom_bind (fun b : bool => if b then X else Y) B).
     
     (* has_type_rw_Case *)
-    pose proof (p_sem_ro_exp _ _ _ p (tedious_prod_sem _ _ (δ, γ))) as B1.
-    pose proof (p_sem_ro_exp _ _ _ p0 (tedious_prod_sem _ _ (δ, γ))) as B2.
-    pose proof (p_sem_rw_exp _ _ _ _ D1 γ δ) as X.
-    pose proof (p_sem_rw_exp _ _ _ _ D2 γ δ) as Y.
+    pose proof (r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (δ, γ))) as B1.
+    pose proof (r_sem_ro_exp _ _ _ r0 (tedious_prod_sem _ _ (δ, γ))) as B2.
+    pose proof (r_sem_rw_exp _ _ _ _ D1 γ δ) as X.
+    pose proof (r_sem_rw_exp _ _ _ _ D2 γ δ) as Y.
     exact (Case2 B1 B2 X Y).
 
     (* has_type_rw_CaseList *)
@@ -155,114 +163,80 @@ Proof.
     induction f.
     exact nil.
     destruct p.
-    exact ((p_sem_ro_exp _ _ _ p (δ; γ), p_sem_rw_exp _ _ _ _ p0 γ δ) :: IHf). 
+    exact ((r_sem_ro_exp _ _ _ r (δ; γ), r_sem_rw_exp _ _ _ _ r0 γ δ) :: IHf). 
     exact (pdom_case_list X).
 
     
     (* has_type_rw_While *)
-    pose proof (fun d => p_sem_ro_exp _ _ _ p (tedious_prod_sem _ _ (d, γ))) as B.
-    pose proof (fun d => pdom_lift fst (p_sem_rw_exp _ _ _ _ D γ d)) as C.
+    pose proof (fun d => r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (d, γ))) as B.
+    pose proof (fun d => pdom_lift fst (r_sem_rw_exp _ _ _ _ D γ d)) as C.
     exact (pdom_lift (fun x => (x, tt)) (pdom_while B C δ)).
 Defined.
 
-Ltac easy_rewrite_uip :=
-  repeat (try unfold simplification_heq; try unfold solution_left; try unfold eq_rect_r; try rewrite (prop_irrl _ (eq_sym _) eq_refl); simpl).
 
-Lemma has_type_ro_phas_type_ro_unambiguous : forall Γ e τ σ, Γ |- e : τ -> Γ |~ e : σ -> τ = σ.
-Proof.
-  intros.
-  apply (has_type_ro_phas_type_ro) in H.
-  apply (phas_type_ro_unambiguous _ _ _ _ H H0).
-Qed.
-
-Lemma has_type_rw_phas_type_rw_unambiguous : forall Γ Δ e τ σ, Γ ;;; Δ ||- e : τ -> Γ ;;; Δ ||~ e : σ -> τ = σ.
-Proof.
-  intros.
-  apply (has_type_rw_phas_type_rw) in H.
-  apply (phas_type_rw_unambiguous _ _ _ _ _ H H0).
-Qed.
-
- 
-Lemma p_has_type_ro_inv_Seq_1 Γ c1 c2 τ (w : Γ |~ (c1 ;; c2) : τ) : Γ ;;; nil ||~ c1 : DUnit.
-Proof.
-  dependent destruction w.
-  dependent destruction p.
-  simpl in p1.
-  exact p1.
-Defined.
-
-Lemma p_has_type_ro_inv_Seq_2 Γ c1 c2 τ (w : Γ |~ (c1 ;; c2) : τ) : Γ ;;; nil ||~ c2 : τ.
-Proof.
-  dependent destruction w.
-  dependent destruction p.
-  simpl in p2.
-  exact p2.
-Defined.
-  
-
-Lemma p_sem_ro_Seq : forall Γ c1 c2 τ (w : Γ |~ (c1 ;; c2) : τ),
-    p_sem_ro_exp Γ (c1;; c2) τ w =
+Lemma r_sem_ro_Seq : forall Γ c1 c2 τ (w : Γ |~ (c1 ;; c2) : τ),
+    r_sem_ro_exp Γ (c1;; c2) τ w =
       (fun γ : sem_ro_ctx Γ =>
-         pdom_lift snd (pdom_bind (p_sem_rw_exp Γ nil c2 τ (p_has_type_ro_inv_Seq_2 _ _ _ _ w) γ) (pdom_lift fst (p_sem_rw_exp Γ nil c1 UNIT (p_has_type_ro_inv_Seq_1 _ _ _ _ w) γ tt)))).
+         pdom_lift snd (pdom_bind (r_sem_rw_exp Γ nil c2 τ (r_has_type_ro_inv_Seq_2 _ _ _ _ w) γ) (pdom_lift fst (r_sem_rw_exp Γ nil c1 UNIT (r_has_type_ro_inv_Seq_1 _ _ _ _ w) γ tt)))).
 Proof.
   intros.
   dependent destruction w.
-  dependent destruction p.
+  dependent destruction r.
   easy_rewrite_uip.
   auto.
 Qed.
 
 
-Lemma p_sem_ro_Newvar : forall Γ e c τ (w :  Γ |~ (NEWVAR e IN c) : τ), exists σ p p1,
-    p_sem_ro_exp Γ (NEWVAR e IN c) τ w
+Lemma r_sem_ro_Newvar : forall Γ e c τ (w :  Γ |~ (NEWVAR e IN c) : τ), exists σ p p1,
+    r_sem_ro_exp Γ (NEWVAR e IN c) τ w
     =
       (fun γ : sem_ro_ctx Γ =>
          pdom_lift snd
-                   (pdom_lift (fun x : sem_datatype σ * unit * sem_datatype τ => (snd (fst x), snd x))
-                              (pdom_bind (p_sem_rw_exp Γ (σ :: nil) c τ p1 γ)
-                                         (pdom_lift (fun v : sem_datatype σ => (v, tt)) (p_sem_ro_exp Γ e σ p γ))))).
+           (pdom_lift (fun x : sem_datatype σ * unit * sem_datatype τ => (snd (fst x), snd x))
+              (pdom_bind (r_sem_rw_exp Γ (σ :: nil) c τ p1 γ)
+                 (pdom_lift (fun v : sem_datatype σ => (v, tt)) (r_sem_ro_exp Γ e σ p γ))))).
 Proof.
   intros.
   dependent destruction w.
-  dependent destruction p.
+  dependent destruction r.
   easy_rewrite_uip.
-  exists σ, p, p1.
+  exists σ, r, r1.
   auto.  
 Qed.
 
-Lemma p_sem_ro_Cond : forall Γ e c1 c2 τ (w : Γ |~ (IF e THEN c1 ELSE c2 END) : τ), exists p1 p2 p3,
-    p_sem_ro_exp Γ (IF e THEN c1 ELSE c2 END) τ w =
+Lemma r_sem_ro_Cond : forall Γ e c1 c2 τ (w : Γ |~ (IF e THEN c1 ELSE c2 END) : τ), exists p1 p2 p3,
+    r_sem_ro_exp Γ (IF e THEN c1 ELSE c2 END) τ w =
       (fun γ : sem_ro_ctx Γ =>
-   pdom_lift snd
-     (pdom_bind (fun b : bool => if b then p_sem_rw_exp Γ nil c1 τ p2 γ tt else p_sem_rw_exp Γ nil c2 τ p3 γ tt)
-        (p_sem_ro_exp Γ e BOOL p1 γ))).
+         pdom_lift snd
+           (pdom_bind (fun b : bool => if b then r_sem_rw_exp Γ nil c1 τ p2 γ tt else r_sem_rw_exp Γ nil c2 τ p3 γ tt)
+              (r_sem_ro_exp Γ e BOOL p1 γ))).
 Proof.
   intros.
   dependent destruction w.
-  dependent destruction p.
+  dependent destruction r.
   easy_rewrite_uip.
-  exists p1, p2, p3.
+  exists r1, r2, r3.
   auto.  
 Qed.
 
-Lemma p_sem_ro_Case : forall Γ e1 e2 c1 c2 τ (w : Γ |~ (CASE e1 ==> c1 OR e2 ==> c2 END) : τ), exists p1 p2 p3 p4,
-    p_sem_ro_exp Γ (CASE e1 ==> c1 OR e2 ==> c2 END) τ w
+Lemma r_sem_ro_Case : forall Γ e1 e2 c1 c2 τ (w : Γ |~ (CASE e1 ==> c1 OR e2 ==> c2 END) : τ), exists p1 p2 p3 p4,
+    r_sem_ro_exp Γ (CASE e1 ==> c1 OR e2 ==> c2 END) τ w
     =  (fun γ : sem_ro_ctx Γ =>
-   pdom_lift snd
-     (Case2 (p_sem_ro_exp Γ e1 BOOL p1 γ) (p_sem_ro_exp Γ e2 BOOL p3 γ) (p_sem_rw_exp Γ nil c1 τ p2 γ tt)
-        (p_sem_rw_exp Γ nil c2 τ p4 γ tt))).
+          pdom_lift snd
+            (Case2 (r_sem_ro_exp Γ e1 BOOL p1 γ) (r_sem_ro_exp Γ e2 BOOL p3 γ) (r_sem_rw_exp Γ nil c1 τ p2 γ tt)
+               (r_sem_rw_exp Γ nil c2 τ p4 γ tt))).
 Proof.
   intros.
   dependent destruction w.
-  dependent destruction p.
+  dependent destruction r.
   easy_rewrite_uip.
-  exists p1, p2, p3, p4.
+  exists r1, r2, r3, r4.
   auto.  
 Qed.
 
-Lemma p_sem_ro_CaseList : forall Γ l τ (w : Γ |~ CaseList l : τ),
-    exists f : ForallT (fun ec : exp * exp => ((Γ |~ fst ec : BOOL) * (Γ;;; nil ||~ snd ec : τ))%type) l,
-    p_sem_ro_exp Γ (CaseList l) τ w
+Lemma r_sem_ro_CaseList : forall Γ l τ (w : Γ |~ CaseList l : τ),
+  exists f : ForallT (fun ec : exp * exp => ((Γ |~ fst ec : BOOL) * (Γ;;; nil ||~ snd ec : τ))%type) l,
+    r_sem_ro_exp Γ (CaseList l) τ w
     = 
 
 
@@ -275,125 +249,52 @@ Lemma p_sem_ro_CaseList : forall Γ l τ (w : Γ |~ CaseList l : τ),
                  (fun (x : exp * exp) (l2 : list (exp * exp)) (p : (Γ |~ fst x : BOOL) * (Γ;;; nil ||~ snd x : τ))
                       (_ : ForallT (fun ec : exp * exp => ((Γ |~ fst ec : BOOL) * (Γ;;; nil ||~ snd ec : τ))%type) l2)
                       (IHf : list (pdom bool * pdom (unit * sem_datatype τ))) =>
-                    let (a, b) := p in (p_sem_ro_exp Γ (fst x) BOOL a γ, p_sem_rw_exp Γ nil (snd x) τ b γ tt) :: IHf) l f))).
+                    let (a, b) := p in (r_sem_ro_exp Γ (fst x) BOOL a γ, r_sem_rw_exp Γ nil (snd x) τ b γ tt) :: IHf) l f))).
   intros.
   dependent destruction w.
-  dependent destruction p.
+  dependent destruction r.
   easy_rewrite_uip.
   exists f.
   auto.
 Qed.
 
-Lemma p_sem_ro_While : forall Γ e c (w : Γ |~ (WHILE e DO c END) : UNIT), exists p p1,
-    p_sem_ro_exp Γ (WHILE e DO c END) UNIT w =
-       (fun γ : sem_ro_ctx Γ =>
-   pdom_lift snd
-     (pdom_lift (fun x : unit => (x, tt))
-        (pdom_while (fun _ : unit => p_sem_ro_exp Γ e BOOL p γ)
-           (fun d : unit => pdom_lift fst (p_sem_rw_exp Γ nil c UNIT p1 γ d)) tt))).
+Lemma r_sem_ro_While : forall Γ e c (w : Γ |~ (WHILE e DO c END) : UNIT), exists p p1,
+    r_sem_ro_exp Γ (WHILE e DO c END) UNIT w =
+      (fun γ : sem_ro_ctx Γ =>
+         pdom_lift snd
+           (pdom_lift (fun x : unit => (x, tt))
+              (pdom_while (fun _ : unit => r_sem_ro_exp Γ e BOOL p γ)
+                 (fun d : unit => pdom_lift fst (r_sem_rw_exp Γ nil c UNIT p1 γ d)) tt))).
 Proof.
   intros.
   dependent destruction w.
-  dependent destruction p.
+  dependent destruction r.
   easy_rewrite_uip.
-  exists p, p1.
+  exists r, r1.
   auto.  
 Qed.
 
-Fixpoint assignable_unique Δ τ n (a1 a2 : assignable Δ τ n) : a1 = a2.
-Proof.
-  dependent destruction a1;
-    dependent destruction a2; try reflexivity.
-  rewrite (assignable_unique _ _ _ a1 a2).
-  reflexivity.
-Qed.
-
-  
-  
-
-Fixpoint p_has_type_ro_unique Γ e τ (w1 w2 : Γ |~ e : τ) {struct w1}: w1 = w2 
-with p_has_type_rw_unique Γ Δ e τ (w1 w2 : Γ ;;; Δ ||~ e : τ) {struct w1}: w1 = w2.
-Proof.
-  dependent destruction w1;
-    dependent destruction w2;
-    try 
-      (rewrite (p_has_type_rw_unique _ _ _ _ p p0); reflexivity);
-    try 
-      (rewrite (p_has_type_ro_unique _ _ _ w1 w2); reflexivity);
-    try 
-      (rewrite (p_has_type_ro_unique _ _ _ w1_1 w2_1); rewrite (p_has_type_ro_unique _ _ _ w1_2 w2_2); reflexivity);
-      try reflexivity.
-dependent destruction w1;
-    dependent destruction w2;
-    try 
-      (rewrite (p_has_type_rw_unique _ _ _ _ p p0); reflexivity);
-    try 
-      (rewrite (p_has_type_ro_unique _ _ _ p p0); reflexivity);
-    try 
-      (rewrite (p_has_type_ro_unique _ _ _ w1_1 w2_1); rewrite (p_has_type_ro_unique _ _ _ w1_2 w2_2); reflexivity);
-      try reflexivity.
-
-  rewrite (p_has_type_rw_unique _ _ _ _ w1_1 w2_1);
-    rewrite (p_has_type_rw_unique _ _ _ _ w1_2 w2_2); reflexivity.
-
-  induction (phas_type_ro_unambiguous _ _ _ _ p p0).
-  rewrite (assignable_unique _ _ _ a a0).
-  rewrite (p_has_type_ro_unique _ _ _ p p0); reflexivity.
-  
-    induction (phas_type_ro_unambiguous _ _ _ _ p p0).
-
-  rewrite (p_has_type_ro_unique _ _ _  p p0);
-    rewrite (p_has_type_rw_unique _ _ _ _ w1 w2); reflexivity.
-  
-  rewrite (p_has_type_ro_unique _ _ _ p p0);
-    rewrite (p_has_type_rw_unique _ _ _ _ w1_1 w2_1);
-    rewrite (p_has_type_rw_unique _ _ _ _ w1_2 w2_2); reflexivity.
-
-  rewrite (p_has_type_ro_unique _ _ _ p p1);
-    rewrite (p_has_type_ro_unique _ _ _ p0 p2);
-    rewrite (p_has_type_rw_unique _ _ _ _ w1_1 w2_1);
-    rewrite (p_has_type_rw_unique _ _ _ _ w1_2 w2_2); reflexivity.
-
-  rewrite (prop_irrl _ l0 l2).
-  assert (f = f0).
-  clear l0 l2.
-  induction f.
-  dependent destruction f0.
-  reflexivity.
-  dependent destruction f0.
-  destruct p, p0.
-  rewrite (p_has_type_ro_unique _ _ _ p p0).
-  rewrite (p_has_type_rw_unique _ _ _ _ p1 p2).
-  rewrite (IHf f0).
-  reflexivity.
-  rewrite H; reflexivity.
-
-  rewrite (p_has_type_ro_unique _ _ _ p p0);
-    rewrite (p_has_type_rw_unique _ _ _ _ w1 w2); reflexivity.
-Qed.
 
 Definition dn_intro : forall X : Type, X -> (X -> False) -> False.
 Proof.
   intro X.
   exact (fun x f => f x).
 Defined.
-  
 
-
-Lemma p_sem_ro_ctx_rewrite : forall Γ1 Γ2 e τ (w1 : Γ1 |~ e : τ) (w2 : Γ2 |~ e : τ) (p : Γ1 = Γ2) γ,
-    p_sem_ro_exp _ _ _ w1 γ = p_sem_ro_exp _ _ _ w2 (tr (fun Γ => sem_ro_ctx Γ) p γ).
+Lemma r_sem_ro_ctx_rewrite : forall Γ1 Γ2 e τ (w1 : Γ1 |~ e : τ) (w2 : Γ2 |~ e : τ) (p : Γ1 = Γ2) γ,
+    r_sem_ro_exp _ _ _ w1 γ = r_sem_ro_exp _ _ _ w2 (tr (fun Γ => sem_ro_ctx Γ) p γ).
 Proof.
   intros.
   destruct p.
   simpl.
-  rewrite (p_has_type_ro_unique _ _ _ w1 w2).
+  rewrite (r_has_type_ro_unique _ _ _ w1 w2).
   auto.
 Qed.
 
-Lemma p_sem_rw_rw_ctx_rewrite : forall Γ Δ1 Δ2 e τ (w : Γ ;;; Δ1 ||~ e : τ) (p : Δ1 = Δ2) γ δ,
-    p_sem_rw_exp _ _ _ _ w γ δ =
+Lemma r_sem_rw_rw_ctx_rewrite : forall Γ Δ1 Δ2 e τ (w : Γ ;;; Δ1 ||~ e : τ) (p : Δ1 = Δ2) γ δ,
+    r_sem_rw_exp _ _ _ _ w γ δ =
       pdom_lift (fun q => (tr (fun Δ => sem_ro_ctx Δ) (eq_sym p) (fst q), (snd q)))
-      (p_sem_rw_exp _ _ _ _ (tr (fun Δ => Γ ;;; Δ ||~ e : τ) p w) γ (tr (fun Δ => sem_ro_ctx Δ) p δ)).
+        (r_sem_rw_exp _ _ _ _ (tr (fun Δ => Γ ;;; Δ ||~ e : τ) p w) γ (tr (fun Δ => sem_ro_ctx Δ) p δ)).
 Proof.
   intros.
   destruct p.
@@ -406,9 +307,9 @@ Proof.
   intros [a b]; simpl; reflexivity.
 Qed.
 
-Lemma p_sem_rw_ro_ctx_rewrite : forall Γ1 Γ2 Δ e τ (w : Γ1 ;;; Δ ||~ e : τ) (p : Γ1 = Γ2) γ δ,
-    p_sem_rw_exp _ _ _ _ w γ δ =
-      (p_sem_rw_exp _ _ _ _ (tr (fun Γ => Γ ;;; Δ ||~ e : τ) p w) (tr (fun Δ => sem_ro_ctx Δ) p γ) δ).
+Lemma r_sem_rw_ro_ctx_rewrite : forall Γ1 Γ2 Δ e τ (w : Γ1 ;;; Δ ||~ e : τ) (p : Γ1 = Γ2) γ δ,
+    r_sem_rw_exp _ _ _ _ w γ δ =
+      (r_sem_rw_exp _ _ _ _ (tr (fun Γ => Γ ;;; Δ ||~ e : τ) p w) (tr (fun Δ => sem_ro_ctx Δ) p γ) δ).
 Proof.
   intros.
   destruct p.
@@ -417,21 +318,21 @@ Proof.
 Qed.
 
 Definition app_assoc := 
-fun {A : Type} (l m n : list A) =>
-list_ind (fun l0 : list A => l0 ++ m ++ n = (l0 ++ m) ++ n)
-  ((let H : n = n := eq_refl in
-    (let H0 : m = m := eq_refl in
-     (let H1 : A = A := eq_refl in (fun (_ : A = A) (_ : m = m) (_ : n = n) => eq_refl) H1) H0) H)
-   :
-   nil ++ m ++ n = (nil ++ m) ++ n)
-  (fun (a : A) (l0 : list A) (IHl : l0 ++ m ++ n = (l0 ++ m) ++ n) =>
-   (let H : l0 ++ m ++ n = (l0 ++ m) ++ n := IHl in
-    (let H0 : a = a := eq_refl in
-     (let H1 : A = A := eq_refl in
-      (fun (_ : A = A) (_ : a = a) (H4 : l0 ++ m ++ n = (l0 ++ m) ++ n) =>
-       eq_trans (f_equal (fun f : list A -> list A => f (l0 ++ m ++ n)) eq_refl) (f_equal (cons a) H4)) H1) H0) H)
-   :
-   (a :: l0) ++ m ++ n = ((a :: l0) ++ m) ++ n) l.
+  fun {A : Type} (l m n : list A) =>
+    list_ind (fun l0 : list A => l0 ++ m ++ n = (l0 ++ m) ++ n)
+      ((let H : n = n := eq_refl in
+        (let H0 : m = m := eq_refl in
+         (let H1 : A = A := eq_refl in (fun (_ : A = A) (_ : m = m) (_ : n = n) => eq_refl) H1) H0) H)
+        :
+        nil ++ m ++ n = (nil ++ m) ++ n)
+      (fun (a : A) (l0 : list A) (IHl : l0 ++ m ++ n = (l0 ++ m) ++ n) =>
+         (let H : l0 ++ m ++ n = (l0 ++ m) ++ n := IHl in
+          (let H0 : a = a := eq_refl in
+           (let H1 : A = A := eq_refl in
+            (fun (_ : A = A) (_ : a = a) (H4 : l0 ++ m ++ n = (l0 ++ m) ++ n) =>
+               eq_trans (f_equal (fun f : list A -> list A => f (l0 ++ m ++ n)) eq_refl) (f_equal (cons a) H4)) H1) H0) H)
+         :
+         (a :: l0) ++ m ++ n = ((a :: l0) ++ m) ++ n) l.
 
 Lemma tr_f_equal : forall X Y (P : Y -> Type) (f : X -> Y) (x y : X) (p : x = y),
   forall t, tr P (f_equal f p) t = tr (fun x => P (f x)) p t.
@@ -862,7 +763,7 @@ Proof.
   contradict (flat_bot_neq_total _ H3).
 Defined.
 
-Lemma p_sem_move_readonly_while X Y Z (f : X -> Z) (g : Y -> Z) x y (b1 : X -> pdom bool) (c1 : X -> pdom X) (b2 : Y -> pdom bool) (c2 : Y -> pdom Y) :
+Lemma r_sem_move_readonly_while X Y Z (f : X -> Z) (g : Y -> Z) x y (b1 : X -> pdom bool) (c1 : X -> pdom X) (b2 : Y -> pdom bool) (c2 : Y -> pdom Y) :
   (forall n, 
       pdom_lift f (pdom_fun_bot_chain (pdom_W b1 c1) (pdom_W_monotone b1 c1) n x) = 
         pdom_lift g (pdom_fun_bot_chain (pdom_W b2 c2) (pdom_W_monotone b2 c2) n y)) ->
@@ -1006,7 +907,7 @@ Defined.
 
 
 Fixpoint assign_concat_fst' Δ Δ' τ k (a :assignable Δ τ k) x δ δ' {struct a} : 
-    (update k x δ a ; δ') = (update k x (δ; δ') (assignable_push_back Δ Δ' τ k a)).
+  (update k x δ a ; δ') = (update k x (δ; δ') (assignable_push_back Δ Δ' τ k a)).
 Proof.
   dependent destruction a.
   simpl.
@@ -1015,8 +916,8 @@ Proof.
   reflexivity.
   destruct δ.
   replace (tedious_prod_sem (@cons datatype σ Δ) Δ'
-       (@pair (sem_list_datatype (@cons datatype σ Δ)) (sem_ro_ctx Δ')
-          (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_list_datatype Δ) s s0)
+             (@pair (sem_list_datatype (@cons datatype σ Δ)) (sem_ro_ctx Δ')
+                (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_list_datatype Δ) s s0)
                    (assignable_S Δ τ σ k a)) δ'))
     with
     (s, (update k x s0 a; δ')).
@@ -1039,33 +940,33 @@ Proof.
   apply assignable_unique. 
 Defined.
 
-Fixpoint p_sem_move_readonly  Γ Δ Δ' e τ (w1 : Γ ;;; (Δ ++ Δ') ||~ e : τ) (w2 : (Δ' ++ Γ) ;;; Δ ||~ e : τ) :
-  forall γ δ δ', p_sem_rw_exp _ _ _ _ w1 γ (δ ; δ') =
-           pdom_lift (fun y => ((fst y; δ'), snd y)) (p_sem_rw_exp _ _ _ _ w2 (δ'; γ) δ).
+Fixpoint r_sem_move_readonly  Γ Δ Δ' e τ (w1 : Γ ;;; (Δ ++ Δ') ||~ e : τ) (w2 : (Δ' ++ Γ) ;;; Δ ||~ e : τ) :
+  forall γ δ δ', r_sem_rw_exp _ _ _ _ w1 γ (δ ; δ') =
+                   pdom_lift (fun y => ((fst y; δ'), snd y)) (r_sem_rw_exp _ _ _ _ w2 (δ'; γ) δ).
 Proof.
   intros.
   dependent destruction w1;
-  dependent destruction w2;
+    dependent destruction w2;
     easy_rewrite_uip; try simpl in p0;
-    try induction (p_has_type_ro_unique _ _ _ p p0);
+    try induction (r_has_type_ro_unique _ _ _ r r0);
     try (rewrite pdom_lift_comp; simpl; reflexivity);
     try (rewrite pdom_lift_comp;
          simpl;
          apply lp;
-         rewrite (p_sem_ro_ctx_rewrite _ _ _ _ p0 p (app_assoc Δ Δ' Γ));
+         rewrite (r_sem_ro_ctx_rewrite _ _ _ _ r0 r (app_assoc Δ Δ' Γ));
          apply lp;
          apply eq_sym;
          apply app_assoc_tr).
   
   unfold pdom_bind.
-  rewrite (p_sem_move_readonly _ _ _ _ _ w1_1 w2_1).
+  rewrite (r_sem_move_readonly _ _ _ _ _ w1_1 w2_1).
   rewrite pdom_lift_comp.
   rewrite pdom_lift_comp.
   rewrite pdom_lift_comp.
   simpl.
-  replace (fun y : sem_ro_ctx Δ * unit => p_sem_rw_exp Γ (Δ ++ Δ') c2 τ w1_2 γ (fst y; δ'))
+  replace (fun y : sem_ro_ctx Δ * unit => r_sem_rw_exp Γ (Δ ++ Δ') c2 τ w1_2 γ (fst y; δ'))
     with (fun y : sem_ro_ctx Δ * unit =>
-            pdom_lift (fun y => ((fst y; δ'), snd y)) (p_sem_rw_exp _ _ _ _ w2_2 (δ'; γ) (fst y))).
+            pdom_lift (fun y => ((fst y; δ'), snd y)) (r_sem_rw_exp _ _ _ _ w2_2 (δ'; γ) (fst y))).
   simpl.
   rewrite <- pdom_lift_comp.
   rewrite pdom_mult_natural.
@@ -1075,13 +976,13 @@ Proof.
   reflexivity.
   apply dfun_ext.
   intro.
-  rewrite (p_sem_move_readonly _ _ _ _ _ w1_2 w2_2).
+  rewrite (r_sem_move_readonly _ _ _ _ _ w1_2 w2_2).
   reflexivity.
 
   assert (τ = τ0).
   assert ( (Δ ++ Δ' ++ Γ) |~ e : τ).
   rewrite app_assoc; auto.
-  apply (phas_type_ro_unambiguous _ _ _ _ H p0).
+  apply (r_has_type_ro_unambiguous _ _ _ _ H r0).
   induction H.
   rewrite pdom_lift_comp.
   rewrite pdom_lift_comp.
@@ -1090,7 +991,7 @@ Proof.
   replace (fun y : sem_datatype τ => (update k y (δ; δ') a, tt)) with
     (fun y : sem_datatype τ => ((update k y δ a0; δ'), tt)).
   apply lp.
-  rewrite (p_sem_ro_ctx_rewrite _ _ _ _ p0 p (app_assoc Δ Δ' Γ)).
+  rewrite (r_sem_ro_ctx_rewrite _ _ _ _ r0 r (app_assoc Δ Δ' Γ)).
   apply lp, eq_sym, app_assoc_tr.
   apply dfun_ext; intro.
   assert (((update k a1 δ a0; δ') = (update k a1 (δ; δ') a))).
@@ -1098,7 +999,7 @@ Proof.
 
   rewrite H; reflexivity.
 
- 
+  
 
   
   rewrite pdom_lift_comp.
@@ -1111,17 +1012,17 @@ Proof.
   assert (σ = σ0).
   assert ( (Δ ++ Δ' ++ Γ) |~ e : σ).
   rewrite app_assoc; auto.
-  apply (phas_type_ro_unambiguous _ _ _ _ H p0).
+  apply (r_has_type_ro_unambiguous _ _ _ _ H r0).
   induction H.
-  rewrite (p_sem_ro_ctx_rewrite _ _ _ _ p0 p (app_assoc Δ Δ' Γ)).
+  rewrite (r_sem_ro_ctx_rewrite _ _ _ _ r0 r (app_assoc Δ Δ' Γ)).
   replace  (tr (fun Γ0 : list datatype => sem_ro_ctx Γ0) (app_assoc Δ Δ' Γ) (δ; (δ'; γ)))
     with  ((δ; δ'); γ) by (apply eq_sym, app_assoc_tr).
-  pose proof (p_sem_move_readonly Γ (σ::Δ) Δ' _ _ w1 w2 γ).
+  pose proof (r_sem_move_readonly Γ (σ::Δ) Δ' _ _ w1 w2 γ).
 
-  replace (fun y : sem_datatype σ => p_sem_rw_exp Γ (σ :: Δ ++ Δ') c τ w1 γ (y, (δ; δ')))
+  replace (fun y : sem_datatype σ => r_sem_rw_exp Γ (σ :: Δ ++ Δ') c τ w1 γ (y, (δ; δ')))
     with ((fun y : sem_datatype σ =>
              pdom_lift (fun y : sem_ro_ctx (σ :: Δ) * sem_datatype τ => ((fst y; δ'), snd y))
-                       (p_sem_rw_exp (Δ' ++ Γ) (σ :: Δ) c τ w2 (δ'; γ) (y, δ)))).
+               (r_sem_rw_exp (Δ' ++ Γ) (σ :: Δ) c τ w2 (δ'; γ) (y, δ)))).
   rewrite <- pdom_lift_comp.
   rewrite pdom_mult_natural.
   rewrite pdom_lift_comp.
@@ -1141,30 +1042,30 @@ Proof.
 
   unfold pdom_bind.
 
-  rewrite (p_sem_ro_ctx_rewrite _ _ _ _ p0 p (app_assoc Δ Δ' Γ)).
+  rewrite (r_sem_ro_ctx_rewrite _ _ _ _ r0 r (app_assoc Δ Δ' Γ)).
   replace  (tr (fun Γ0 : list datatype => sem_ro_ctx Γ0) (app_assoc Δ Δ' Γ) (δ; (δ'; γ)))
     with  ((δ; δ'); γ) by (apply eq_sym, app_assoc_tr).
-  rewrite (p_sem_move_readonly Γ _ _ _ _ w1_1 w2_1 γ ).
-  rewrite (p_sem_move_readonly Γ _ _ _ _ w1_2 w2_2 γ).
+  rewrite (r_sem_move_readonly Γ _ _ _ _ w1_1 w2_1 γ ).
+  rewrite (r_sem_move_readonly Γ _ _ _ _ w1_2 w2_2 γ).
   replace
     ((fun b : bool =>
         if b
         then
           pdom_lift (fun y : sem_ro_ctx Δ * sem_datatype τ => ((fst y; δ'), snd y))
-                    (p_sem_rw_exp (Δ' ++ Γ) Δ c1 τ w2_1 (δ'; γ) δ)
+            (r_sem_rw_exp (Δ' ++ Γ) Δ c1 τ w2_1 (δ'; γ) δ)
         else
           pdom_lift (fun y : sem_ro_ctx Δ * sem_datatype τ => ((fst y; δ'), snd y))
-                    (p_sem_rw_exp (Δ' ++ Γ) Δ c2 τ w2_2 (δ'; γ) δ)))
+            (r_sem_rw_exp (Δ' ++ Γ) Δ c2 τ w2_2 (δ'; γ) δ)))
     with
     
     ((fun b : bool =>
         pdom_lift (fun y : sem_ro_ctx Δ * sem_datatype τ => ((fst y; δ'), snd y))
-        (if b
-        then
-         
-           (p_sem_rw_exp (Δ' ++ Γ) Δ c1 τ w2_1 (δ'; γ) δ)
-        else
-           (p_sem_rw_exp (Δ' ++ Γ) Δ c2 τ w2_2 (δ'; γ) δ)))).
+          (if b
+           then
+             
+             (r_sem_rw_exp (Δ' ++ Γ) Δ c1 τ w2_1 (δ'; γ) δ)
+           else
+             (r_sem_rw_exp (Δ' ++ Γ) Δ c2 τ w2_2 (δ'; γ) δ)))).
   rewrite <- pdom_lift_comp.
   rewrite pdom_mult_natural.
   rewrite app_assoc_tr.
@@ -1174,12 +1075,12 @@ Proof.
 
 
   (* case *)
-  rewrite (p_sem_ro_ctx_rewrite _ _ _ _ p1 p (app_assoc Δ Δ' Γ)).
-  rewrite (p_sem_ro_ctx_rewrite _ _ _ _ p2 p0 (app_assoc Δ Δ' Γ)).
+  rewrite (r_sem_ro_ctx_rewrite _ _ _ _ r1 r (app_assoc Δ Δ' Γ)).
+  rewrite (r_sem_ro_ctx_rewrite _ _ _ _ r2 r0 (app_assoc Δ Δ' Γ)).
   replace  (tr (fun Γ0 : list datatype => sem_ro_ctx Γ0) (app_assoc Δ Δ' Γ) (δ; (δ'; γ)))
     with  ((δ; δ'); γ) by (apply eq_sym, app_assoc_tr).
-  rewrite (p_sem_move_readonly Γ _ _ _ _ w1_1 w2_1 γ ).
-  rewrite (p_sem_move_readonly Γ _ _ _ _ w1_2 w2_2 γ).
+  rewrite (r_sem_move_readonly Γ _ _ _ _ w1_1 w2_1 γ ).
+  rewrite (r_sem_move_readonly Γ _ _ _ _ w1_2 w2_2 γ).
   rewrite app_assoc_tr.
   apply Case2_post_processing.
 
@@ -1197,13 +1098,13 @@ Proof.
     destruct p.
     dependent destruction f0.
     simpl.
-    destruct p1.
+    destruct p.
     simpl.
     rewrite (IHf f0).
     apply pl.
     apply lp.
-    rewrite (p_sem_move_readonly Γ _ _ _ _ p0 p2).
-    rewrite (p_sem_ro_ctx_rewrite _ _ _ _ p1 p (app_assoc Δ Δ' Γ)).
+    rewrite (r_sem_move_readonly Γ _ _ _ _ r0 r2).
+    rewrite (r_sem_ro_ctx_rewrite _ _ _ _ r1 r (app_assoc Δ Δ' Γ)).
     rewrite app_assoc_tr.
     reflexivity.
   }
@@ -1213,7 +1114,7 @@ Proof.
   
   rewrite pdom_lift_comp.
   simpl.
-  apply p_sem_move_readonly_while.
+  apply r_sem_move_readonly_while.
   intros.
   generalize δ, δ'.
   induction n.
@@ -1265,7 +1166,7 @@ Proof.
   rewrite <- pdom_mult_natural.
   rewrite pdom_lift_comp.
   apply lp.
-  rewrite (p_sem_ro_ctx_rewrite _ _ _ _ p0 p (app_assoc Δ Δ' Γ)).
+  rewrite (r_sem_ro_ctx_rewrite _ _ _ _ r0 r (app_assoc Δ Δ' Γ)).
   replace  (tr (fun Γ0 : list datatype => sem_ro_ctx Γ0) (app_assoc Δ Δ' Γ) (δ0; (δ'0; γ)))
     with  ((δ0; δ'0); γ) by (apply eq_sym, app_assoc_tr).
   rewrite app_assoc_tr.
@@ -1279,26 +1180,26 @@ Proof.
   simpl in IHn.
   assert (
       (fun y : sem_ro_ctx (Δ ++ Δ') * unit =>
-        pdom_lift (fun x : sem_ro_ctx (Δ ++ Δ') => (x, tt))
-                  (pdom_fun_bot_chain
-                     (pdom_W (fun d : sem_ro_ctx (Δ ++ Δ') => p_sem_ro_exp ((Δ ++ Δ') ++ Γ) e BOOL p (d; γ))
-                             (fun d : sem_ro_ctx (Δ ++ Δ') => pdom_lift fst (p_sem_rw_exp Γ (Δ ++ Δ') c UNIT w1 γ d)))
-                     (pdom_W_monotone (fun d : sem_ro_ctx (Δ ++ Δ') => p_sem_ro_exp ((Δ ++ Δ') ++ Γ) e BOOL p (d; γ))
-                                      (fun d : sem_ro_ctx (Δ ++ Δ') => pdom_lift fst (p_sem_rw_exp Γ (Δ ++ Δ') c UNIT w1 γ d))) n
-                     (fst y))) =
-          fun y : sem_ro_ctx (Δ ++ Δ') * unit =>
-            pdom_lift (fun y0 : sem_ro_ctx Δ => ((y0; snd_concat (fst y)), tt))
-                      (pdom_fun_bot_chain
-                         (pdom_W (fun d : sem_ro_ctx Δ => p_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL p0 (d; (snd_concat (fst y); γ)))
-                                 (fun d : sem_ro_ctx Δ => pdom_lift fst (p_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (snd_concat (fst y); γ) d)))
-                         (pdom_W_monotone
-                            (fun d : sem_ro_ctx Δ => p_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL p0 (d; (snd_concat (fst y); γ)))
-                            (fun d : sem_ro_ctx Δ => pdom_lift fst (p_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (snd_concat (fst y); γ) d))) n
-                         (fst_concat (fst y)))).
+         pdom_lift (fun x : sem_ro_ctx (Δ ++ Δ') => (x, tt))
+           (pdom_fun_bot_chain
+              (pdom_W (fun d : sem_ro_ctx (Δ ++ Δ') => r_sem_ro_exp ((Δ ++ Δ') ++ Γ) e BOOL r (d; γ))
+                 (fun d : sem_ro_ctx (Δ ++ Δ') => pdom_lift fst (r_sem_rw_exp Γ (Δ ++ Δ') c UNIT w1 γ d)))
+              (pdom_W_monotone (fun d : sem_ro_ctx (Δ ++ Δ') => r_sem_ro_exp ((Δ ++ Δ') ++ Γ) e BOOL r (d; γ))
+                 (fun d : sem_ro_ctx (Δ ++ Δ') => pdom_lift fst (r_sem_rw_exp Γ (Δ ++ Δ') c UNIT w1 γ d))) n
+              (fst y))) =
+        fun y : sem_ro_ctx (Δ ++ Δ') * unit =>
+          pdom_lift (fun y0 : sem_ro_ctx Δ => ((y0; snd_app (fst y)), tt))
+            (pdom_fun_bot_chain
+               (pdom_W (fun d : sem_ro_ctx Δ => r_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL r0 (d; (snd_app (fst y); γ)))
+                  (fun d : sem_ro_ctx Δ => pdom_lift fst (r_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (snd_app (fst y); γ) d)))
+               (pdom_W_monotone
+                  (fun d : sem_ro_ctx Δ => r_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL r0 (d; (snd_app (fst y); γ)))
+                  (fun d : sem_ro_ctx Δ => pdom_lift fst (r_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (snd_app (fst y); γ) d))) n
+               (fst_app (fst y)))).
   
 
   apply dfun_ext; intro y.
-  pose proof (IHn (fst_concat (fst y)) (snd_concat (fst y))).
+  pose proof (IHn (fst_app (fst y)) (snd_app (fst y))).
   rewrite <- tedious_equiv_2 in H0.
   simpl.
   auto.
@@ -1306,37 +1207,37 @@ Proof.
   simpl in H0.
   rewrite H0.
   clear H0.
-  rewrite (p_sem_move_readonly Γ _ _ _ _ w1 w2 γ).
+  rewrite (r_sem_move_readonly Γ _ _ _ _ w1 w2 γ).
   rewrite pdom_lift_comp.
   simpl.
- assert  ((fun y : sem_ro_ctx Δ * unit =>
-     pdom_lift (fun y0 : sem_ro_ctx Δ => ((y0; snd_concat (fst y; δ'0)), tt))
-       (pdom_fun_bot_chain
-          (pdom_W (fun d : sem_ro_ctx Δ => p_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL p0 (d; (snd_concat (fst y; δ'0); γ)))
-             (fun d : sem_ro_ctx Δ =>
-              pdom_lift fst (p_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (snd_concat (fst y; δ'0); γ) d)))
-          (pdom_W_monotone
-             (fun d : sem_ro_ctx Δ => p_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL p0 (d; (snd_concat (fst y; δ'0); γ)))
-             (fun d : sem_ro_ctx Δ =>
-              pdom_lift fst (p_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (snd_concat (fst y; δ'0); γ) d))) n
-          (fst_concat (fst y; δ'0)))) =
-     (fun y : sem_ro_ctx Δ * unit =>
-     pdom_lift (fun y0 : sem_ro_ctx Δ => ((y0;  δ'0), tt))
-       (pdom_fun_bot_chain
-          (pdom_W (fun d : sem_ro_ctx Δ => p_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL p0 (d; (δ'0; γ)))
-             (fun d : sem_ro_ctx Δ =>
-              pdom_lift fst (p_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (δ'0; γ) d)))
-          (pdom_W_monotone
-             (fun d : sem_ro_ctx Δ => p_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL p0 (d; (δ'0; γ)))
-             (fun d : sem_ro_ctx Δ =>
-              pdom_lift fst (p_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (δ'0; γ) d))) n
-          (fst y)))).
+  assert  ((fun y : sem_ro_ctx Δ * unit =>
+              pdom_lift (fun y0 : sem_ro_ctx Δ => ((y0; snd_app (fst y; δ'0)), tt))
+                (pdom_fun_bot_chain
+                   (pdom_W (fun d : sem_ro_ctx Δ => r_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL r0 (d; (snd_app (fst y; δ'0); γ)))
+                      (fun d : sem_ro_ctx Δ =>
+                         pdom_lift fst (r_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (snd_app (fst y; δ'0); γ) d)))
+                   (pdom_W_monotone
+                      (fun d : sem_ro_ctx Δ => r_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL r0 (d; (snd_app (fst y; δ'0); γ)))
+                      (fun d : sem_ro_ctx Δ =>
+                         pdom_lift fst (r_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (snd_app (fst y; δ'0); γ) d))) n
+                   (fst_app (fst y; δ'0)))) =
+             (fun y : sem_ro_ctx Δ * unit =>
+                pdom_lift (fun y0 : sem_ro_ctx Δ => ((y0;  δ'0), tt))
+                  (pdom_fun_bot_chain
+                     (pdom_W (fun d : sem_ro_ctx Δ => r_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL r0 (d; (δ'0; γ)))
+                        (fun d : sem_ro_ctx Δ =>
+                           pdom_lift fst (r_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (δ'0; γ) d)))
+                     (pdom_W_monotone
+                        (fun d : sem_ro_ctx Δ => r_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL r0 (d; (δ'0; γ)))
+                        (fun d : sem_ro_ctx Δ =>
+                           pdom_lift fst (r_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (δ'0; γ) d))) n
+                     (fst y)))).
 
   apply dfun_ext.
   intros.
-  unfold snd_concat.
+  unfold snd_app.
   rewrite tedious_equiv_1.
-  unfold fst_concat.
+  unfold fst_app.
   rewrite tedious_equiv_1.
   auto.
   simpl in H0.
@@ -1349,64 +1250,9 @@ Proof.
   auto.
 Qed.
 
- 
 
-(* Fixpoint p_sem_move_readonly  Γ Δ e τ (w1 : Γ ;;; Δ ||~ e : τ) (w2 : (Δ ++ Γ) ;;; nil ||~ e : τ) : *)
-(*   forall γ δ, p_sem_rw_exp Γ Δ e τ w1 γ δ = *)
-(*            pdom_lift (fun y => (δ, snd y)) (p_sem_rw_exp (Δ ++ Γ) nil e τ w2 (δ; γ) tt). *)
-(* Proof. *)
-(*   intros. *)
-(*   dependent destruction w1; *)
-(*   dependent destruction w2; *)
-(*     easy_rewrite_uip; try simpl in p0; *)
-(*     try induction (p_has_type_ro_unique _ _ _ p p0); *)
-(*     try (rewrite pdom_lift_comp; simpl; reflexivity). *)
-
-(*   unfold pdom_bind. *)
-
-(*   rewrite (p_sem_move_readonly _ _ _ _ w1_1 w2_1). *)
-(*   rewrite pdom_lift_comp. *)
-(*   rewrite pdom_lift_comp. *)
-(*   rewrite pdom_lift_comp. *)
-(*   simpl. *)
-(*   rewrite (p_sem_move_readonly _ _ _ _ w1_2 w2_2). *)
-(*   simpl. *)
-(*   rewrite <- pdom_lift_comp. *)
-(*   rewrite pdom_mult_natural. *)
-(*   replace (fun y : unit * unit => p_sem_rw_exp (Δ ++ Γ) nil c2 τ w2_2 (δ; γ) (fst y)) with *)
-(*     (fun _ : unit * unit => p_sem_rw_exp (Δ ++ Γ) nil c2 τ w2_2 (δ; γ) tt). *)
-(*   reflexivity. *)
-(*   apply dfun_ext. *)
-(*   intro. *)
-(*   destruct a. *)
-(*   destruct u; simpl; reflexivity. *)
-
-(*   contradict (assignable_absurd _ _ a0). *)
-
-  
-(*   rewrite pdom_lift_comp. *)
-(*   rewrite pdom_lift_comp. *)
-  
-  
-(*   rewrite pdom_lift_comp. *)
-(*   s *)
-  
-  
-(*   rewrite (p_sem_move_readonly _ _ _ _ w1_2 w2_2). *)
-  
-  
-(*   simpl in w2_1, w2_2. *)
-  
-
-  
-  
-(*   reflex *)
-(*   rewrite (p_sem_move_readonly . *)
-(*   apply lp.re *)
-    
-
-Fixpoint sem_ro_p_sem_ro Γ e τ (w1 : Γ |- e : τ) w2 {struct w1} : sem_ro_exp Γ e τ w1 = p_sem_ro_exp Γ e τ w2
-with sem_rw_p_sem_rw Γ Δ e τ (w1 : Γ ;;; Δ ||- e : τ) w2 {struct w1}: sem_rw_exp Γ Δ e τ w1 = p_sem_rw_exp Γ Δ e τ w2.
+Fixpoint sem_ro_r_sem_ro Γ e τ (w1 : Γ |- e : τ) w2 {struct w1} : sem_ro_exp Γ e τ w1 = r_sem_ro_exp Γ e τ w2
+with sem_rw_r_sem_rw Γ Δ e τ (w1 : Γ ;;; Δ ||- e : τ) w2 {struct w1}: sem_rw_exp Γ Δ e τ w1 = r_sem_rw_exp Γ Δ e τ w2.
 Proof.
   +
     dependent destruction w1.
@@ -1414,51 +1260,51 @@ Proof.
     simpl.
     easy_rewrite_uip.
     simpl in h.
-    rewrite <- (sem_ro_p_sem_ro _ _ _ h w2). 
+    rewrite <- (sem_ro_r_sem_ro _ _ _ h w2). 
     apply dfun_ext; intro.
     rewrite pdom_lift_comp.
     simpl.
     rewrite pdom_lift_id.
     auto.
 
-    rewrite p_sem_ro_Seq.    
+    rewrite r_sem_ro_Seq.    
     easy_rewrite_uip.
-    rewrite (sem_rw_p_sem_rw _ _ _ _ h1 (p_has_type_ro_inv_Seq_1 Γ c1 c2 τ w2) ).
-    rewrite (sem_rw_p_sem_rw _ _ _ _ h2 (p_has_type_ro_inv_Seq_2 Γ c1 c2 τ w2) ).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ h1 (r_has_type_ro_inv_Seq_1 Γ c1 c2 τ w2) ).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ h2 (r_has_type_ro_inv_Seq_2 Γ c1 c2 τ w2) ).
     auto.
 
     contradict (assignable_absurd _ _ a).
 
-    destruct (p_sem_ro_Newvar _ _ _ _ w2) as [σ' [p [p1 eq]]].
-    induction (has_type_ro_phas_type_ro_unambiguous _ _ _ _ h p).
+    destruct (r_sem_ro_Newvar _ _ _ _ w2) as [σ' [p [p1 eq]]].
+    induction (has_type_ro_r_has_type_ro_unambiguous _ _ _ _ h p).
     rewrite eq.
     simpl in h.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ h p).
-    rewrite (sem_rw_p_sem_rw _ _ _ _ h1 p1).
+    rewrite (sem_ro_r_sem_ro _ _ _ h p).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ h1 p1).
     reflexivity.
 
-    destruct (p_sem_ro_Cond _ _ _ _ _ w2) as [p1 [p2 [p3 eq]]].
+    destruct (r_sem_ro_Cond _ _ _ _ _ w2) as [p1 [p2 [p3 eq]]].
     rewrite eq.
     simpl in h1.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ h1 p1).
-    rewrite (sem_rw_p_sem_rw _ _ _ _ h2 p2).
-    rewrite (sem_rw_p_sem_rw _ _ _ _ h3 p3).
+    rewrite (sem_ro_r_sem_ro _ _ _ h1 p1).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ h2 p2).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ h3 p3).
     reflexivity.
 
 
-    destruct (p_sem_ro_Case _ _ _ _ _ _ w2) as [p1 [p2 [p3 [p4 eq]]]].
+    destruct (r_sem_ro_Case _ _ _ _ _ _ w2) as [p1 [p2 [p3 [p4 eq]]]].
     rewrite eq.
     simpl in h1, h3.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ h1 p1).
-    rewrite (sem_ro_p_sem_ro _ _ _ h3 p3).
-    rewrite (sem_rw_p_sem_rw _ _ _ _ h2 p2).
-    rewrite (sem_rw_p_sem_rw _ _ _ _ h4 p4).
+    rewrite (sem_ro_r_sem_ro _ _ _ h1 p1).
+    rewrite (sem_ro_r_sem_ro _ _ _ h3 p3).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ h2 p2).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ h4 p4).
     reflexivity.
     {
-      destruct (p_sem_ro_CaseList _ _ _ w2) as [ff eq].
+      destruct (r_sem_ro_CaseList _ _ _ w2) as [ff eq].
       rewrite eq.
       easy_rewrite_uip.
       apply dfun_ext; intro.
@@ -1476,17 +1322,17 @@ Proof.
       destruct p, p0; simpl.
       rewrite (IHf ff).
       apply pl.
-      rewrite (sem_ro_p_sem_ro _ _ _ h p).
-      rewrite (sem_rw_p_sem_rw _ _ _ _ h0 p0).
+      rewrite (sem_ro_r_sem_ro _ _ _ h r).
+      rewrite (sem_rw_r_sem_rw _ _ _ _ h0 r0).
       reflexivity.
     }
     
-    destruct (p_sem_ro_While _ _ _  w2) as [p [p1 eq]].
+    destruct (r_sem_ro_While _ _ _  w2) as [p [p1 eq]].
     rewrite eq.
     simpl in h. 
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ h p).
-    rewrite (sem_rw_p_sem_rw _ _ _ _ h1 p1).
+    rewrite (sem_ro_r_sem_ro _ _ _ h p).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ h1 p1).
     reflexivity.
 
     dependent destruction w2.
@@ -1495,7 +1341,7 @@ Proof.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ w1 w2).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1 w2).
     reflexivity.
 
 
@@ -1517,242 +1363,242 @@ Proof.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ w1 w2).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1 w2).
     reflexivity.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ w1 w2).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1 w2).
     reflexivity.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ w1 w2).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1 w2).
     reflexivity.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_1 w2_1).
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_2 w2_2).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_1 w2_1).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_2 w2_2).
     reflexivity.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_1 w2_1).
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_2 w2_2).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_1 w2_1).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_2 w2_2).
     reflexivity.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_1 w2_1).
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_2 w2_2).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_1 w2_1).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_2 w2_2).
     reflexivity.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_1 w2_1).
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_2 w2_2).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_1 w2_1).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_2 w2_2).
     reflexivity.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_1 w2_1).
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_2 w2_2).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_1 w2_1).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_2 w2_2).
     reflexivity.
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_1 w2_1).
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_2 w2_2).
-    reflexivity.
-
-    dependent destruction w2.
-    easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_1 w2_1).
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_2 w2_2).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_1 w2_1).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_2 w2_2).
     reflexivity.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_1 w2_1).
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_2 w2_2).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_1 w2_1).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_2 w2_2).
     reflexivity.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_1 w2_1).
-    rewrite (sem_ro_p_sem_ro _ _ _ w1_2 w2_2).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_1 w2_1).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_2 w2_2).
     reflexivity.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ w1 w2).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_1 w2_1).
+    rewrite (sem_ro_r_sem_ro _ _ _ w1_2 w2_2).
+    reflexivity.
+
+    dependent destruction w2.
+    easy_rewrite_uip.
+    rewrite (sem_ro_r_sem_ro _ _ _ w1 w2).
     reflexivity.
 
   +
     dependent destruction w1.
     dependent destruction h.
-     easy_rewrite_uip.
+    easy_rewrite_uip.
     apply dfun_ext; intros.
     apply dfun_ext; intros.
-    pose proof (sem_rw_p_sem_rw _ _ _ _ h (has_type_rw_phas_type_rw _ _ _ _ h)).
+    pose proof (sem_rw_r_sem_rw _ _ _ _ h (has_type_rw_r_has_type_rw _ _ _ _ h)).
     rewrite H.
     rewrite pdom_lift_comp.
-    pose proof (p_sem_move_readonly Γ nil Δ).
+    pose proof (r_sem_move_readonly Γ nil Δ).
     simpl in H0.
-    rewrite <- (H0 _ _ w2 (has_type_rw_phas_type_rw (Δ ++ Γ) nil e τ h)).
+    rewrite <- (H0 _ _ w2 (has_type_rw_r_has_type_rw (Δ ++ Γ) nil e τ h)).
     reflexivity.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro  _ _ _ h0 p).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h0 r).
     reflexivity.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro  _ _ _ h0 p).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h0 r).
     reflexivity.
 
     dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction r.    
     easy_rewrite_uip.
     reflexivity.
 
     dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction r.    
     easy_rewrite_uip.
     reflexivity.
 
     dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction r.    
     easy_rewrite_uip.
     reflexivity.
 
     dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction r.    
     easy_rewrite_uip.
     reflexivity.
 
     dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction r.    
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro  _ _ _ h p).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h r).
     reflexivity.
     
     dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction r.    
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro  _ _ _ h p).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h r).
     reflexivity.
     
     dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction r.    
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro  _ _ _ h p).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h r).
     reflexivity.
     
     dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction r.    
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro  _ _ _ h1 p1).
-    rewrite (sem_ro_p_sem_ro  _ _ _ h2 p2).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h1 r1).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h2 r2).
     reflexivity.
     
     dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction r.    
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro  _ _ _ h1 p1).
-    rewrite (sem_ro_p_sem_ro  _ _ _ h2 p2).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h1 r1).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h2 r2).
     reflexivity.
     
     dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction r.    
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro  _ _ _ h1 p1).
-    rewrite (sem_ro_p_sem_ro  _ _ _ h2 p2).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h1 r1).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h2 r2).
     reflexivity.
 
-        dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction w2.
+    dependent destruction r.    
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro  _ _ _ h1 p1).
-    rewrite (sem_ro_p_sem_ro  _ _ _ h2 p2).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h1 r1).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h2 r2).
     reflexivity.
 
-        dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction w2.
+    dependent destruction r.    
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro  _ _ _ h1 p1).
-    rewrite (sem_ro_p_sem_ro  _ _ _ h2 p2).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h1 r1).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h2 r2).
     reflexivity.
 
-        dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction w2.
+    dependent destruction r.    
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro  _ _ _ h1 p1).
-    rewrite (sem_ro_p_sem_ro  _ _ _ h2 p2).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h1 r1).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h2 r2).
     reflexivity.
 
-        dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction w2.
+    dependent destruction r.    
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro  _ _ _ h1 p1).
-    rewrite (sem_ro_p_sem_ro  _ _ _ h2 p2).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h1 r1).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h2 r2).
     reflexivity.
 
-        dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction w2.
+    dependent destruction r.    
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro  _ _ _ h1 p1).
-    rewrite (sem_ro_p_sem_ro  _ _ _ h2 p2).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h1 r1).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h2 r2).
     reflexivity.
 
-        dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction w2.
+    dependent destruction r.    
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro  _ _ _ h1 p1).
-    rewrite (sem_ro_p_sem_ro  _ _ _ h2 p2).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h1 r1).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h2 r2).
     reflexivity.
 
-        dependent destruction w2.
-    dependent destruction p.    
+    dependent destruction w2.
+    dependent destruction r.    
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro  _ _ _ h p).
+    rewrite (sem_ro_r_sem_ro  _ _ _ h r).
     reflexivity.
 
     
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_rw_p_sem_rw _ _ _ _ w1_1 w2_1).
-    rewrite (sem_rw_p_sem_rw _ _ _ _ w1_2 w2_2).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ w1_1 w2_1).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ w1_2 w2_2).
     reflexivity.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    induction (has_type_ro_phas_type_ro_unambiguous _ _ _ _ h p).
-    rewrite (sem_ro_p_sem_ro _ _ _ h p).
+    induction (has_type_ro_r_has_type_ro_unambiguous _ _ _ _ h r).
+    rewrite (sem_ro_r_sem_ro _ _ _ h r).
     induction (assignable_unique _ _ _ a a0).
     reflexivity.
 
     dependent destruction w2.
-    induction (has_type_ro_phas_type_ro_unambiguous _ _ _ _ h p).
+    induction (has_type_ro_r_has_type_ro_unambiguous _ _ _ _ h r).
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ h p).
-    rewrite (sem_rw_p_sem_rw _ _ _ _ w1 w2).
+    rewrite (sem_ro_r_sem_ro _ _ _ h r).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ w1 w2).
     reflexivity.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ h p).
-    rewrite (sem_rw_p_sem_rw _ _ _ _ w1_1 w2_1).
-    rewrite (sem_rw_p_sem_rw _ _ _ _ w1_2 w2_2).
+    rewrite (sem_ro_r_sem_ro _ _ _ h r).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ w1_1 w2_1).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ w1_2 w2_2).
     reflexivity.
 
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ h p).
-    rewrite (sem_ro_p_sem_ro _ _ _ h0 p0).
-    rewrite (sem_rw_p_sem_rw _ _ _ _ w1_1 w2_1).
-    rewrite (sem_rw_p_sem_rw _ _ _ _ w1_2 w2_2).
+    rewrite (sem_ro_r_sem_ro _ _ _ h r).
+    rewrite (sem_ro_r_sem_ro _ _ _ h0 r0).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ w1_1 w2_1).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ w1_2 w2_2).
     reflexivity.
 
     
@@ -1771,46 +1617,38 @@ Proof.
     simpl.
     rewrite (IHf f0).
     apply pl.
-    rewrite (sem_ro_p_sem_ro _ _ _ h p).
-    rewrite (sem_rw_p_sem_rw _ _ _ _ h0 p0).
+    rewrite (sem_ro_r_sem_ro _ _ _ h r).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ h0 r0).
     reflexivity.
     
     
     dependent destruction w2.
     easy_rewrite_uip.
-    rewrite (sem_ro_p_sem_ro _ _ _ h p).
-    rewrite (sem_rw_p_sem_rw _ _ _ _ w1 w2).
+    rewrite (sem_ro_r_sem_ro _ _ _ h r).
+    rewrite (sem_rw_r_sem_rw _ _ _ _ w1 w2).
     reflexivity.
 Qed.
 
-
-(* Lemma sem_ro_exp_unique_Seq Γ c1 c2 τ h1 h2 : *)
-(*   sem_ro_exp Γ (c1;; c2) τ (has_type_ro_rw Γ (c1;; c2) τ (has_type_rw_Seq Γ nil c1 c2 τ h1 h2)) = *)
-(*     sem_ro_exp Γ (c1;; c2) τ (has_type_ro_rw Γ (c1;; c2) τ (has_type_rw_Seq Γ nil c1 c2 τ h1 h2)). *)
-(*   simpl. *)
-(*   easy_rewrite_uip. *)
-
-  
 (* semantics is unique *)
 Lemma sem_ro_exp_unique Γ e τ (w1 w2 : Γ |- e : τ): sem_ro_exp Γ e τ w1 = sem_ro_exp Γ e τ w2.
 Proof.
-  rewrite (sem_ro_p_sem_ro _ _ _ w1 (has_type_ro_phas_type_ro _ _ _ w1)).
-  rewrite (sem_ro_p_sem_ro _ _ _ w2 (has_type_ro_phas_type_ro _ _ _ w2)).
+  rewrite (sem_ro_r_sem_ro _ _ _ w1 (has_type_ro_r_has_type_ro _ _ _ w1)).
+  rewrite (sem_ro_r_sem_ro _ _ _ w2 (has_type_ro_r_has_type_ro _ _ _ w2)).
   apply lp.
-  apply p_has_type_ro_unique.
+  apply r_has_type_ro_unique.
 Qed.
 
-  
+
 Lemma sem_rw_exp_unique Γ Δ e τ (w1 w2 : Γ ;;; Δ ||- e : τ) : sem_rw_exp Γ Δ e τ w1 = sem_rw_exp Γ Δ e τ w2.
 Proof.
-  rewrite (sem_rw_p_sem_rw _ _ _ _ w1 (has_type_rw_phas_type_rw _ _ _ _ w1)).
-  rewrite (sem_rw_p_sem_rw _ _ _ _ w2 (has_type_rw_phas_type_rw _ _ _ _ w2)).
+  rewrite (sem_rw_r_sem_rw _ _ _ _ w1 (has_type_rw_r_has_type_rw _ _ _ _ w1)).
+  rewrite (sem_rw_r_sem_rw _ _ _ _ w2 (has_type_rw_r_has_type_rw _ _ _ _ w2)).
   apply lp.
-  apply p_has_type_rw_unique.
+  apply r_has_type_rw_unique.
 Qed.
 
-Fixpoint p_has_type_ro_add_auxiliaries Γ e τ (w : Γ |~ e : τ) : forall Γ', (Γ ++ Γ') |~ e : τ
-with p_has_type_rw_add_auxiliaries Γ Δ e τ (w : Γ ;;; Δ ||~ e : τ) : forall Γ', (Γ ++ Γ') ;;; Δ ||~ e : τ.
+Fixpoint r_has_type_ro_add_auxiliaries Γ e τ (w : Γ |~ e : τ) : forall Γ', (Γ ++ Γ') |~ e : τ
+with r_has_type_rw_add_auxiliaries Γ Δ e τ (w : Γ ;;; Δ ||~ e : τ) : forall Γ', (Γ ++ Γ') ;;; Δ ||~ e : τ.
 Proof.
   +
     
@@ -1819,26 +1657,26 @@ Proof.
 
     (* commands *)
     constructor.
-    exact (p_has_type_rw_add_auxiliaries _ _ _ _ p Γ').
+    exact (r_has_type_rw_add_auxiliaries _ _ _ _ r Γ').
     constructor.
-    exact (p_has_type_rw_add_auxiliaries _ _ _ _ p Γ').
+    exact (r_has_type_rw_add_auxiliaries _ _ _ _ r Γ').
     constructor.
-    exact (p_has_type_rw_add_auxiliaries _ _ _ _ p Γ').
+    exact (r_has_type_rw_add_auxiliaries _ _ _ _ r Γ').
     constructor.
-    exact (p_has_type_rw_add_auxiliaries _ _ _ _ p Γ').
+    exact (r_has_type_rw_add_auxiliaries _ _ _ _ r Γ').
     constructor.
-    exact (p_has_type_rw_add_auxiliaries _ _ _ _ p Γ').
+    exact (r_has_type_rw_add_auxiliaries _ _ _ _ r Γ').
     constructor.
-    exact (p_has_type_rw_add_auxiliaries _ _ _ _ p Γ').
+    exact (r_has_type_rw_add_auxiliaries _ _ _ _ r Γ').
     constructor.
-    exact (p_has_type_rw_add_auxiliaries _ _ _ _ p Γ').
+    exact (r_has_type_rw_add_auxiliaries _ _ _ _ r Γ').
 
     (* variables *)
     constructor.
 
     simpl.
-    pose proof (p_has_type_ro_add_auxiliaries _ _ _ w Γ').
-    exact (phas_type_ro_Var_S (Γ++ Γ') σ τ k H).
+    pose proof (r_has_type_ro_add_auxiliaries _ _ _ w Γ').
+    exact (r_has_type_ro_Var_S (Γ++ Γ') σ τ k H).
 
     (* constants *)
     constructor.
@@ -1848,50 +1686,50 @@ Proof.
 
     (* unary *)
     constructor.
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w Γ').
     constructor.
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w Γ').
     constructor.
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w Γ').
 
     constructor.
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
 
     constructor.
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
 
     constructor.
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
 
     constructor.
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
 
     constructor.
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
 
     constructor.
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
 
     constructor.
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
 
     constructor.
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
 
     constructor.
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w1 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w2 Γ').
 
     constructor.
-    exact (p_has_type_ro_add_auxiliaries _ _ _ w Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ w Γ').
   +
 
     intros.
@@ -1899,61 +1737,61 @@ Proof.
     
     constructor.
     induction (eq_sym (app_assoc Δ Γ Γ')). 
-    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ r Γ').
 
     constructor.
     induction (eq_sym (app_assoc Δ Γ Γ')). 
-    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ r Γ').
 
     constructor.
     induction (eq_sym (app_assoc Δ Γ Γ')). 
-    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ r Γ').
 
     constructor.
     induction (eq_sym (app_assoc Δ Γ Γ')). 
-    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ r Γ').
 
     constructor.
     induction (eq_sym (app_assoc Δ Γ Γ')). 
-    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ r Γ').
 
     constructor.
     induction (eq_sym (app_assoc Δ Γ Γ')). 
-    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ r Γ').
 
     constructor.
     induction (eq_sym (app_assoc Δ Γ Γ')). 
-    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ r Γ').
 
     constructor.
-    exact (p_has_type_rw_add_auxiliaries _ _ _ _ w1 Γ').
-    exact (p_has_type_rw_add_auxiliaries _ _ _ _ w2 Γ').
+    exact (r_has_type_rw_add_auxiliaries _ _ _ _ w1 Γ').
+    exact (r_has_type_rw_add_auxiliaries _ _ _ _ w2 Γ').
 
-    apply (phas_type_rw_Assign _ _ _ τ).
+    apply (r_has_type_rw_Assign _ _ _ τ).
     exact a.
     induction (eq_sym (app_assoc Δ Γ Γ')).     
-    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ r Γ').
     
 
-    apply (phas_type_rw_Newvar _ _ _ _ σ).
+    apply (r_has_type_rw_Newvar _ _ _ _ σ).
     induction (eq_sym (app_assoc Δ Γ Γ')).     
-    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
-    exact (p_has_type_rw_add_auxiliaries _ _ _ _ w Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ r Γ').
+    exact (r_has_type_rw_add_auxiliaries _ _ _ _ w Γ').
 
     constructor.
     induction (eq_sym (app_assoc Δ Γ Γ')). 
-    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
-    exact (p_has_type_rw_add_auxiliaries _ _ _ _ w1 Γ').
-    exact (p_has_type_rw_add_auxiliaries _ _ _ _ w2 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ r Γ').
+    exact (r_has_type_rw_add_auxiliaries _ _ _ _ w1 Γ').
+    exact (r_has_type_rw_add_auxiliaries _ _ _ _ w2 Γ').
 
     
     constructor.
     induction (eq_sym (app_assoc Δ Γ Γ')). 
-    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
-    exact (p_has_type_rw_add_auxiliaries _ _ _ _ w1 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ r Γ').
+    exact (r_has_type_rw_add_auxiliaries _ _ _ _ w1 Γ').
     induction (eq_sym (app_assoc Δ Γ Γ')). 
-    exact (p_has_type_ro_add_auxiliaries _ _ _ p0 Γ').
-    exact (p_has_type_rw_add_auxiliaries _ _ _ _ w2 Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ r0 Γ').
+    exact (r_has_type_rw_add_auxiliaries _ _ _ _ w2 Γ').
 
     constructor.
     apply l0.
@@ -1964,31 +1802,31 @@ Proof.
     induction (eq_sym (app_assoc Δ Γ Γ')). 
     split.
     destruct p.
-    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ r Γ').
     destruct p.
-    exact (p_has_type_rw_add_auxiliaries _ _ _ _ p0 Γ').
+    exact (r_has_type_rw_add_auxiliaries _ _ _ _ r0 Γ').
     exact (IHf Γ').
 
     
     constructor.
     induction (eq_sym (app_assoc Δ Γ Γ')). 
-    exact (p_has_type_ro_add_auxiliaries _ _ _ p Γ').
-    exact (p_has_type_rw_add_auxiliaries _ _ _ _ w Γ').
+    exact (r_has_type_ro_add_auxiliaries _ _ _ r Γ').
+    exact (r_has_type_rw_add_auxiliaries _ _ _ _ w Γ').
 
 Defined.
 
-Fixpoint p_sem_ro_exp_auxiliary_ctx Γ Γ' e τ (w : Γ |~ e : τ) :
-forall γ γ', p_sem_ro_exp Γ e τ w γ = p_sem_ro_exp (Γ ++ Γ') e τ (p_has_type_ro_add_auxiliaries _ _ _ w Γ') (γ; γ')
-with p_sem_rw_exp_auxiliary_ctx Γ Γ' Δ e τ (w : Γ ;;; Δ ||~ e : τ) :
-  forall γ γ' δ, p_sem_rw_exp Γ Δ e τ w γ δ = p_sem_rw_exp (Γ ++ Γ') Δ e τ (p_has_type_rw_add_auxiliaries _ _ _ _ w Γ') (γ ; γ') δ.
+Fixpoint r_sem_ro_exp_auxiliary_ctx Γ Γ' e τ (w : Γ |~ e : τ) :
+  forall γ γ', r_sem_ro_exp Γ e τ w γ = r_sem_ro_exp (Γ ++ Γ') e τ (r_has_type_ro_add_auxiliaries _ _ _ w Γ') (γ; γ')
+with r_sem_rw_exp_auxiliary_ctx Γ Γ' Δ e τ (w : Γ ;;; Δ ||~ e : τ) :
+  forall γ γ' δ, r_sem_rw_exp Γ Δ e τ w γ δ = r_sem_rw_exp (Γ ++ Γ') Δ e τ (r_has_type_rw_add_auxiliaries _ _ _ _ w Γ') (γ ; γ') δ.
 Proof.
   +
     intros.
     dependent destruction w; easy_rewrite_uip;
-      try (rewrite (p_sem_rw_exp_auxiliary_ctx _ _ _ _ _ p γ γ' tt); reflexivity);
-      try (rewrite (p_sem_ro_exp_auxiliary_ctx _ _ _ _ w γ γ'); reflexivity);
-      try (rewrite (p_sem_ro_exp_auxiliary_ctx _ _ _ _ w1 γ γ');
-           rewrite (p_sem_ro_exp_auxiliary_ctx _ _ _ _ w2 γ γ'); reflexivity);
+      try (rewrite (r_sem_rw_exp_auxiliary_ctx _ _ _ _ _ r γ γ' tt); reflexivity);
+      try (rewrite (r_sem_ro_exp_auxiliary_ctx _ _ _ _ w γ γ'); reflexivity);
+      try (rewrite (r_sem_ro_exp_auxiliary_ctx _ _ _ _ w1 γ γ');
+           rewrite (r_sem_ro_exp_auxiliary_ctx _ _ _ _ w2 γ γ'); reflexivity);
       try reflexivity.
     
     destruct γ.
@@ -1996,56 +1834,56 @@ Proof.
 
     destruct γ.
     simpl.
-    rewrite (p_sem_ro_exp_auxiliary_ctx _ _ _ _ w s0 γ'). 
+    rewrite (r_sem_ro_exp_auxiliary_ctx _ _ _ _ w s0 γ'). 
     reflexivity.
 
     apply lp.
     apply dfun_ext; intro.
-    rewrite (p_sem_ro_exp_auxiliary_ctx _ _ _ _ w (a, γ) γ'). 
+    rewrite (r_sem_ro_exp_auxiliary_ctx _ _ _ _ w (a, γ) γ'). 
     reflexivity.
-   
+    
   +
     intros.
     dependent destruction w; easy_rewrite_uip; try apply lp;
       try (rewrite <- eq_sym_app_assoc_tr;
-           rewrite <- (p_sem_ro_ctx_rewrite _ _ _ _ (p_has_type_ro_add_auxiliaries _ _ _ p Γ'));
-           rewrite (p_sem_ro_exp_auxiliary_ctx _ _ _ _ p _ γ');
+           rewrite <- (r_sem_ro_ctx_rewrite _ _ _ _ (r_has_type_ro_add_auxiliaries _ _ _ r Γ'));
+           rewrite (r_sem_ro_exp_auxiliary_ctx _ _ _ _ r _ γ');
            reflexivity).
     
-    rewrite <- (p_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w1 _ γ').
+    rewrite <- (r_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w1 _ γ').
     apply pl.
     apply lp.
     apply dfun_ext; intro d.
-    rewrite <- (p_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w2 _ γ').
+    rewrite <- (r_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w2 _ γ').
     reflexivity.
 
     rewrite <- eq_sym_app_assoc_tr.
-    rewrite <- (p_sem_ro_ctx_rewrite _ _ _ _ (p_has_type_ro_add_auxiliaries _ _ _ p Γ')).
-    rewrite (p_sem_ro_exp_auxiliary_ctx _ _ _ _ p _ γ').
+    rewrite <- (r_sem_ro_ctx_rewrite _ _ _ _ (r_has_type_ro_add_auxiliaries _ _ _ r Γ')).
+    rewrite (r_sem_ro_exp_auxiliary_ctx _ _ _ _ r _ γ').
     apply pl.
     apply lp.
     apply dfun_ext; intro.
-    rewrite (p_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w _ γ' a).
+    rewrite (r_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w _ γ' a).
     reflexivity.
 
     
     rewrite <- eq_sym_app_assoc_tr.
-    rewrite <- (p_sem_ro_ctx_rewrite _ _ _ _ (p_has_type_ro_add_auxiliaries _ _ _ p Γ')).
-    rewrite (p_sem_ro_exp_auxiliary_ctx _ _ _ _ p _ γ').
+    rewrite <- (r_sem_ro_ctx_rewrite _ _ _ _ (r_has_type_ro_add_auxiliaries _ _ _ r Γ')).
+    rewrite (r_sem_ro_exp_auxiliary_ctx _ _ _ _ r _ γ').
     apply pl.
     apply lp.
     apply dfun_ext; intro.
-    rewrite (p_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w1 _ γ').
-    rewrite (p_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w2 _ γ').
+    rewrite (r_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w1 _ γ').
+    rewrite (r_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w2 _ γ').
     reflexivity.
 
     rewrite <- eq_sym_app_assoc_tr.
-    rewrite <- (p_sem_ro_ctx_rewrite _ _ _ _ (p_has_type_ro_add_auxiliaries _ _ _ p Γ')).
-    rewrite <- (p_sem_ro_exp_auxiliary_ctx _ _ _ _ p _ γ').
-    rewrite <- (p_sem_ro_ctx_rewrite _ _ _ _ (p_has_type_ro_add_auxiliaries _ _ _ p0 Γ')).
-    rewrite <- (p_sem_ro_exp_auxiliary_ctx _ _ _ _ p0 _ γ').
-    rewrite (p_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w1 _ γ').
-    rewrite (p_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w2 _ γ').
+    rewrite <- (r_sem_ro_ctx_rewrite _ _ _ _ (r_has_type_ro_add_auxiliaries _ _ _ r Γ')).
+    rewrite <- (r_sem_ro_exp_auxiliary_ctx _ _ _ _ r _ γ').
+    rewrite <- (r_sem_ro_ctx_rewrite _ _ _ _ (r_has_type_ro_add_auxiliaries _ _ _ r0 Γ')).
+    rewrite <- (r_sem_ro_exp_auxiliary_ctx _ _ _ _ r0 _ γ').
+    rewrite (r_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w1 _ γ').
+    rewrite (r_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w2 _ γ').
     reflexivity.
 
     {
@@ -2061,7 +1899,6 @@ Proof.
       destruct p.
       simpl.
       rewrite <- eq_sym_app_assoc_tr.
-      Check eq_rec.
       assert (forall (A : Type) (x y: A) (P Q : A -> Set) (e : x = y) p q,
                  @eq_rec A x (fun a : A => (P a * Q a)%type) (p, q) y e =
                    (@eq_rec A x P p y e, @eq_rec A x Q q y e)).
@@ -2070,14 +1907,14 @@ Proof.
       auto.
       rewrite H.
       simpl.
-      rewrite <- (p_sem_ro_ctx_rewrite _ _ _ _ (p_has_type_ro_add_auxiliaries _ _ _ p Γ')).
-      rewrite <- (p_sem_ro_exp_auxiliary_ctx _ _ _ _ p _ γ').
-      assert (p_sem_rw_exp Γ Δ (snd x) τ p0 γ δ =
-               p_sem_rw_exp (Γ ++ Γ') Δ (snd x) τ
-     (eq_rec ((Δ ++ Γ) ++ Γ') (fun _ : list datatype => (Γ ++ Γ');;; Δ ||~ snd x : τ) (p_has_type_rw_add_auxiliaries Γ Δ (snd x) τ p0 Γ') 
-        (Δ ++ Γ ++ Γ') (eq_sym (app_assoc Δ Γ Γ'))) (γ; γ') δ).
+      rewrite <- (r_sem_ro_ctx_rewrite _ _ _ _ (r_has_type_ro_add_auxiliaries _ _ _ r Γ')).
+      rewrite <- (r_sem_ro_exp_auxiliary_ctx _ _ _ _ r _ γ').
+      assert (r_sem_rw_exp Γ Δ (snd x) τ r0 γ δ =
+                r_sem_rw_exp (Γ ++ Γ') Δ (snd x) τ
+                  (eq_rec ((Δ ++ Γ) ++ Γ') (fun _ : list datatype => (Γ ++ Γ');;; Δ ||~ snd x : τ) (r_has_type_rw_add_auxiliaries Γ Δ (snd x) τ r0 Γ') 
+                     (Δ ++ Γ ++ Γ') (eq_sym (app_assoc Δ Γ Γ'))) (γ; γ') δ).
       
-      rewrite  (p_sem_rw_exp_auxiliary_ctx _ _ _ _ _ p0 _ γ').
+      rewrite  (r_sem_rw_exp_auxiliary_ctx _ _ _ _ _ r0 _ γ').
       assert (forall (A : Type) (x y: A) (P : Set) (e : x = y) p,
                  @eq_rec A x (fun a : A => (P )%type) p y e = p).
       intros.
@@ -2106,13 +1943,13 @@ Proof.
     apply dfun_ext.
     intros.
     rewrite <- eq_sym_app_assoc_tr.
-    rewrite <- (p_sem_ro_ctx_rewrite _ _ _ _ (p_has_type_ro_add_auxiliaries _ _ _ p Γ')).
-    rewrite <- (p_sem_ro_exp_auxiliary_ctx _ _ _ _ p _ γ').
+    rewrite <- (r_sem_ro_ctx_rewrite _ _ _ _ (r_has_type_ro_add_auxiliaries _ _ _ r Γ')).
+    rewrite <- (r_sem_ro_exp_auxiliary_ctx _ _ _ _ r _ γ').
     reflexivity.
 
     apply dfun_ext.
     intros.
-    rewrite (p_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w _ γ').
+    rewrite (r_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w _ γ').
     reflexivity.    
 Qed.
 
@@ -2122,19 +1959,19 @@ Lemma sem_ro_exp_auxiliary_ctx :
   forall Γ Γ' e τ (w : Γ |- e : τ) (w' : (Γ ++ Γ') |- e : τ) γ γ', sem_ro_exp Γ e τ w γ = sem_ro_exp (Γ ++ Γ') e τ w' (γ; γ').
 Proof.
   intros.
-  rewrite (sem_ro_p_sem_ro _ _ _ _ (has_type_ro_phas_type_ro _ _ _ w)).
-  rewrite (sem_ro_p_sem_ro _ _ _ _ (has_type_ro_phas_type_ro _ _ _ w')).
-  rewrite <- (p_has_type_ro_unique _ _ _ (p_has_type_ro_add_auxiliaries _ _ _ (has_type_ro_phas_type_ro Γ e τ w) Γ') (has_type_ro_phas_type_ro (Γ ++ Γ') e τ w')).
-  apply p_sem_ro_exp_auxiliary_ctx.
+  rewrite (sem_ro_r_sem_ro _ _ _ _ (has_type_ro_r_has_type_ro _ _ _ w)).
+  rewrite (sem_ro_r_sem_ro _ _ _ _ (has_type_ro_r_has_type_ro _ _ _ w')).
+  rewrite <- (r_has_type_ro_unique _ _ _ (r_has_type_ro_add_auxiliaries _ _ _ (has_type_ro_r_has_type_ro Γ e τ w) Γ') (has_type_ro_r_has_type_ro (Γ ++ Γ') e τ w')).
+  apply r_sem_ro_exp_auxiliary_ctx.
 Defined.
 
 
 Lemma sem_rw_exp_auxiliary_ctx : forall Γ Γ' Δ e τ (w : Γ ;;; Δ ||- e : τ) (w' : (Γ ++ Γ') ;;; Δ ||- e : τ) γ γ' δ, sem_rw_exp Γ Δ e τ w γ δ = sem_rw_exp (Γ ++ Γ') Δ e τ w' (γ ; γ') δ.
 Proof.
   intros.
-  rewrite (sem_rw_p_sem_rw _ _ _ _ _ (has_type_rw_phas_type_rw _ _ _ _ w)).
-  rewrite (sem_rw_p_sem_rw _ _ _ _ _ (has_type_rw_phas_type_rw _ _ _ _ w')).
-  rewrite <- (p_has_type_rw_unique _ _ _ _ (p_has_type_rw_add_auxiliaries _ _ _ _ (has_type_rw_phas_type_rw Γ Δ e τ w) Γ') (has_type_rw_phas_type_rw (Γ ++ Γ') Δ e τ w')).
-  apply p_sem_rw_exp_auxiliary_ctx.
+  rewrite (sem_rw_r_sem_rw _ _ _ _ _ (has_type_rw_r_has_type_rw _ _ _ _ w)).
+  rewrite (sem_rw_r_sem_rw _ _ _ _ _ (has_type_rw_r_has_type_rw _ _ _ _ w')).
+  rewrite <- (r_has_type_rw_unique _ _ _ _ (r_has_type_rw_add_auxiliaries _ _ _ _ (has_type_rw_r_has_type_rw Γ Δ e τ w) Γ') (has_type_rw_r_has_type_rw (Γ ++ Γ') Δ e τ w')).
+  apply r_sem_rw_exp_auxiliary_ctx.
 Defined.
-  
+

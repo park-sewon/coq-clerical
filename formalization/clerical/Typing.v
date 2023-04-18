@@ -1,7 +1,8 @@
-(** Clerical typing judgments *)
-
+(** Clerical typing judgment rules defined here *)
 Require Import Clerical.
 Require Import List.
+Reserved Notation " Γ |- t : T " (at level 50, t, T at next level). 
+Reserved Notation " Γ ;;; Δ ||- t : T " (at level 50, Δ, t, T at next level). 
 
 (* A typing context. *)
 Definition ro_ctx := list datatype.
@@ -16,10 +17,7 @@ Inductive assignable : ro_ctx -> datatype -> nat -> Type :=
   assignable_0 : forall Δ τ, assignable (τ :: Δ) τ 0
 | assignable_S : forall Δ τ σ k, assignable Δ τ k -> assignable (σ :: Δ) τ (S k). 
 
-Reserved Notation " Γ |- t : T " (at level 50, t, T at next level). 
-Reserved Notation " Γ ;;; Δ ||- t : T " (at level 50, Δ, t, T at next level). 
-
-(* list forall in Type level *)
+(* List forall in type level; cf. the Forall in List library is for Prop-level type families *)
 Inductive ForallT {A} (P : A -> Type): list A -> Type :=
 | ForallT_nil : ForallT P nil
 | ForallT_cons : forall x l, P x -> ForallT P l -> ForallT P (x::l).
@@ -81,15 +79,7 @@ with has_type_rw : rw_ctx -> exp -> datatype -> Type :=
     (1 <= length l)%nat -> 
     ForallT (fun ec => ((Δ ++ Γ) |- fst ec : DBoolean) * (Γ ;;; Δ ||- snd ec : τ))%type l ->
     Γ ;;; Δ ||- CaseList l : τ
-                                                                                                                                                           
-(* (* case list one guard *) *)
-(* | has_type_rw_Case_1 : forall Γ Δ e c τ, *)
-(*     (Δ ++ Γ) |- e : DBoolean -> Γ ;;; Δ ||- c : τ -> Γ ;;; Δ ||- CaseList ((e, c) :: nil) : τ   *)
-
-(* (* case list appending guarded command *) *)
-(* | has_type_rw_Case_S : forall Γ Δ l e c τ, *)
-(*     Γ ;;; Δ ||- (CaseList l) : τ -> (Δ ++ Γ) |- e : DBoolean -> Γ ;;; Δ ||- c : τ -> Γ ;;; Δ ||- CaseList ((e, c) :: l) : τ   *)
-    
+                               
 (* while *)
 | has_type_rw_While : forall Γ Δ e c, (Δ ++ Γ) |- e : DBoolean -> Γ ;;; Δ ||- c : DUnit -> Γ ;;; Δ ||- While e c : DUnit
                                                                                                                                                                  

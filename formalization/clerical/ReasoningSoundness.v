@@ -2,7 +2,6 @@ Require Import List.
 Require Import Reals.
 Require Import Coq.Program.Equality.
 
-
 Require Import Clerical.
 Require Import Typing.
 Require Import TypingProperties.
@@ -13,152 +12,19 @@ Require Import Specification.
 Require Import ReasoningRules.
 Require Import ReasoningAdmissible.
 
-  
-Lemma sem_ro_prt_excludes_bot_is_tot : forall Γ e τ ϕ ψ (w : Γ |- e : τ), 
-    w |= {{ϕ}} e {{ψ}} -> 
-    (forall γ, ϕ γ -> ⊥ ∉ sem_ro_exp _ _ _ w γ) ->
-    w |= [{ϕ}] e [{ψ}].
-Proof.
-  intros Γ e τ ϕ ψ w h1 h2 γ m; simpl; simpl in m.
-  destruct (h1 γ m) as [h3 h4]; split; auto.
-  intros v m'.
-  destruct v.
-  contradict (h2 _ m m').
-  exists s; split; auto.
-  apply (h4 _ m' _ eq_refl).
-Qed.
+(* Ths file proves the soundnsess of our Reasoning rules.
+   The main thoerems are
 
-Lemma sem_rw_prt_excludes_bot_is_tot : forall Γ Δ e τ ϕ ψ (w : Γ ;;; Δ ||- e : τ), 
-    w ||= {{ϕ}} e {{ψ}} -> 
-    (forall γ δ, ϕ (δ, γ) -> ⊥ ∉ sem_rw_exp _ _ _ _ w γ δ) ->
-    w ||= [{ϕ}] e [{ψ}].
-Proof.
-  intros Γ Δ e τ ϕ ψ w h1 h2 γ δ m; simpl; simpl in m.
-  destruct (h1 γ δ m) as [h3 h4]; split; auto.
-  intros v m'.
-  destruct v.
-  contradict (h2 _ _ m m').
-  exists p; split; auto.
-  apply (h4 _ m' _ eq_refl).
-Qed.
+   Lemma proves_ro_prt_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, w |- {{ϕ}} e {{ψ}} -> w |= {{ϕ}} e {{ψ}}
+   with proves_ro_tot_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, w |- [{ϕ}] e [{ψ}] -> w |= [{ϕ}] e [{ψ}]
+   with proves_rw_prt_sound : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ, w ||- {{ϕ}} e {{ψ}} -> w ||= {{ϕ}} e {{ψ}}
+   with proves_rw_tot_sound : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ, w ||- [{ϕ}] e [{ψ}] -> w ||= [{ϕ}] e [{ψ}].
 
-Lemma sem_ro_tot_is_prt_excludes_bot : forall Γ e τ ϕ ψ (w : Γ |- e : τ), 
-    w |= [{ϕ}] e [{ψ}] ->
-    w |= {{ϕ}} e {{ψ}} /\ 
-    (forall γ, ϕ γ -> ⊥ ∉ sem_ro_exp _ _ _ w γ).
-Proof.
-  intros Γ e τ ϕ ψ w h1.
-  split.
-  intros γ m; simpl; simpl in m.
-  destruct (h1 γ m) as [h3 h4]; split; auto.
-  intros.
-  pose proof (h4 v H).
-  destruct H1.
-  destruct H1.
-  rewrite H0 in H1.
-  apply total_is_injective in H1.
-  rewrite H1; auto.
-  intros.
-  destruct (h1 γ H) as [_ h4].
-  intro h.
-  pose proof (h4 ⊥ h) as [j [i _]].
-  contradict (flat_bot_neq_total _ i).
-Qed.
-
-Lemma sem_ro_tot_excludes_bot : forall Γ e τ ϕ ψ (w : Γ |- e : τ), 
-    w |= [{ϕ}] e [{ψ}] ->
-    (forall γ, ϕ γ -> ⊥ ∉ sem_ro_exp _ _ _ w γ).
-Proof.
-  apply sem_ro_tot_is_prt_excludes_bot.
-Defined.
-    
-Lemma sem_rw_tot_is_prt_excludes_bot : forall Γ Δ e τ ϕ ψ (w : Γ ;;; Δ ||- e : τ), 
-    w ||= [{ϕ}] e [{ψ}] ->
-    w ||= {{ϕ}} e {{ψ}} /\ 
-    (forall γ δ, ϕ (δ, γ) -> ⊥ ∉ sem_rw_exp _ _ _ _ w γ δ).
-Proof.
-  intros Γ Δ e τ ϕ ψ w h1.
-  split.
-  intros γ δ m; simpl; simpl in m.
-  destruct (h1 γ δ m) as [h3 h4]; split; auto.
-  intros.
-  pose proof (h4 v H).
-  destruct H1.
-  destruct H1.
-  rewrite H0 in H1.
-  apply total_is_injective in H1.
-  rewrite H1; auto.
-  intros.
-  destruct (h1 γ δ H) as [_ h4].
-  intro h.
-  pose proof (h4 ⊥ h) as [j [i _]].
-  contradict (flat_bot_neq_total _ i).
-Qed.
-
-Lemma sem_rw_tot_excludes_bot : forall Γ Δ e τ ϕ ψ (w : Γ ;;; Δ ||- e : τ), 
-    w ||= [{ϕ}] e [{ψ}] ->
-    (forall γ δ, ϕ (δ, γ) -> ⊥ ∉ sem_rw_exp _ _ _ _ w γ δ).
-Proof.
-  apply sem_rw_tot_is_prt_excludes_bot.
-Defined.
-
-    
-Lemma ro_prt_post_pre : forall Γ e τ ϕ ψ (w : Γ |- e : τ),
-    (w |= {{ϕ}} e {{ψ}}) ->
-    forall y,
-    forall γ, ϕ γ -> total y ∈ sem_ro_exp _ _ _ w γ -> ψ y γ.
-Proof.
-  intros.
-  pose proof (H γ H0) as [H2 H3].
-  exact (H3 (total y) H1 y eq_refl).
-Defined.
-
-Lemma ro_tot_post_pre : forall Γ e τ ϕ ψ (w : Γ |- e : τ),
-    (w |= [{ϕ}] e [{ψ}]) ->
-    forall y,
-    forall γ, ϕ γ -> total y ∈ sem_ro_exp _ _ _ w γ -> ψ y γ.
-Proof.
-  intros.
-  pose proof (H γ H0) as [H3 H4].
-  pose proof (H4 _ H1) as [v [p q] ].
-  injection p; intro j; rewrite j; exact q.
-Defined.
-
-  
-Lemma trip_ro_prt_sem_typing_irrl : forall Γ e τ ϕ ψ (w1 w2 : Γ |- e : τ), (w1 |= {{ϕ}} e {{ψ}}) -> (w2 |= {{ϕ}} e {{ψ}}).
-Proof.
-  intros.
-  intros γ m.
-  rewrite (sem_ro_exp_unique _ _ _ w2 w1).
-  apply H; auto.
-Defined.
-
-Lemma trip_rw_prt_sem_typing_irrl : forall Γ Δ e τ ϕ ψ (w1 w2 : Γ ;;; Δ ||- e : τ), (w1 ||= {{ϕ}} e {{ψ}}) -> (w2 ||= {{ϕ}} e {{ψ}}).
-Proof.
-  intros.
-  intros γ m.
-  rewrite (sem_rw_exp_unique _ _ _ _ w2 w1).
-  apply H; auto.
-Defined.
-
-Lemma trip_ro_tot_sem_typing_irrl : forall Γ e τ ϕ ψ (w1 w2 : Γ |- e : τ), (w1 |= [{ϕ}] e [{ψ}]) -> (w2 |= [{ϕ}] e [{ψ}]).
-Proof.
-  intros.
-  intros γ m.
-  rewrite (sem_ro_exp_unique _ _ _ w2 w1).
-  apply H; auto.
-Defined.
-
-Lemma trip_rw_tot_sem_typing_irrl : forall Γ Δ e τ ϕ ψ (w1 w2 : Γ ;;; Δ ||- e : τ), (w1 ||= [{ϕ}] e [{ψ}]) -> (w2 ||= [{ϕ}] e [{ψ}]).
-Proof.
-  intros.
-  intros γ m.
-  rewrite (sem_rw_exp_unique _ _ _ _ w2 w1).
-  apply H; auto.
-Defined.
+   that comes at the end of this file. Before getting there, in this file we prove various sublemmas
+   which include that about finitely branching trees that are used in while loop termination proof.  *)
 
 
-Fixpoint p_ro_access  Γ k τ (w : phas_type_ro Γ (Var k) τ) : sem_ro_ctx Γ -> sem_datatype τ.
+Fixpoint p_ro_access  Γ k τ (w : r_has_type_ro Γ (Var k) τ) : sem_ro_ctx Γ -> sem_datatype τ.
 Proof.
   inversion w.  
   intro.
@@ -170,18 +36,6 @@ Proof.
   destruct X.
   exact s0.
 Defined.
-
-(* Lemma ro_access_typing_irrl' Γ k τ (w1 : Γ |- Var k : τ): forall γ, ro_access Γ k τ w1 γ = p_ro_access Γ k τ (has_type_ro_phas_type_ro _ _ _ w1) γ. *)
-(* Proof. *)
-(*   unfold ro_access. *)
-(*   unfold p_ro_access. *)
-(*   unfold has_type_ro_phas_type_ro. *)
-(*   dependent induction w1. *)
-(*   simpl. *)
-(*   intros. *)
-(*   dependent destruction h. *)
-(*   simpl. *)
-(* Admitted. *)
  
 Fixpoint ro_access_Var_0 Γ τ (w : (τ :: Γ) |- Var 0 : τ) {struct w} : forall x (γ : sem_ro_ctx Γ), ro_access (τ :: Γ) 0 τ w (x, γ) = x.
 Proof.
@@ -246,8 +100,8 @@ Proof.
   destruct Γ.
   contradict w1.
   intro.
-  apply has_type_ro_phas_type_ro in w1.
-  apply phas_type_ro_Var_absurd in w1.
+  apply has_type_ro_r_has_type_ro in w1.
+  apply r_has_type_ro_Var_absurd in w1.
   auto.
   simpl in γ.
   destruct γ.
@@ -259,8 +113,8 @@ Proof.
   destruct Γ.
   contradict w1.
   intro.
-  apply has_type_ro_phas_type_ro in w1.
-  apply phas_type_ro_Var_absurd in w1.
+  apply has_type_ro_r_has_type_ro in w1.
+  apply r_has_type_ro_Var_absurd in w1.
   auto.
   simpl in γ.
   destruct γ.
@@ -368,7 +222,7 @@ Defined.
 
 Lemma proves_rw_prt_Assign_sound
   Γ Δ e k τ ϕ0 (ψ0 :post) θ (w : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit)  :
-  w |= {{(fun δγ : sem_ro_ctx (Δ ++ Γ) => ϕ0 (tedious_sem_concat Δ Γ δγ))}} e {{θ}}
+  w |= {{(fun δγ : sem_ro_ctx (Δ ++ Γ) => ϕ0 (tedious_sem_app Δ Γ δγ))}} e {{θ}}
   -> (forall x γ δ , θ x (δ; γ) -> ψ0 tt (update' w w' δ x, γ))
   ->  w' ||= {{ϕ0}} Assign k e {{ψ0}}.
 Proof.
@@ -429,7 +283,7 @@ Defined.
 
 Lemma proves_rw_tot_Assign_sound
   Γ Δ e k τ ϕ0 (ψ0 :post) θ (w : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit)  :
-  w |= [{(fun δγ : sem_ro_ctx (Δ ++ Γ) => ϕ0 (tedious_sem_concat Δ Γ δγ))}] e [{θ}]
+  w |= [{(fun δγ : sem_ro_ctx (Δ ++ Γ) => ϕ0 (tedious_sem_app Δ Γ δγ))}] e [{θ}]
   -> (forall x γ δ , θ x (δ; γ) -> ψ0 tt (update' w w' δ x, γ))
   ->  w' ||= [{ϕ0}] Assign k e [{ψ0}].
 Proof.
@@ -617,6 +471,9 @@ Proof.
       rewrite H0 ; simpl; auto.
 Defined.
 
+(* Now let us detour and proves some properties of finitely branchign trees
+   that will establish termination of while loops later in the total correctness
+   proof. *)
 Section FinitelyBranchingTree.
 
   Definition E_tree_is_fin {X} (E : X -> X -> Prop) :=
@@ -627,12 +484,12 @@ Section FinitelyBranchingTree.
   | cons_chain : forall n y, E x y -> E_finite_chain E y n -> E_finite_chain E x (S n).
 
   Definition E_is_infinite_chain {X} (E : X -> X -> Prop) x f : Prop
-    := f 0 = x /\ forall n, E (f n) (f (S n)).
+    := f O = x /\ forall n, E (f n) (f (S n)).
 
   Definition E_finite_chains {X} (E : X -> X -> Prop) x := {n : nat & E_finite_chain E x n}.
 
   Definition E_finite_chains_next {X} (E : X -> X -> Prop) x (c : E_finite_chains E x) :
-    projT1 c <> 0 -> {y & (E x y * E_finite_chains E y)%type}.
+    projT1 c <> O -> {y & (E x y * E_finite_chains E y)%type}.
   Proof.
     intros.
     destruct c.
@@ -660,7 +517,7 @@ Section FinitelyBranchingTree.
   Defined.
 
   Lemma E_infinite_finite_chains_S_aux2 :forall {X} (E : X -> X -> Prop) (x : X),
-      {y' : {y : X | E x y} & E_finite_chains E (proj1_sig y')} -> {c : E_finite_chains E x | projT1 c <> 0}.
+      {y' : {y : X | E x y} & E_finite_chains E (proj1_sig y')} -> {c : E_finite_chains E x | projT1 c <> O}.
   Proof.
     intros.
     destruct X0.
@@ -671,13 +528,8 @@ Section FinitelyBranchingTree.
     simpl.
     auto.
   Defined.
-  
-  (* Definition E_infinite_finite_chains_S_aux2 : forall {X} (E : X -> X -> Prop) (x : X), *)
-  (*     infinite (E_finite_chains E x) -> nat -> {c : E_finite_chains E x | projT1 c <> 0}. *)
-  (* Proof. *)
-  (*   intros. *)
-  (*   destruct H. *)
-  
+
+  Open Scope nat_scope.
 
   Lemma E_infinite_finite_chains_S :
     forall {X} (E : X -> X -> Prop), E_tree_is_fin E -> forall (x : X),  
@@ -779,6 +631,7 @@ Section FinitelyBranchingTree.
 
 End FinitelyBranchingTree.
 
+Open Scope nat_scope.
 Lemma pdom_While_bot {X} (b : X -> pdom bool) (c : X -> pdom X)
       (ϕ : X -> Prop) (θ : bool -> X -> Prop) (ψ : X -> X -> Prop) :
   (forall x, ϕ x ->
@@ -925,7 +778,7 @@ Defined.
 Lemma proves_rw_while_tot_sound :
   forall Γ Δ e c (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : (Γ ++ Δ) ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT) ϕ θ ψ, 
     wty_e |= [{rw_to_ro_pre ϕ}] e [{θ}] ->
-    wty_c ||= [{fun δγδ' => ro_to_rw_pre (θ true) (fst δγδ', fst_concat (snd δγδ')) /\ fst δγδ' = snd_concat (snd δγδ')}] c [{fun _ δγδ' => ϕ (fst δγδ', fst_concat (snd δγδ')) /\ ψ δγδ' }] ->
+    wty_c ||= [{fun δγδ' => ro_to_rw_pre (θ true) (fst δγδ', fst_app (snd δγδ')) /\ fst δγδ' = snd_app (snd δγδ')}] c [{fun _ δγδ' => ϕ (fst δγδ', fst_app (snd δγδ')) /\ ψ δγδ' }] ->
     (forall δ γ, ϕ (δ, γ) ->
             ~exists f : nat -> sem_ro_ctx Δ,
                 f 0 = δ /\ forall n, ψ (f (S n), (γ ; f n))) ->
@@ -943,15 +796,15 @@ Proof.
     (sem_rw_exp_auxiliary_ctx _ _ _ _ _ _ wty_c γ δ δ).
   pose proof (CC (γ; δ) δ).
   simpl in H.
-  assert (ro_to_rw_pre (θ true) (δ, fst_concat (γ; δ)) /\ δ = snd_concat (γ; δ)).
-  unfold fst_concat, snd_concat.
+  assert (ro_to_rw_pre (θ true) (δ, fst_app (γ; δ)) /\ δ = snd_app (γ; δ)).
+  unfold fst_app, snd_app.
   rewrite tedious_equiv_1.
   split; auto.
   apply H in H0.
   destruct H0; split; auto.
   intro.
   pose proof (H1 v).
-  unfold fst_concat in H2; rewrite tedious_equiv_1 in H2.
+  unfold fst_app in H2; rewrite tedious_equiv_1 in H2.
   intro.
   pose proof (H2 H3).
   destruct H4.
@@ -994,7 +847,7 @@ Proof.
   pose proof (CC (γ; x) x).
   simpl in H0.
   unfold ro_to_rw_pre in H0.
-  unfold fst_concat, snd_concat in H0.
+  unfold fst_app, snd_app in H0.
   rewrite tedious_equiv_1 in H0.
   pose proof (H0 (conj m eq_refl)).
   destruct H1; split; auto.
@@ -1042,9 +895,6 @@ Proof.
   exists f.
   split; auto.
 Defined.
-
-
-Axiom magic : forall X, X.
 
 Lemma proves_ro_prt_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, w |- {{ϕ}} e {{ψ}} -> w |= {{ϕ}} e {{ψ}}
 with proves_ro_tot_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, w |- [{ϕ}] e [{ψ}] -> w |= [{ϕ}] e [{ψ}]
@@ -3062,7 +2912,7 @@ Proof.
     ++
       (* | rw_new_var_prt : forall Γ Δ e c τ σ (w1 : (Δ ++ Γ) |- e : σ) (w2 : Γ ;;; (σ :: Δ) ||- c : τ) ϕ ψ θ (w' : Γ ;;; Δ ||- (NEWVAR e IN c) : τ), *)
 
-      (*     w1 |- {{fun γδ => (ϕ (tedious_sem_concat _ _ γδ))}} e {{θ}} ->  *)
+      (*     w1 |- {{fun γδ => (ϕ (tedious_sem_app _ _ γδ))}} e {{θ}} ->  *)
       (*     w2 ||- {{fun xδγ => θ (fst (fst xδγ)) (tedious_prod_sem _ _ (snd (fst xδγ), snd xδγ))}} c {{fun x xδγ => ψ x (snd (fst xδγ), snd xδγ)}} ->  *)
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- {{ϕ}} NEWVAR e IN c {{ψ}} *)
@@ -3076,7 +2926,7 @@ Proof.
       unfold V, f, res.
       pose proof (proves_ro_prt_sound _ _ _ _ _ _ p (tedious_prod_sem Δ Γ (δ, γ))).
       simpl in H.
-      assert (ϕ0 (tedious_sem_concat Δ Γ (tedious_prod_sem Δ Γ (δ, γ)))) as H'
+      assert (ϕ0 (tedious_sem_app Δ Γ (tedious_prod_sem Δ Γ (δ, γ)))) as H'
           by (rewrite tedious_equiv_1; auto).
       apply H in H' as [p1 p2]; clear H.
       split.
@@ -3125,7 +2975,7 @@ Proof.
     ++
       (* | rw_assign_prt : forall Γ Δ e k τ (w : (Δ ++ Γ) |- e : τ) ϕ θ (ψ : post) (w' : Γ ;;; Δ ||- (LET k := e) : UNIT), *)
 
-      (*     w |- {{fun δγ => ϕ (tedious_sem_concat _ _ δγ)}} e {{θ}} ->  *)
+      (*     w |- {{fun δγ => ϕ (tedious_sem_app _ _ δγ)}} e {{θ}} ->  *)
       (*     (forall x γ δ, θ x (tedious_prod_sem _ _ (δ, γ)) -> ψ tt (update' w w' δ x, γ)) -> *)
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- {{ϕ}} LET k := e {{ψ}} *)
@@ -3231,7 +3081,7 @@ Proof.
       (* | Rw_case_list_prt *)
       intros γ δ m; simpl in m; simpl.
       assert (1 <= length l).
-      pose proof (has_type_rw_phas_type_rw _ _ _ _ wty).
+      pose proof (has_type_rw_r_has_type_rw _ _ _ _ wty).
       dependent destruction H; auto.
       
       rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_CaseList _ _ l _ H wty_l)).
@@ -3669,7 +3519,7 @@ Proof.
     ++
       (* | rw_new_var_tot : forall Γ Δ e c τ σ (w1 : (Δ ++ Γ) |- e : σ) (w2 : Γ ;;; (σ :: Δ) ||- c : τ) ϕ ψ θ (w' : Γ ;;; Δ ||- (NEWVAR e IN c) : τ), *)
 
-      (*     w1 |- [{fun γδ => (ϕ (tedious_sem_concat _ _ γδ))}] e [{θ}] ->  *)
+      (*     w1 |- [{fun γδ => (ϕ (tedious_sem_app _ _ γδ))}] e [{θ}] ->  *)
       (*     w2 ||- [{fun xδγ => θ (fst (fst xδγ)) (tedious_prod_sem _ _ (snd (fst xδγ), snd xδγ))}] c [{fun x xδγ => ψ x (snd (fst xδγ), snd xδγ)}] ->  *)
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- [{ϕ}] NEWVAR e IN c [{ψ}] *)
@@ -3683,7 +3533,7 @@ Proof.
       unfold V, f, res.
       pose proof (proves_ro_tot_sound _ _ _ _ _ _ p (tedious_prod_sem Δ Γ (δ, γ))).
       simpl in H.
-      assert (ϕ0 (tedious_sem_concat Δ Γ (tedious_prod_sem Δ Γ (δ, γ)))) as H'
+      assert (ϕ0 (tedious_sem_app Δ Γ (tedious_prod_sem Δ Γ (δ, γ)))) as H'
           by (rewrite tedious_equiv_1; auto).
       apply H in H' as [p1 p2]; clear H.
       split.
@@ -3785,7 +3635,7 @@ Proof.
     ++
       (* | rw_assign_tot : forall Γ Δ e k τ (w : (Δ ++ Γ) |- e : τ) ϕ θ (ψ : post) (w' : Γ ;;; Δ ||- (LET k := e) : UNIT), *)
 
-      (*     w |- [{fun δγ => ϕ (tedious_sem_concat _ _ δγ)}] e [{θ}] ->  *)
+      (*     w |- [{fun δγ => ϕ (tedious_sem_app _ _ δγ)}] e [{θ}] ->  *)
       (*     (forall x γ δ, θ x (tedious_prod_sem _ _ (δ, γ)) -> ψ tt (update' w w' δ x, γ)) -> *)
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- [{ϕ}] LET k := e [{ψ}] *)
@@ -3977,7 +3827,7 @@ Proof.
         assert (rw_to_ro_pre ϕ0 (δ; γ)) as m' by (unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
         assert (1 <= length l).
         {
-          pose proof (has_type_rw_phas_type_rw _ _ _ _ wty).
+          pose proof (has_type_rw_r_has_type_rw _ _ _ _ wty).
           dependent destruction H; auto.
         }
         rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_CaseList _ _ l _ H wty_l)).
@@ -4072,7 +3922,7 @@ Proof.
         assert (rw_to_ro_pre ϕ0 (δ; γ)) as m' by (unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
         assert (1 <= length l).
         {
-          pose proof (has_type_rw_phas_type_rw _ _ _ _ wty).
+          pose proof (has_type_rw_r_has_type_rw _ _ _ _ wty).
           dependent destruction H; auto.
         }
         rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_CaseList _ _ l _ H wty_l)).
@@ -4163,7 +4013,7 @@ Proof.
       (* | rw_while_tot : forall Γ Δ e c (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : (Γ ++ Δ) ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT) ϕ θ ψ, *)
       
       (*     wty_e |- [{rw_to_ro_pre ϕ}] e [{θ}] -> *)
-      (*     wty_c ||- [{fun δγδ' => ro_to_rw_pre (θ true) (fst δγδ', fst_concat (snd δγδ')) /\ fst δγδ' = snd_concat (snd δγδ')}] c [{fun _ δγδ' => ϕ (fst δγδ', fst_concat (snd δγδ')) /\ ψ δγδ' }] -> *)
+      (*     wty_c ||- [{fun δγδ' => ro_to_rw_pre (θ true) (fst δγδ', fst_app (snd δγδ')) /\ fst δγδ' = snd_app (snd δγδ')}] c [{fun _ δγδ' => ϕ (fst δγδ', fst_app (snd δγδ')) /\ ψ δγδ' }] -> *)
       (*              (forall δ γ, ϕ (δ, γ) ->   *)
       (*                            ~exists f : nat -> sem_ro_ctx Δ, *)
       (*                                f 0 = δ /\ forall n, ψ (f (S n), (γ ; f n))) -> *)

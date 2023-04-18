@@ -1,4 +1,5 @@
 Require Import List.
+Require Import Powerdomain.
 Require Import Clerical.
 Require Import Typing.
 Require Import TypingProperties.
@@ -102,27 +103,27 @@ Proof.
       assert (ro_to_rw_pre (θ true) ->> (fun δγ : sem_ro_ctx Δ * sem_ro_ctx Γ =>
                                            exists γ' : sem_ro_ctx Δ,
                                              (fun δγδ' : sem_ro_ctx Δ * sem_ro_ctx (Γ ++ Δ) =>
-                                                ro_to_rw_pre (θ true) (fst δγδ', fst_concat (snd δγδ')) /\ fst δγδ' = snd_concat (snd δγδ'))
+                                                ro_to_rw_pre (θ true) (fst δγδ', fst_app (snd δγδ')) /\ fst δγδ' = snd_app (snd δγδ'))
                                                (fst δγ, (snd δγ; γ')))).
       {
         simpl.
         intros δγ h.
         exists (fst δγ); auto.
-        unfold snd_concat.
-        unfold fst_concat.
+        unfold snd_app.
+        unfold fst_app.
         rewrite tedious_equiv_1.
         destruct δγ; split; auto.
       }
       assert ((fun y => (fun δγ : sem_ro_ctx Δ * sem_ro_ctx Γ =>
                         exists γ' : sem_ro_ctx Δ,
                           (fun (_ : sem_datatype UNIT) (δγδ' : sem_ro_ctx Δ * sem_ro_ctx (Γ ++ Δ)) =>
-                             ϕ (fst δγδ', fst_concat (snd δγδ')) /\ ψ0 δγδ') y (fst δγ, (snd δγ; γ')))) ->>>
+                             ϕ (fst δγδ', fst_app (snd δγδ')) /\ ψ0 δγδ') y (fst δγ, (snd δγ; γ')))) ->>>
                                                                                                        fun _ => ϕ).
 
       {
         simpl.
         intros _ δγ [γ' [h1 h2]].
-        unfold fst_concat in h1.
+        unfold fst_app in h1.
         rewrite tedious_equiv_1 in h1.
         destruct δγ; auto.
       }
