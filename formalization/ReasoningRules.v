@@ -2,11 +2,13 @@ Require Import Coq.Program.Equality.
 Require Import Reals.
 Require Import List.
 
-Require Import Clerical.
-Require Import Typing.
-Require Import Powerdomain.
-Require Import Semantics.
-Require Import Specification.
+Require Import Clerical.Powerdomain.Powerdomain.
+Require Import Clerical.Syntax.
+Require Import Clerical.Typing.
+Require Import Clerical.TypingProperties.
+Require Import Clerical.Semantics.
+Require Import Clerical.SemanticsProperties.
+Require Import Clerical.Specification.
 
 Reserved Notation " w |- {{ P }} e {{ Q }} " (at level 50, P, e, Q at next level).
 Reserved Notation " w |- {{ P }} e {{ y | Q }} " (at level 50, P, e,y, Q at next level).

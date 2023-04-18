@@ -1,5 +1,5 @@
 (** Clerical typing judgment rules defined here *)
-Require Import Clerical.
+Require Import Clerical.Syntax.
 Require Import List.
 Reserved Notation " Γ |- t : T " (at level 50, t, T at next level). 
 Reserved Notation " Γ ;;; Δ ||- t : T " (at level 50, Δ, t, T at next level). 

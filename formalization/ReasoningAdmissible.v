@@ -1,13 +1,17 @@
 Require Import List.
-Require Import Powerdomain.
-Require Import Clerical.
-Require Import Typing.
-Require Import TypingProperties.
-Require Import Semantics.
-Require Import Specification.
-Require Import ReasoningRules.
-Arguments existT {_} {_}.
 Require Import Coq.Program.Equality.
+
+Require Import Clerical.Powerdomain.Powerdomain.
+Require Import Clerical.Syntax.
+Require Import Clerical.Typing.
+Require Import Clerical.TypingProperties.
+Require Import Clerical.Semantics.
+Require Import Clerical.SemanticsProperties.
+Require Import Clerical.Specification.
+Require Import Clerical.ReasoningRules.
+
+
+Arguments existT {_} {_}.
 Fixpoint proves_admissible_ro_tot_prt Γ e τ (w : Γ |- e : τ) ϕ ψ (X : w |- [{ϕ}] e [{ψ}]) {struct X} : w |- {{ϕ}} e {{ψ}}
 with proves_admissible_rw_tot_prt Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ (X : w ||- [{ϕ}] e [{ψ}]) {struct X} : w ||- {{ϕ}} e {{ψ}}.
 Proof.

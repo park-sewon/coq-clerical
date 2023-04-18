@@ -1,9 +1,9 @@
-Require Import Powerdomain.
-Require Import Clerical.
-Require Import Typing.
-Require Import TypingProperties.
-Require Import Semantics.
-Require Import SemanticsProperties.
+Require Import Clerical.Powerdomain.Powerdomain.
+Require Import Clerical.Syntax.
+Require Import Clerical.Typing.
+Require Import Clerical.TypingProperties.
+Require Import Clerical.Semantics.
+Require Import Clerical.SemanticsProperties.
 
 
 Structure ro_prt {Γ : ro_ctx} {e : exp} {τ : datatype} (wty : Γ |- e : τ) :=

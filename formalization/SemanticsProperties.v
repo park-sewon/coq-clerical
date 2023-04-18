@@ -2,11 +2,11 @@ Require Import List.
 Require Import Reals.
 Require Import Coq.Program.Equality.
 
-Require Import Clerical.
-Require Import Typing.
-Require Import TypingProperties.
-Require Import Powerdomain.
-Require Import Semantics.
+Require Import Clerical.Powerdomain.Powerdomain.
+Require Import Clerical.Syntax.
+Require Import Clerical.Typing.
+Require Import Clerical.TypingProperties.
+Require Import Clerical.Semantics.
 
 (* In this file, we prove some properties of the semantics of Clerical.
    The main theorems here are that 1) the semantics is irrelevnet to the welltypedness

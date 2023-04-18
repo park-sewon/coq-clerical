@@ -1,9 +1,9 @@
 Require Import List.
 Require Import Coq.Program.Equality.
 
-Require Import Clerical.
-Require Import Typing.
-Require Import Powerdomain.
+Require Import Clerical.Syntax.
+Require Import Clerical.Typing.
+Require Import Clerical.Powerdomain.Powerdomain.
 
 (* In this file, we prove various properties regarding the type system of Clerical. The main theorem here is that the typing rules are unambiguous in the sense that when Γ |- e : τ and Γ |- e : σ, τ = σ. Similarly, we prove that when Γ ;;; Δ ||- e : τ and Γ ;;; Δ ||- e : σ, τ = σ.
 
