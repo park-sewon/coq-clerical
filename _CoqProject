@@ -1,0 +1,20 @@
+-R formalization Clerical
+formalization/Powerdomain/Powerdomain.v
+formalization/Powerdomain/PowerdomainBase.v
+formalization/Powerdomain/PowerdomainInfinite.v
+formalization/Powerdomain/PowerdomainMonad.v
+formalization/Powerdomain/PowerdomainProperties.v
+formalization/Powerdomain/PowerdomainCompleteness.v
+formalization/Powerdomain/PowerdomainOrderProperties.v
+formalization/Powerdomain/PowerdomainFixedpoints.v
+formalization/Powerdomain/PowerdomainSemantics.v
+formalization/Powerdomain/PowerdomainSemantics2.v
+formalization/Syntax.v
+formalization/Typing.v
+formalization/TypingProperties.v
+formalization/Semantics.v
+formalization/SemanticsProperties.v
+formalization/Specification.v
+formalization/ReasoningRules.v
+formalization/ReasoningAdmissible.v
+formalization/ReasoningSoundness.v
