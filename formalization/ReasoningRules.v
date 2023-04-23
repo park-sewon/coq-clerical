@@ -155,11 +155,11 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
     (*——————————-——————————-——————————-——————————-——————————-*)
     w' |- {{fun γ => P (tt, γ)}} c {{fun v w => Q v (tt, w)}}
 
-(** restricting auxiliary variables *)
-| ro_proj_prt : forall Γ Γ' e τ (w : Γ |- e : τ) (w' : (Γ ++ Γ') |- e : τ) ϕ ψ, 
-    w' |- {{ϕ}} e {{ψ}} ->
-    (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- {{fun γ => exists γ', ϕ (γ ; γ')}} e {{y | fun γ => exists γ', ψ y (γ ; γ')}}
+(* (** restricting auxiliary variables *) *)
+(* | ro_proj_prt : forall Γ Γ' e τ (w : Γ |- e : τ) (w' : (Γ ++ Γ') |- e : τ) ϕ ψ,  *)
+(*     w' |- {{ϕ}} e {{ψ}} -> *)
+(*     (*——————————-——————————-——————————-——————————-——————————-*) *)
+(*     w |- {{fun γ => exists γ', ϕ (γ ; γ')}} e {{y | fun γ => exists γ', ψ y (γ ; γ')}} *)
 
                                  
 (** coercion and exponentiation *)
@@ -330,11 +330,11 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
     (*——————————-——————————-——————————-——————————-——————————-*)
     w' |- [{fun γ => P (tt, γ)}] c [{fun v w => Q v (tt, w)}]
 
-(** restricting auxiliary variables *)
-| ro_proj_tot : forall Γ Γ' e τ (w : Γ |- e : τ) (w' : (Γ ++ Γ') |- e : τ) ϕ ψ, 
-    w' |- [{ϕ}] e [{ψ}] ->
-    (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- [{fun γ => exists γ', ϕ (γ ; γ')}] e [{y | fun γ => exists γ', ψ y (γ ; γ')}]
+(* (** restricting auxiliary variables *) *)
+(* | ro_proj_tot : forall Γ Γ' e τ (w : Γ |- e : τ) (w' : (Γ ++ Γ') |- e : τ) ϕ ψ,  *)
+(*     w' |- [{ϕ}] e [{ψ}] -> *)
+(*     (*——————————-——————————-——————————-——————————-——————————-*) *)
+(*     w |- [{fun γ => exists γ', ϕ (γ ; γ')}] e [{y | fun γ => exists γ', ψ y (γ ; γ')}] *)
 
                                  
 (** coercion and exponentiation *)
@@ -483,11 +483,11 @@ with proves_rw_prt : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_prt w -> T
     (*——————————-——————————-——————————-——————————-——————————-*)
     w' ||- {{fun γδ => ϕ (tedious_prod_sem _ _ γδ)}} e {{fun v γδ => ψ v (tedious_prod_sem _ _ γδ)}}
 
-(** restricting auxiliary variables *)
-| rw_proj_prt : forall Γ Δ Γ' e τ (w : Γ ;;; Δ ||- e : τ) (w' : (Γ ++ Γ') ;;; Δ ||- e : τ) ϕ ψ, 
-    w' ||- {{ϕ}} e {{ψ}} ->
-    (*——————————-——————————-——————————-——————————-——————————-*)
-    w ||- {{fun δγ => exists γ', ϕ (fst δγ, (snd δγ ; γ'))}} e {{y | fun δγ => exists γ', ψ y (fst δγ, (snd δγ ; γ'))}}
+(* (** restricting auxiliary variables *) *)
+(* | rw_proj_prt : forall Γ Δ Γ' e τ (w : Γ ;;; Δ ||- e : τ) (w' : (Γ ++ Γ') ;;; Δ ||- e : τ) ϕ ψ,  *)
+(*     w' ||- {{ϕ}} e {{ψ}} -> *)
+(*     (*——————————-——————————-——————————-——————————-——————————-*) *)
+(*     w ||- {{fun δγ => exists γ', ϕ (fst δγ, (snd δγ ; γ'))}} e {{y | fun δγ => exists γ', ψ y (fst δγ, (snd δγ ; γ'))}} *)
 
 (** operational proof rules  *)                            
 | rw_sequence_prt : forall Γ Δ c1 c2 τ (w1 : Γ ;;; Δ ||- c1 : DUnit) (w2 : Γ ;;; Δ ||- c2 : τ) ϕ θ ψ (w' : Γ ;;; Δ ||- (c1 ;; c2) : τ),
@@ -588,11 +588,11 @@ with proves_rw_tot : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_tot w -> T
     (*——————————-——————————-——————————-——————————-——————————-*)
     w' ||- [{fun γδ => ϕ (tedious_prod_sem _ _ γδ)}] e [{fun v γδ => ψ v (tedious_prod_sem _ _ γδ)}]
 
-(** restricting auxiliary variables *)
-| rw_proj_tot : forall Γ Δ Γ' e τ (w : Γ ;;; Δ ||- e : τ) (w' : (Γ ++ Γ') ;;; Δ ||- e : τ) ϕ ψ, 
-    w' ||- [{ϕ}] e [{ψ}] ->
-    (*——————————-——————————-——————————-——————————-——————————-*)
-    w ||- [{fun δγ => exists γ', ϕ (fst δγ, (snd δγ ; γ'))}] e [{y | fun δγ => exists γ', ψ y (fst δγ, (snd δγ ; γ'))}]
+(* (** restricting auxiliary variables *) *)
+(* | rw_proj_tot : forall Γ Δ Γ' e τ (w : Γ ;;; Δ ||- e : τ) (w' : (Γ ++ Γ') ;;; Δ ||- e : τ) ϕ ψ,  *)
+(*     w' ||- [{ϕ}] e [{ψ}] -> *)
+(*     (*——————————-——————————-——————————-——————————-——————————-*) *)
+(*     w ||- [{fun δγ => exists γ', ϕ (fst δγ, (snd δγ ; γ'))}] e [{y | fun δγ => exists γ', ψ y (fst δγ, (snd δγ ; γ'))}] *)
       
 (** operational proof rules  *)                            
 | rw_sequence_tot : forall Γ Δ c1 c2 τ (w1 : Γ ;;; Δ ||- c1 : UNIT) (w2 : Γ ;;; Δ ||- c2 : τ) ϕ θ ψ (w' : Γ ;;; Δ ||- (c1 ;; c2) : τ),

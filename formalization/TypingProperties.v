@@ -695,3 +695,141 @@ Section Unambiguity.
 End Unambiguity.
 
 
+Section InverseTyping.
+  Fixpoint has_type_ro_OpRrecip_inverse Γ e (w : Γ |- (;/; e) : REAL) : Γ |- e  : REAL.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpRrecip_inverse _ _ h).
+    exact w.
+  Defined.
+
+  Fixpoint has_type_ro_OpZRcoerce_inverse Γ e (w : Γ |- (RE e) : REAL) : Γ |- e  : INTEGER.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpZRcoerce_inverse _ _ h).
+    exact w.
+  Defined.
+
+  Fixpoint has_type_ro_OpZRexp_inverse Γ e (w : Γ |- (EXP e) : REAL) : Γ |- e  : INTEGER.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpZRexp_inverse _ _ h).
+    exact w.
+  Defined.
+
+  Fixpoint has_type_ro_OpZplus_inverse Γ e1 e2 (w : Γ |- (e1 :+: e2) : INTEGER) : ((Γ |- e1  : INTEGER) * (Γ |- e2  : INTEGER))%type.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpZplus_inverse _ _ _ h).
+    exact (pair w1 w2).
+  Defined.
+
+  Fixpoint has_type_ro_OpZminus_inverse Γ e1 e2 (w : Γ |- (e1 :-: e2) : INTEGER) : ((Γ |- e1  : INTEGER) * (Γ |- e2  : INTEGER))%type.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpZminus_inverse _ _ _ h).
+    exact (pair w1 w2).
+  Defined.
+
+  Fixpoint has_type_ro_OpZmult_inverse Γ e1 e2 (w : Γ |- (e1 :*: e2) : INTEGER) : ((Γ |- e1  : INTEGER) * (Γ |- e2  : INTEGER))%type.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpZmult_inverse _ _ _ h).
+    exact (pair w1 w2).
+  Defined.
+
+  Fixpoint has_type_ro_OpZlt_inverse Γ e1 e2 (w : Γ |- (e1 :<: e2) : BOOL) : ((Γ |- e1  : INTEGER) * (Γ |- e2  : INTEGER))%type.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpZlt_inverse _ _ _ h).
+    exact (pair w1 w2).
+  Defined.
+
+  Fixpoint has_type_ro_OpZeq_inverse Γ e1 e2 (w : Γ |- (e1 :=: e2) : BOOL) : ((Γ |- e1  : INTEGER) * (Γ |- e2  : INTEGER))%type.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpZeq_inverse _ _ _ h).
+    exact (pair w1 w2).
+  Defined.
+
+  Fixpoint has_type_ro_OpRplus_inverse Γ e1 e2 (w : Γ |- (e1 ;+; e2) : REAL) : ((Γ |- e1  : REAL) * (Γ |- e2  : REAL))%type.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpRplus_inverse _ _ _ h).
+    exact (pair w1 w2).
+  Defined.
+
+  Fixpoint has_type_ro_OpRminus_inverse Γ e1 e2 (w : Γ |- (e1 ;-; e2) : REAL) : ((Γ |- e1  : REAL) * (Γ |- e2  : REAL))%type.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpRminus_inverse _ _ _ h).
+    exact (pair w1 w2).
+  Defined.
+
+  Fixpoint has_type_ro_OpRmult_inverse Γ e1 e2 (w : Γ |- (e1 ;*; e2) : REAL) : ((Γ |- e1  : REAL) * (Γ |- e2  : REAL))%type.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpRmult_inverse _ _ _ h).
+    exact (pair w1 w2).
+  Defined.
+
+
+  Fixpoint has_type_ro_OpRlt_inverse Γ e1 e2 (w : Γ |- (e1 ;<; e2) : BOOL) : ((Γ |- e1  : REAL) * (Γ |- e2  : REAL))%type.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpRlt_inverse _ _ _ h).
+    exact (pair w1 w2).
+  Defined.
+
+  Fixpoint has_type_ro_Lim_inverse Γ e (w : Γ |- (Lim e) : REAL) : ((INTEGER :: Γ) |- e  : REAL).
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_Lim_inverse _ _ h).
+    exact w.
+  Defined.
+
+  
+  Fixpoint has_type_rw_Seq_inverse Γ Δ c1 c2 τ (w : Γ ;;; Δ ||- (c1 ;; c2) : τ) :
+    ((Γ ;;; Δ ||- c1 : UNIT) * (Γ ;;; Δ ||- c2 : τ))%type.
+  Proof.
+    apply has_type_rw_r_has_type_rw in w.
+    dependent destruction w.
+    apply r_has_type_rw_has_type_rw in w1.
+    apply r_has_type_rw_has_type_rw in w2.
+    exact (pair w1 w2).
+  Defined.
+
+End InverseTyping.
+
+  (* Fixpoint has_type_rw_Assign Γ Δ e τ k (w : Γ ;;; Δ ||- (LET k := e)) :   : forall (Γ : list datatype) (Δ : ro_ctx) (e : exp) (τ : datatype) (k : nat), *)
+  (*                        assignable Δ τ k -> (Δ ++ Γ) |- e : τ -> Γ;;; Δ ||- (LET k := e) : UNIT *)
+  (* Fixpoint has_type_rw_Newvar Γ c :  : forall (Γ Δ : list datatype) (e c : exp) (σ τ : datatype), *)
+  (*                        (Δ ++ Γ) |- e : σ -> Γ;;; (σ :: Δ) ||- c : τ -> Γ;;; Δ ||- (NEWVAR e IN c) : τ *)
+  (* Fixpoint has_type_rw_Cond Γ c :  : forall (Γ Δ : list datatype) (e c1 c2 : exp) (τ : datatype), *)
+  (*                      (Δ ++ Γ) |- e : BOOL -> *)
+  (*                      Γ;;; Δ ||- c1 : τ -> Γ;;; Δ ||- c2 : τ -> Γ;;; Δ ||- (IF e THEN c1 ELSE c2 END) : τ *)
+  (* Fixpoint has_type_rw_Case Γ c :  : forall (Γ Δ : list datatype) (e1 c1 e2 c2 : exp) (τ : datatype), *)
+  (*                      (Δ ++ Γ) |- e1 : BOOL -> *)
+  (*                      Γ;;; Δ ||- c1 : τ -> *)
+  (*                      (Δ ++ Γ) |- e2 : BOOL -> *)
+  (*                      Γ;;; Δ ||- c2 : τ -> Γ;;; Δ ||- (CASE e1 ==> c1 OR e2 ==> c2 END) : τ *)
+  (* Fixpoint has_type_rw_CaseList Γ c :  : forall (Γ Δ : list datatype) (l : list (exp * exp)) (τ : datatype), *)
+  (*                          1 <= length l -> *)
+  (*                          ForallT *)
+  (*                            (fun ec : exp * exp => (((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;; Δ ||- snd ec : τ))%type) l -> *)
+  (*                          Γ;;; Δ ||- CaseList l : τ *)
+  (* Fixpoint has_type_rw_While Γ c :  : forall (Γ Δ : list datatype) (e c : exp), *)
+  (*                       (Δ ++ Γ) |- e : BOOL -> Γ;;; Δ ||- c : UNIT -> Γ;;; Δ ||- (WHILE e DO c END) : UNIT. *)
