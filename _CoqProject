@@ -16,5 +16,7 @@ formalization/Semantics.v
 formalization/SemanticsProperties.v
 formalization/Specification.v
 formalization/ReasoningRules.v
+formalization/ReasoningAdmissible1.v
+formalization/ReasoningAdmissible2.v
 formalization/ReasoningAdmissible.v
 formalization/ReasoningSoundness.v
