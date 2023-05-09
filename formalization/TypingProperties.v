@@ -811,8 +811,116 @@ Section InverseTyping.
     apply r_has_type_rw_has_type_rw in w2.
     exact (pair w1 w2).
   Defined.
-
 End InverseTyping.
+
+
+Section InferTyping.
+  Fixpoint has_type_ro_OpRrecip_infer Γ e τ (w : Γ |- (;/; e) : τ) : τ = REAL.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpRrecip_infer _ _ _ h).
+    apply eq_refl.
+  Defined.
+
+  Fixpoint has_type_ro_OpZRcoerce_infer Γ e τ (w : Γ |- (RE e) : τ) : τ = REAL.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpZRcoerce_infer _ _ _ h).
+    exact eq_refl.
+  Defined.
+
+  Fixpoint has_type_ro_OpZRexp_infer Γ e τ (w : Γ |- (EXP e) : τ) : τ = REAL.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpZRexp_infer _ _ _ h).
+    exact eq_refl.
+  Defined.
+
+  Fixpoint has_type_ro_OpZplus_infer Γ e1 e2 τ (w : Γ |- (e1 :+: e2) : τ) : τ = INTEGER.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpZplus_infer _ _ _ _ h).
+    exact eq_refl.
+  Defined.
+
+  Fixpoint has_type_ro_OpZminus_infer Γ e1 e2 τ (w : Γ |- (e1 :-: e2) : τ) : τ = INTEGER.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpZminus_infer _ _ _ _ h).
+    exact eq_refl.
+  Defined.
+
+  Fixpoint has_type_ro_OpZmult_infer Γ e1 e2 τ (w : Γ |- (e1 :*: e2) : τ) : τ = INTEGER.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpZmult_infer _ _ _ _ h).
+    exact eq_refl.
+  Defined.
+
+  Fixpoint has_type_ro_OpZlt_infer Γ e1 e2 τ (w : Γ |- (e1 :<: e2) : τ) : τ = BOOL.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpZlt_infer _ _ _ _ h).
+    exact eq_refl.
+  Defined.
+
+  Fixpoint has_type_ro_OpZeq_infer Γ e1 e2 τ (w : Γ |- (e1 :=: e2) : τ) : τ = BOOL.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpZeq_infer _ _ _ _ h).
+    exact eq_refl.
+  Defined.
+
+  Fixpoint has_type_ro_OpRplus_infer Γ e1 e2 τ (w : Γ |- (e1 ;+; e2) : τ) : τ = REAL.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpRplus_infer _ _ _ _ h).
+    exact eq_refl.
+  Defined.
+
+  Fixpoint has_type_ro_OpRminus_infer Γ e1 e2 τ (w : Γ |- (e1 ;-; e2) : τ) : τ = REAL.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpRminus_infer _ _ _ _ h).
+    exact eq_refl.
+  Defined.
+
+  Fixpoint has_type_ro_OpRmult_infer Γ e1 e2 τ (w : Γ |- (e1 ;*; e2) : τ) : τ = REAL.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpRmult_infer _ _ _ _ h).
+    exact eq_refl.
+  Defined.
+
+
+  Fixpoint has_type_ro_OpRlt_infer Γ e1 e2 τ (w : Γ |- (e1 ;<; e2) : τ) : τ = BOOL.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_OpRlt_infer _ _ _ _ h).
+    exact eq_refl.
+  Defined.
+
+  Fixpoint has_type_ro_Lim_infer Γ e τ (w : Γ |- (Lim e) : τ) : τ = REAL.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_Lim_infer _ _ _ h).
+    exact eq_refl.
+  Defined.
+
+End InferTyping.
 
   (* Fixpoint has_type_rw_Assign Γ Δ e τ k (w : Γ ;;; Δ ||- (LET k := e)) :   : forall (Γ : list datatype) (Δ : ro_ctx) (e : exp) (τ : datatype) (k : nat), *)
   (*                        assignable Δ τ k -> (Δ ++ Γ) |- e : τ -> Γ;;; Δ ||- (LET k := e) : UNIT *)
@@ -833,3 +941,77 @@ End InverseTyping.
   (*                          Γ;;; Δ ||- CaseList l : τ *)
   (* Fixpoint has_type_rw_While Γ c :  : forall (Γ Δ : list datatype) (e c : exp), *)
   (*                       (Δ ++ Γ) |- e : BOOL -> Γ;;; Δ ||- c : UNIT -> Γ;;; Δ ||- (WHILE e DO c END) : UNIT. *)
+
+Fixpoint r_has_type_ro_add_auxiliary Γ e τ (w : Γ |~ e : τ) Γ' {struct w}: (Γ ++ Γ') |~ e : τ
+with r_has_type_rw_add_auxiliary Γ Δ e τ (w : Γ ;;; Δ ||~ e : τ) Γ' {struct w} : (Γ ++ Γ') ;;; Δ ||~ e : τ.
+Proof.
+  dependent destruction w;
+    try
+      (pose proof (r_has_type_rw_add_auxiliary _ _ _ _ r Γ') as H;
+       constructor;
+       exact H);
+    try constructor; auto.
+  rewrite app_comm_cons.
+  apply r_has_type_ro_add_auxiliary.
+  exact w.
+  
+  dependent destruction w;
+    try
+      (pose proof (r_has_type_ro_add_auxiliary _ _ _ r Γ') as H;
+       constructor;
+       rewrite app_assoc;
+       auto; fail);
+    try (constructor; apply r_has_type_rw_add_auxiliary; auto; fail);
+    try (constructor; auto; fail).
+  
+  apply (r_has_type_rw_Assign _ _ _ τ); auto.
+  rewrite app_assoc.
+  apply r_has_type_ro_add_auxiliary; auto.
+  
+  apply (r_has_type_rw_Newvar _ _ _ _ σ); auto.
+  rewrite app_assoc.
+  apply r_has_type_ro_add_auxiliary; auto.
+
+  apply (r_has_type_rw_Cond); auto.
+  rewrite app_assoc.
+  apply r_has_type_ro_add_auxiliary; auto.
+
+  apply (r_has_type_rw_Case); auto.
+  rewrite app_assoc.
+  apply r_has_type_ro_add_auxiliary; auto.
+  rewrite app_assoc.
+  apply r_has_type_ro_add_auxiliary; auto.
+
+  apply (r_has_type_rw_CaseList).
+  exact l0.  
+  clear l0.
+  dependent induction f.
+  apply ForallT_nil.
+  apply ForallT_cons.
+  destruct p.
+  split.
+  rewrite app_assoc.  
+  exact (r_has_type_ro_add_auxiliary _ _ _ r _).
+  exact (r_has_type_rw_add_auxiliary _ _ _ _ r0 _).
+  apply IHf.
+
+  apply (r_has_type_rw_While); auto.
+  rewrite app_assoc.
+  apply r_has_type_ro_add_auxiliary; auto.
+Defined.
+
+Lemma has_type_ro_add_auxiliary Γ e τ (w : Γ |- e : τ) Γ': (Γ ++ Γ') |- e : τ.
+Proof.
+  apply r_has_type_ro_has_type_ro.
+  apply r_has_type_ro_add_auxiliary.
+  apply has_type_ro_r_has_type_ro.
+  exact w.
+Defined.
+
+Lemma has_type_rw_add_auxiliary Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) Γ' : (Γ ++ Γ') ;;; Δ ||- e : τ.
+Proof.
+  apply r_has_type_rw_has_type_rw.
+  apply r_has_type_rw_add_auxiliary.
+  apply has_type_rw_r_has_type_rw.
+  exact w.
+Defined.
