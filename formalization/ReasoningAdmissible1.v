@@ -51,13 +51,13 @@ Defined.
 Inductive r_proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
 (*  partial correctness triple for read only expressions *)
 (** logical rules *)
-| r_ro_imply_prt : forall Γ e τ (w : Γ |- e : τ) P Q P' Q',
+| r_ro_imply_prt : forall Γ e τ (w w' : Γ |- e : τ) P Q P' Q',
 
     P' ->> P -> 
     w |~ {{ P }} e {{ Q }} -> 
     Q ->>> Q' -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |~ {{ P'}}  e {{ Q' }}
+    w' |~ {{ P'}}  e {{ Q' }}
 
 (** variables and constants *)
 | r_ro_var_prt : forall Γ k τ (w : Γ |- VAR k : τ) Q,
@@ -206,13 +206,13 @@ Inductive r_proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type 
                                                         
 with r_proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
 (** logical rules *)
-| r_ro_imply_tot : forall Γ e τ (w : Γ |- e : τ) P Q P' Q',
+| r_ro_imply_tot : forall Γ e τ (w w' : Γ |- e : τ) P Q P' Q',
 
     P' ->> P -> 
     w |~ [{ P }] e [{ Q }] -> 
     Q ->>> Q' -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |~ [{ P'}]  e [{ Q' }]
+    w' |~ [{ P'}]  e [{ Q' }]
 
 (** variables and constants *)
 | r_ro_var_tot : forall Γ k τ (w : Γ |- VAR k : τ) Q,
@@ -366,13 +366,13 @@ with r_proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
                                                         
 with r_proves_rw_prt : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_prt w -> Type :=
 (** logical rules *)
-| r_rw_imply_prt : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ ϕ' ψ',
+| r_rw_imply_prt : forall Γ Δ e τ (w w' : Γ ;;; Δ ||- e : τ) ϕ ψ ϕ' ψ',
     
     ϕ' ->> ϕ -> 
     w ||~ {{ ϕ }} e {{ ψ }} -> 
     ψ ->>> ψ' -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w ||~ {{ ϕ'}}  e {{ ψ' }}
+    w' ||~ {{ ϕ'}}  e {{ ψ' }}
 
 (** passage between read-only and read-write correctness *)
 | r_ro_rw_prt : forall Γ Δ e τ (w : (Δ ++ Γ) |- e : τ) ϕ ψ (w' : Γ ;;; Δ ||- e : τ),
@@ -452,13 +452,13 @@ with r_proves_rw_prt : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_prt w ->
                                   
 with r_proves_rw_tot : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_tot w -> Type :=
 (** logical rules *)
-| r_rw_imply_tot : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ ϕ' ψ',
+| r_rw_imply_tot : forall Γ Δ e τ (w w' : Γ ;;; Δ ||- e : τ) ϕ ψ ϕ' ψ',
     
     ϕ' ->> ϕ -> 
     w ||~ [{ ϕ }] e [{ ψ }] -> 
     ψ ->>> ψ' -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w ||~ [{ ϕ'}]  e [{ ψ' }]
+    w' ||~ [{ ϕ'}]  e [{ ψ' }]
 
 (** passage between read-only and read-write correctness *)
 | r_ro_rw_tot : forall Γ Δ e τ (w : (Δ ++ Γ) |- e : τ) ϕ ψ (w' : Γ ;;; Δ ||- e : τ),
@@ -547,4 +547,7 @@ with r_proves_rw_tot : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_tot w ->
                                                                                                        
 where
 " w |~ {{ P }} e {{ Q }} " := (r_proves_ro_prt _ e _ w (mk_ro_prt w P Q)) and  " w |~ {{ P }} e {{ y | Q }} " := (r_proves_ro_prt _ e _ w (mk_ro_prt w P (fun y => Q))) and " w |~ [{ P }] e [{ y | Q }] " := (r_proves_ro_tot _ e _ w (mk_ro_tot w P (fun y => Q))) and " w ||~ {{ P }} e {{ y | Q }} " := (r_proves_rw_prt _ _ e _ w (mk_rw_prt w P (fun y => Q))) and " w ||~ [{ P }] e [{ y | Q }] " := (r_proves_rw_tot _ _ e _ w (mk_rw_tot w P (fun y => Q))) and " w |~ [{ P }] e [{ Q }] " := (r_proves_ro_tot _ e _ w (mk_ro_tot w P Q)) and " w ||~ {{ P }} e {{ Q }} " := (r_proves_rw_prt _ _ e _ w (mk_rw_prt w P Q)) and " w ||~ [{ P }] e [{ Q }] " := (r_proves_rw_tot _ _ e _ w (mk_rw_tot w P Q)).
+
+
+
 
