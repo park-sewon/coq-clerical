@@ -11,8 +11,8 @@ Require Import Clerical.Semantics.
 Require Import Clerical.SemanticsProperties.
 Require Import Clerical.Specification.
 Require Import Clerical.ReasoningRules.
-Require Import Clerical.ReasoningAdmissible.
 
+Arguments existT {_} {_}.
 (* Ths file proves the soundnsess of our Reasoning rules.
    The main thoerems are
 
@@ -959,24 +959,7 @@ Proof.
       rewrite i in j.
       rewrite <- j.
       destruct p0, u; simpl; auto.
-    ++
-    (* (** restricting auxiliary variables *) *)
-    (* | ro_proj_prt : forall Γ Γ' e τ (w : Γ |- e : τ) (w' : (Γ ++ Γ') |- e : τ) ϕ ψ,  *)
-    (*     w' |- {{ϕ}} e {{ψ}} -> *)
-    (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
-    (*     w |- {{fun γ => exists γ', ϕ (γ ; γ')}} e {{y | fun γ => exists γ', ψ y (γ ; γ')}} *)
-      intros γ [γ' m]; simpl in m; simpl.
-      
-      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip (γ; γ')  m) as [p1 p2].
-      split.
-      rewrite <- (sem_ro_exp_auxiliary_ctx _ _ _ _ w) in p1; auto.
-      intros h1 h2 h3 h4.
-      exists γ'.
-      rewrite <- (sem_ro_exp_auxiliary_ctx _ _ _ _ w) in p2; auto.
-      pose proof (p2 h1 h2 _ h4).
-      simpl in H; auto.
-      
-      
+
     ++
       (* (** coercion and exponentiation *) *)
       (* | ro_coerce_prt : forall Γ e (w : Γ |- e : INTEGER) P Q (w' : Γ |- RE e : REAL), *)
@@ -1849,23 +1832,6 @@ Proof.
       simpl in h2.
       rewrite h1 in x4; simpl in x4; rewrite <- x4; destruct u; split; auto.
 
-    ++
-      (* (** restricting auxiliary variables *) *)
-      (* | ro_proj_tot : forall Γ Γ' e τ (w : Γ |- e : τ) (w' : (Γ ++ Γ') |- e : τ) ϕ ψ,  *)
-      (*     w' |- [{ϕ}] e [{ψ}] -> *)
-      (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
-      (*     w |- [{fun γ => exists γ', ϕ (γ ; γ')]} e [{y | fun γ => exists γ', ψ y (γ ; γ')}] *)
-      intros γ [γ' m]; simpl in m; simpl.
-      
-      pose proof (proves_ro_tot_sound _ _ _ _ _ _ trip (γ; γ')  m) as [p1 p2].
-      split.
-      rewrite <- (sem_ro_exp_auxiliary_ctx _ _ _ _ w) in p1; auto.
-      intros h1 h2. 
-      rewrite <- (sem_ro_exp_auxiliary_ctx _ _ _ _ w) in p2; auto.
-      pose proof (p2 _ h2) as [p3 [p4 p5]].
-      exists p3; split; auto.
-      exists γ'; auto.
-      
 
     ++
       (* (** coercion and exponentiation *) *)
@@ -2749,18 +2715,6 @@ Proof.
       rewrite <- h4; rewrite <- h4 in H.
       apply H; auto.
 
-    ++
-      (* (** restricting auxiliary variables *) *)
-      intros γ δ [γ' m]; simpl in m; simpl.
-      
-      pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip (γ; γ') δ  m) as [p1 p2].
-      split.
-      rewrite <- (sem_rw_exp_auxiliary_ctx _ _ _ _ _ w) in p1; auto.
-      intros h1 h2 h3 h4.
-      exists γ'.
-      rewrite <- (sem_rw_exp_auxiliary_ctx _ _ _ _ _ w) in p2; auto.
-      pose proof (p2 h1 h2 _ h4).
-      simpl in H; auto.
       
     ++
       (* (** operational proof rules  *)                             *)
@@ -3328,19 +3282,6 @@ Proof.
       rewrite q2 in h4.
       simpl in h4.
       exists (δ, q1); split; simpl; auto.
-      
-    ++
-      (* (** restricting auxiliary variables *) *)
-      intros γ δ [γ' m]; simpl in m; simpl.
-      
-      pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip (γ; γ') δ m) as [p1 p2].
-      split.
-      rewrite <- (sem_rw_exp_auxiliary_ctx _ _ _ _ _ w) in p1; auto.
-      intros h1 h2. 
-      rewrite <- (sem_rw_exp_auxiliary_ctx _ _ _ _ _ w) in p2; auto.
-      pose proof (p2 _ h2) as [p3 [p4 p5]].
-      exists p3; split; auto.
-      exists γ'; auto.
       
 
     ++
