@@ -271,7 +271,7 @@ Proof.
           ψ y γ /\
           (forall (x : sem_datatype INTEGER) (z : sem_datatype REAL),
            (fun (_ : sem_datatype REAL) (_ : sem_ro_ctx (INTEGER :: Γ)) => False) z (x, γ) ->
-           Rabs (z - y) < powerRZ 2 (- x)))).
+           Rabs (z - y) < powerRZ 2 (- x))))%R.
     intros.
     contradict H0.
     pose proof (X1 H0).
@@ -543,7 +543,7 @@ Proof.
           ψ y γ /\
           (forall (x : sem_datatype INTEGER) (z : sem_datatype REAL),
            (fun (_ : sem_datatype REAL) (_ : sem_ro_ctx (INTEGER :: Γ)) => False) z (x, γ) ->
-           Rabs (z - y) < powerRZ 2 (- x)))).
+           Rabs (z - y) < powerRZ 2 (- x)))%R).
     intros.
     contradict H0.
     pose proof (X1 H0).
@@ -703,7 +703,7 @@ Proof.
     assert ((forall (y1 y2 : sem_datatype REAL) (γ : sem_ro_ctx (Δ ++ Γ)),
         (fun (_ : sem_datatype REAL) (_ : sem_ro_ctx (Δ ++ Γ)) => False) y1 γ ->
         (fun (_ : sem_datatype REAL) (_ : sem_ro_ctx (Δ ++ Γ)) => False) y2 γ ->
-        (fun (y : R) (x : sem_ro_ctx (Δ ++ Γ)) => ψ y (fst_app x, snd_app x)) (y1 + y2) γ)).
+        (fun (y : R) (x : sem_ro_ctx (Δ ++ Γ)) => ψ y (fst_app x, snd_app x)) (y1 + y2)%R γ)).
     intros.
     destruct H.
     pose proof (X1 H).
@@ -779,7 +779,7 @@ Proof.
     pose proof (r_admissible_ro_exfalso_prt _ _ _ r (fun y x => False)).
     pose proof (r_ro_recip_prt _ _ _ _ _ (has_type_ro_OpRrecip _ _  r) (fun y x => ψ y (fst_app x, snd_app x)) X).
     assert (((fun (_ : sem_datatype REAL) (_ : sem_ro_ctx (Δ ++ Γ)) => False) /\\\
-        (fun (x : sem_datatype REAL) (_ : sem_ro_ctx (Δ ++ Γ)) => x <> 0)) ->>>
+        (fun (x : sem_datatype REAL) (_ : sem_ro_ctx (Δ ++ Γ)) => x <> 0%R)) ->>>
        (fun x : sem_datatype REAL => (fun (y : R) (x0 : sem_ro_ctx (Δ ++ Γ)) => ψ y (fst_app x0, snd_app x0)) (/ x))).
     intros h1 h2 [h3 _].
     destruct h3.
@@ -940,7 +940,7 @@ Proof.
                      end) (Δ ++ Γ)) => ψ y0 (fst_app x, snd_app x)) y γ /\
           (forall (x : sem_datatype INTEGER) (z : sem_datatype REAL),
            (fun (_ : sem_datatype REAL) (_ : sem_ro_ctx (INTEGER :: Δ ++ Γ)) => False) z (x, γ) ->
-           Rabs (z - y) < powerRZ 2 (- x))).
+           Rabs (z - y) < powerRZ 2 (- x)))%R.
     intros.
     contradict H.
     pose proof (X1 H).
@@ -1102,7 +1102,7 @@ Proof.
     assert ((forall (y1 y2 : sem_datatype REAL) (γ : sem_ro_ctx (Δ ++ Γ)),
         (fun (_ : sem_datatype REAL) (_ : sem_ro_ctx (Δ ++ Γ)) => False) y1 γ ->
         (fun (_ : sem_datatype REAL) (_ : sem_ro_ctx (Δ ++ Γ)) => False) y2 γ ->
-        (fun (y : R) (x : sem_ro_ctx (Δ ++ Γ)) => ψ y (fst_app x, snd_app x)) (y1 + y2) γ)).
+        (fun (y : R) (x : sem_ro_ctx (Δ ++ Γ)) => ψ y (fst_app x, snd_app x)) (y1 + y2)%R γ)).
     intros.
     destruct H.
     pose proof (X1 H).
@@ -1179,7 +1179,7 @@ Proof.
     pose proof (r_ro_recip_tot _ _ _ _ _ (has_type_ro_OpRrecip _ _  r) (fun y x => ψ y (fst_app x, snd_app x)) X).
     assert ((fun (_ : sem_datatype REAL) (_ : sem_ro_ctx (Δ ++ Γ)) => False) ->>>
        ((fun (x : R) (_ : sem_ro_ctx (Δ ++ Γ)) => x <> 0) /\\\
-        (fun x : R => (fun (y : R) (x0 : sem_ro_ctx (Δ ++ Γ)) => ψ y (fst_app x0, snd_app x0)) (/ x)))).
+        (fun x : R => (fun (y : R) (x0 : sem_ro_ctx (Δ ++ Γ)) => ψ y (fst_app x0, snd_app x0)) (/ x))))%R.
     intros h1 h2 h3.
     destruct h3.
     pose proof (X0 H).
@@ -1365,7 +1365,7 @@ Proof.
                      end) (Δ ++ Γ)) => ψ y0 (fst_app x, snd_app x)) y γ /\
           (forall (x : sem_datatype INTEGER) (z : sem_datatype REAL),
            (fun (_ : sem_datatype REAL) (_ : sem_ro_ctx (INTEGER :: Δ ++ Γ)) => False) z (x, γ) ->
-           Rabs (z - y) < powerRZ 2 (- x))).
+           Rabs (z - y) < powerRZ 2 (- x)))%R.
     intros.
     contradict H.
     pose proof (X1 H).
@@ -2023,12 +2023,12 @@ Qed.
 Fixpoint r_ro_recip_prt_inv {Γ} {e} {w : Γ |- (;/; e) : REAL}
   (w' : Γ |- e : REAL)
   {ϕ} {ψ} (p : w |~ {{ϕ}} (;/; e) {{ψ}}) {struct p}:
-  {θ & (w' |~ {{ϕ}} e {{θ}}) *   ((θ /\\\ (fun (x : sem_datatype REAL) (_ : sem_ro_ctx Γ) => x <> 0)) ->>> (fun x : sem_datatype REAL => ψ (/ x)))}%type
+  {θ & (w' |~ {{ϕ}} e {{θ}}) *   ((θ /\\\ (fun (x : sem_datatype REAL) (_ : sem_ro_ctx Γ) => x <> 0%R)) ->>> (fun x : sem_datatype REAL => ψ (/ x)%R))}%type
 with r_rw_recip_prt_inv {Γ} {e} {w : Γ;;; nil ||- (;/; e) : REAL}
   {w' : Γ |- e : REAL}
   {ϕ} {ψ} (p : w ||~ {{ϕ}} (;/; e) {{ψ}}) {struct p}:
   {θ & (w' |~ {{(fun γ : sem_ro_ctx Γ => ϕ (tt, γ))}} e {{y | θ y}}) *
-         ((θ /\\\ (fun (x : sem_datatype REAL) (_ : sem_ro_ctx Γ) => x <> 0)) ->>> (fun x γ => ψ (/ x) (tt, γ)))}%type.
+         ((θ /\\\ (fun (x : sem_datatype REAL) (_ : sem_ro_ctx Γ) => x <> 0%R)) ->>> (fun x γ => ψ (/ x)%R (tt, γ)))}%type.
 Proof.
     dependent induction p.
     pose proof (r_ro_recip_prt_inv _ _ _  w' _ _ p) as [θ [m1 m2]].
@@ -2114,8 +2114,26 @@ Qed.
 
 Axiom magic : forall A, A.
 
+Lemma has_type_rw_move
+     : forall (Γ : list datatype) (Δ1 : ro_ctx) (Δ2 : list datatype) (e : exp) (τ : datatype),
+    (Δ2 ++ Γ);;; Δ1 ||- e : τ -> Γ;;; (Δ1 ++ Δ2) ||- e : τ.
+Proof.
+  intros.
+  apply r_has_type_rw_has_type_rw.
+  apply has_type_rw_r_has_type_rw in H.
+  apply r_has_type_rw_move.
+  exact H.
+Defined
+.
+
+  
+Fixpoint r_admissible_move_rw_prt Γ Δ1 Δ2 e τ (w : (Δ2 ++ Γ) ;;; Δ1 ||- e : τ) ϕ ψ (p : w ||~ {{ϕ}} e {{ψ}}) :
+  (has_type_rw_move Γ Δ1 Δ2 e τ w) ||~ {{fun x => ϕ (fst_app (fst x), (snd_app (fst x); snd x))}} e {{fun y x => ψ y (fst_app (fst x), (snd_app (fst x); snd x))}}.
+Proof.
+Admitted.
 
 Check r_rw_sequence_prt.
+(* Lemma has_type_ro_Seq_rw  *)
 Fixpoint r_rw_sequence_prt_inv {Γ Δ} {c1 c2} {τ} {w : Γ ;;; Δ ||- (c1 ;; c2) : τ}
   (w1 : Γ ;;; Δ ||- c1 : UNIT)
   (w2 : Γ ;;; Δ ||- c2 : τ)
@@ -2160,25 +2178,23 @@ Proof.
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a m2);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
-    pose proof (r_rw_sequence_prt_inv _ _ _ _ _ w0 w1 w2 _ _ r).
-    destruct h2.
+    pose proof (has_type_rw_Seq_inverse _ _ _ _ _ w0) as [r1 r2].
+    pose proof (r_rw_sequence_prt_inv _ _ _ _ _ w0 r1 r2 _ _ r) as [θ [m1 m2]].
+    exists (fun _ x => θ tt (tt, (fst x; snd x))).
+    split.
+    apply r_admissible_move_rw_prt in m1.
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a m1);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    destruct h1, h2.
+    simpl in s.
+    unfold fst_app, snd_app; simpl.
+    auto.
+    apply r_admissible_move_rw_prt in m2.
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a m2);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+Qed.
 
-    
-    
-    
-  Check tedious_equiv_1.
-  
-  unfold tedious_prod_sem.
-  apply m1.
-  dependent destruction w0.
-  
-  pose proof has_type_ro_rw.
 
-  (has_type_ro_rw _ _  w1).
-  pose proof (r_ro_sequence_prt_inv _ _ _ _ w0 (has_type_ro_rw _ _ _ w1) (has_type_ro_rw w2)).
-  dependent induction r.
-  apply (IHr c1 c2 _ _ .
-  dependent induction r.
 
   
 Fixpoint r_admissible_ro_conj_prt Γ e τ (w : Γ |- e : τ) ϕ ψ1 ψ2 {struct e} : w |~ {{ϕ}} e {{ψ1}} -> w |~ {{ϕ}} e {{ψ2}} ->  w |~ {{ϕ}} e {{ψ1 /\\\ ψ2}}
@@ -2392,6 +2408,7 @@ Proof.
     split.
     apply H; auto.
     apply H0; auto.
+
     
     apply magic.
     apply magic.
