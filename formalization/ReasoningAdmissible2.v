@@ -11,7 +11,6 @@ Require Import Clerical.SemanticsProperties.
 Require Import Clerical.Specification.
 Require Import Clerical.ReasoningRules.
 Require Import Clerical.ReasoningAdmissible1.
-Require Import Clerical.ReasoningSoundness.
 
 
 Lemma r_proves_ro_prt_typing_irrl {Γ} {e} {τ} {w1 : Γ |- e : τ} {ϕ} {ψ} (p : w1 |~ {{ϕ}} e {{ψ}}) (w2 : Γ |- e : τ) : w2 |~ {{ϕ}} e {{ψ}}.
@@ -2195,9 +2194,294 @@ Proof.
 Qed.
 
 
+  Fixpoint has_type_rw_Cond_inverse Γ Δ e c1 c2 τ (w : Γ ;;; Δ ||- (IF e THEN c1 ELSE c2 END) : τ) :
+    (((Δ ++ Γ) |- e : BOOL) * (Γ ;;; Δ ||- c1 : τ) * (Γ ;;; Δ ||- c2 : τ))%type.
+  Proof.
+    apply has_type_rw_r_has_type_rw in w.
+    dependent destruction w.
+    apply r_has_type_ro_has_type_ro in r.
+    apply r_has_type_rw_has_type_rw in w1.
+    apply r_has_type_rw_has_type_rw in w2.
+    repeat split; auto.
+  Defined.
+
 
   
-Fixpoint r_admissible_ro_conj_prt Γ e τ (w : Γ |- e : τ) ϕ ψ1 ψ2 {struct e} : w |~ {{ϕ}} e {{ψ1}} -> w |~ {{ϕ}} e {{ψ2}} ->  w |~ {{ϕ}} e {{ψ1 /\\\ ψ2}}
+
+Fixpoint r_rw_cond_prt_inv {Γ Δ} {e c1 c2} {τ} {w : Γ ;;; Δ ||- (IF e THEN c1 ELSE c2 END) : τ}
+  (w1 : (Δ ++ Γ) |- e : BOOL)
+  (w2 : Γ ;;; Δ ||- c1 : τ)
+  (w3 : Γ ;;; Δ ||- c2 : τ)
+  {ϕ} {ψ} (p : w ||~ {{ϕ}} (IF e THEN c1 ELSE c2 END) {{ψ}}) {struct p}:
+  {θ & (w1 |~ {{fun x => ϕ (fst_app x, snd_app x)}} e {{θ}}) * (w2 ||~ {{ro_to_rw_pre (θ true)}} c1 {{ψ}}) * (w3 ||~ {{ro_to_rw_pre (θ false)}} c2 {{ψ}})}%type
+with r_ro_cond_prt_inv {Γ Δ} {e c1 c2} {τ} {w : (Δ ++ Γ) |- (IF e THEN c1 ELSE c2 END) : τ}
+  (w1 : (Δ ++ Γ) |- e : BOOL)
+  (w2 : Γ ;;; Δ ||- c1 : τ)
+  (w3 : Γ ;;; Δ ||- c2 : τ)
+  {ϕ} {ψ} (p : w |~ {{ϕ}} (IF e THEN c1 ELSE c2 END) {{ψ}}) {struct p}:
+  {θ & (w1 |~ {{ϕ}} e {{θ}}) * (w2 ||~ {{ro_to_rw_pre (θ true)}} c1 {{fun y x => ψ y (fst x; snd x)}}) * (w3 ||~ {{ro_to_rw_pre (θ false)}} c2 {{fun y x => ψ y (fst x; snd x)}})}%type.
+Proof.
+  +
+    dependent induction p.
+    pose proof (r_rw_cond_prt_inv _ _ _ _ _ _ w0 w1 w2 w3 _ _ p) as [θ [[m1 m2] m3]].
+    exists θ.
+    split.
+    split.
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a m1);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a m2);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a m3);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    
+    pose proof (r_ro_cond_prt_inv _ _ _ _ _ _ w0 w1 w2 w3 _ _ r) as [θ [[m1 m2] m3]].
+    exists θ.
+    split.
+    split.
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a m1);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    rewrite tedious_equiv_2.
+    exact h2.
+
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a m2);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    destruct h2.
+    simpl.
+    auto.
+    
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a m3);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    destruct h2.
+    simpl.
+    auto.
+    
+    exists θ.
+    split; auto.
+    split.
+    assert (w4 |~ {{(fun x : sem_ro_ctx (Δ ++ Γ) => ϕ (fst_app x, snd_app x))}} e {{y | θ y}}).
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a r);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    unfold rw_to_ro_pre.
+    unfold fst_app, snd_app in h2.
+    destruct (tedious_sem_app Δ Γ h1); auto.
+    apply (r_proves_ro_prt_typing_irrl X).
+    apply (r_proves_rw_prt_typing_irrl p1).
+    apply (r_proves_rw_prt_typing_irrl p2).
+
+  +
+    dependent induction p.
+    pose proof (r_ro_cond_prt_inv _ _ _ _ _ _ w0 w1 w2 w3 _ _ p) as [θ [[m1 m2] m3]].
+    exists θ.
+    split.
+    split.
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a m1);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a m2);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a m3);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    pose proof (has_type_rw_Cond_inverse _ _ _ _ _ _ w0) as [[r1 r2] r3].
+    pose proof (r_rw_cond_prt_inv _ _ _ _ _ _ w0 r1 r2 r3 _ _ r) as [θ [[m1 m2] m3]].
+    exists θ.
+    split.
+    split.
+    assert (r1 |~ {{(fun γ : sem_ro_ctx (Δ ++ Γ) => P (tt, γ))}} e {{y | θ y}}).
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a m1);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    apply (r_proves_ro_prt_typing_irrl X).
+
+    
+    apply r_admissible_move_rw_prt in m2.
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a m2);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    destruct h1; simpl.
+    simpl in s.
+    unfold ro_to_rw_pre.
+    unfold ro_to_rw_pre in h2.
+    simpl.
+    unfold snd_app.
+    simpl.
+    auto.
+
+    apply r_admissible_move_rw_prt in m3.
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a m3);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    destruct h1; simpl.
+    simpl in s.
+    unfold ro_to_rw_pre.
+    unfold ro_to_rw_pre in h2.
+    simpl.
+    unfold snd_app.
+    simpl.
+    auto.
+Qed.
+
+Fixpoint has_type_rw_CaseList_inverse Γ Δ l τ (w : Γ ;;; Δ ||- (CaseList l) : τ) :
+  (ForallT (fun ec : exp * exp => (((Δ ++ Γ) |- fst ec : BOOL) * (Γ ;;; Δ ||- snd ec : τ))%type) l).
+Proof.
+  apply has_type_rw_r_has_type_rw in w.
+  dependent destruction w.
+  clear l1.
+  dependent induction f.
+  apply ForallT_nil.
+  apply ForallT_cons.
+  destruct p.
+  split.
+  apply r_has_type_ro_has_type_ro; auto.
+  apply r_has_type_rw_has_type_rw; auto.
+  exact IHf.    
+Defined.
+
+Fixpoint r_rw_case_list_prt_inv {Γ Δ} {l} {τ} {w : Γ ;;; Δ ||- (CaseList l) : τ}
+  wty_l
+  {ϕ} {ψ} (p : w ||~ {{ϕ}} (CaseList l) {{ψ}}) {struct p} :
+  {θ & ForallT2 (fun ec : exp * exp => (((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;; Δ ||- snd ec : τ))%type)
+         (fun _ : exp * exp => bool -> sem_ro_ctx (Δ ++ Γ) -> Prop)
+         (fun (ec : exp * exp) (wty_l0 : ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;; Δ ||- snd ec : τ)) (θ0 : bool -> sem_ro_ctx (Δ ++ Γ) -> Prop) =>
+            ((fst wty_l0 |~ {{rw_to_ro_pre ϕ}} fst ec {{y | θ0 y}}) * (snd wty_l0 ||~ {{ro_to_rw_pre (θ0 true)}} snd ec {{y | ψ y}}))%type) l wty_l θ}
+with r_ro_case_list_prt_inv {Γ Δ} {l} {τ} {w : (Δ ++ Γ) |- (CaseList l) : τ}
+  wty_l
+  {ϕ} {ψ} (p : w |~ {{ϕ}} (CaseList l) {{ψ}}) {struct p} :
+  {θ : ForallT (fun _ : exp * exp => bool -> sem_ro_ctx (Δ ++ Γ) -> Prop) l &
+  ForallT2 (fun ec : exp * exp => (((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;; Δ ||- snd ec : τ))%type)
+    (fun _ : exp * exp => bool -> sem_ro_ctx (Δ ++ Γ) -> Prop)
+    (fun (ec : exp * exp) (wty_l0 : ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;; Δ ||- snd ec : τ)) (θ0 : bool -> sem_ro_ctx (Δ ++ Γ) -> Prop) =>
+     ((fst wty_l0 |~ {{rw_to_ro_pre (fun γδ : sem_ro_ctx Δ * sem_ro_ctx Γ => ϕ (tedious_prod_sem Δ Γ γδ))}} fst ec {{y | θ0 y}}) *
+      (snd wty_l0 ||~ {{ro_to_rw_pre (θ0 true)}} snd ec {{y | (fun γδ : sem_ro_ctx Δ * sem_ro_ctx Γ => ψ y (tedious_prod_sem Δ Γ γδ))}}))%type) l wty_l
+    θ}.
+Proof.
+  +
+    dependent induction p.
+    pose proof (r_rw_case_list_prt_inv _ _ _ _ w0 wty_l _ _ p) as [θ F].
+    clear IHp .
+    clear w.
+    clear p w0.
+    exists θ.
+    dependent induction F.
+    apply ForallT2_nil.
+    apply ForallT2_cons.
+    simpl.
+    apply IHF.
+    clear IHF.
+    simpl in F.
+    destruct F.
+    destruct r.
+    split.
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a r);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    apply a.
+    unfold rw_to_ro_pre in h2.
+    auto.
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a r0);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    destruct r.
+    split.
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a r);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    apply a.
+    unfold rw_to_ro_pre in h2.
+    auto.
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a r0);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+
+    apply (r_ro_case_list_prt_inv _ _ _ _ w0); auto.
+
+    exists θ.
+    clear w.
+    dependent induction f.
+    simpl.
+    dependent destruction wty_l.
+    apply ForallT2_nil.
+    dependent destruction wty_l.
+    apply ForallT2_cons.
+    apply IHf.
+    destruct r.
+    clear IHf wty_l.
+    split.
+    apply (r_proves_ro_prt_typing_irrl r).
+    apply (r_proves_rw_prt_typing_irrl r0).
+  +
+    dependent induction p.
+    pose proof (r_ro_case_list_prt_inv _ _ _ _ w0 wty_l _ _ p) as [θ f].
+    exists θ.
+    clear p w0 w IHp.
+    induction f.
+    apply ForallT2_nil.
+    apply ForallT2_cons.
+    apply IHf.
+    clear IHf.
+    destruct r.
+    split.
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a r);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    apply a.
+    apply h2.
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a r0);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+
+    pose proof (has_type_rw_CaseList_inverse _ _ _ _ w0).
+    pose proof (r_rw_case_list_prt_inv _ _ _ _ w0 H _ _ r) as [θ f].
+    exists θ.
+    clear r w w0.
+    dependent induction f.
+    dependent destruction wty_l.
+    apply ForallT2_nil.
+    dependent destruction wty_l.
+    apply ForallT2_cons.
+    apply IHf.
+    clear IHf.
+    destruct r.
+    split.
+    assert (fst p0 |~ {{rw_to_ro_pre (fun γδ : sem_ro_ctx Δ * sem_ro_ctx Γ => P (tt, tedious_prod_sem Δ Γ γδ))}} fst a {{y | q y}}).
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a r);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    simpl in h1.
+    unfold rw_to_ro_pre.
+    unfold rw_to_ro_pre in h2.
+    simpl.
+    pose proof (tedious_equiv_2 h1).
+    rewrite H.
+    rewrite H in h2.
+    unfold fst_app, snd_app.
+    unfold fst_app, snd_app in h2.
+    destruct (tedious_sem_app Δ Γ h1).
+    simpl.
+    simpl in h2.
+    rewrite tedious_equiv_1 in h2.
+    exact h2.
+    apply (r_proves_ro_prt_typing_irrl X).
+    
+    assert (snd p0 ||~ {{ro_to_rw_pre (q true)}} snd a {{y | (fun x => Q y (tt, snd x))}}).
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a r0);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    simpl in h2.
+    destruct h2.
+    simpl.
+    destruct u.
+    auto.
+    apply r_admissible_move_rw_prt in X.
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    destruct h1.
+    simpl.
+    unfold ro_to_rw_pre.
+    unfold ro_to_rw_pre in h2.
+    simpl in s.
+    simpl.
+    unfold snd_app; simpl.
+    auto.
+    destruct h2.
+    simpl in s.
+    simpl.
+    unfold snd_app; simpl.
+    auto.
+Qed.
+  
+  
+
+  
+
+  Fixpoint r_admissible_ro_conj_prt Γ e τ (w : Γ |- e : τ) ϕ ψ1 ψ2 {struct e} : w |~ {{ϕ}} e {{ψ1}} -> w |~ {{ϕ}} e {{ψ2}} ->  w |~ {{ϕ}} e {{ψ1 /\\\ ψ2}}
 with r_admissible_ro_conj_tot Γ e τ (w : Γ |- e : τ) ϕ ψ1 ψ2 {struct e} : w |~ [{ϕ}] e [{ψ1}] -> w |~ [{ϕ}] e [{ψ2}] ->  w |~ [{ϕ}] e [{ψ1 /\\\ ψ2}]
 with r_admissible_rw_conj_prt Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ1 ψ2 {struct e} : w ||~ {{ϕ}} e {{ψ1}} -> w ||~ {{ϕ}} e {{ψ2}} ->  w ||~ {{ϕ}} e {{ψ1 /\\\ ψ2}}
 with r_admissible_rw_conj_tot Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ1 ψ2 {struct e} : w ||~ [{ϕ}] e [{ψ1}] -> w ||~ [{ϕ}] e [{ψ2}] ->  w ||~ [{ϕ}] e [{ψ1 /\\\ ψ2}].
@@ -2409,10 +2693,71 @@ Proof.
     apply H; auto.
     apply H0; auto.
 
+    dependent destruction w.
+    pose proof (has_type_rw_Seq_inverse _ _ _ _ _ h) as [r1 r2].
+    
+    apply (r_ro_sequence_prt_inv r1 r2) in t1 as [θ1 [p1 p2]].
+    apply (r_ro_sequence_prt_inv r1 r2) in t2 as [θ2 [q1 q2]].
+    pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _ p1 q1).
+    assert (r2 ||~ {{(θ1 /\\\ θ2) tt}} e2 {{y | (fun x : sem_ro_ctx nil * sem_ro_ctx Γ => ψ1 y (fst x; snd x))}}).
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p2);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    destruct h2; auto.
+    assert (r2 ||~ {{(θ1 /\\\ θ2) tt}} e2 {{y | (fun x : sem_ro_ctx nil * sem_ro_ctx Γ => ψ2 y (fst x; snd x))}}).
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a q2);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    destruct h2; auto.
+    pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _ X0 X1).
+    
+    pose proof (r_rw_sequence_prt _ _ _ _ _ _ _ _ _ _ h X X2).
+    pose proof (r_rw_ro_prt _ _ _ _ _ _ (has_type_ro_rw Γ (e1;; e2) τ h) X3).
+    exact X4.
+    
+    dependent destruction w.
+    pose proof (has_type_rw_Cond_inverse _ _ _ _ _ _ h) as [[r1 r2] r3].
+
+    apply (r_ro_cond_prt_inv r1 r2 r3) in t1 as [θ1 [[p1 p2] p3]].
+    apply (r_ro_cond_prt_inv r1 r2 r3) in t2 as [θ2 [[q1 q2] q3]].
+    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p1 q1).
+    assert (r2 ||~ {{ro_to_rw_pre ((θ1 /\\\ θ2) true)}} e2 {{y | (fun x : sem_ro_ctx nil * sem_ro_ctx Γ => ψ1 y (fst x; snd x))}}).
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p2);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    destruct h2; auto.
+    assert (r2 ||~ {{ro_to_rw_pre ((θ1 /\\\ θ2) true)}} e2 {{y | (fun x : sem_ro_ctx nil * sem_ro_ctx Γ => ψ2 y (fst x; snd x))}}).
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a q2);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    destruct h2; auto.
+    pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _ X0 X1).
+    assert (r3 ||~ {{ro_to_rw_pre ((θ1 /\\\ θ2) false)}} e3 {{y | (fun x : sem_ro_ctx nil * sem_ro_ctx Γ => ψ1 y (fst x; snd x))}}).
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p3);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    destruct h2; auto.
+    assert (r3 ||~ {{ro_to_rw_pre ((θ1 /\\\ θ2) false)}} e3 {{y | (fun x : sem_ro_ctx nil * sem_ro_ctx Γ => ψ2 y (fst x; snd x))}}).
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a q3);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    destruct h2; auto.
+    pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _ X3 X4).
+    assert (r1 |~ {{rw_to_ro_pre (fun x => ϕ (snd x))}} e1 {{y | (θ1 /\\\ θ2) y}}).
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    
+    pose proof (r_rw_cond_prt Γ nil e1 e2 e3 τ r1 r2 r3 h _ _ _ X6 X2 X5).
+    pose proof (r_rw_ro_prt _ _ _ _ _ _ (  has_type_ro_rw Γ (IF e1 THEN e2 ELSE e3 END) τ h) X7).
+    exact X8.
     
     apply magic.
-    apply magic.
-    apply magic.
+
+    {
+      dependent destruction w.
+      
+      pose proof (has_type_rw_CaseList_inverse _ _ _ _ h) as wty_l.
+      apply (r_ro_case_list_prt_inv wty_l) in t1 as [θ1 f1].
+      apply (r_ro_case_list_prt_inv wty_l) in t2 as [θ2 f2].
+      
+      
+    }
+
+    
     apply magic.
     apply magic.
     apply magic.
