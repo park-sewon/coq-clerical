@@ -204,6 +204,20 @@ Section TediousList.
     auto.
   Defined.
 
+  
+
+  Lemma tedious_equiv_3 : forall {Γ Δ} h, tedious_prod_sem Δ Γ (tedious_sem_app Δ Γ h) = h.
+  Proof.
+    intros.
+    rewrite (tedious_equiv_2 h) at 1.
+    rewrite (tedious_equiv_2 h) at 3.
+    unfold fst_app, snd_app.
+    destruct (tedious_sem_app Δ Γ h).
+    rewrite  tedious_equiv_1.
+    reflexivity.
+  Defined.
+
+
 End TediousList.
 Notation " ( γ ; δ ) " := (tedious_prod_sem _ _  (γ, δ)).
 

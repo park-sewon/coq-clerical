@@ -230,5 +230,14 @@ Proof.
 Defined.
 
 
+Lemma projT2_eq {A} {P : A -> Type} {a} {x y : P a} : @existT A P a x = @existT A P a y -> x = y.
+Proof.
+  intro.
+  dependent destruction H.
+  apply eq_refl.
+Qed.
+
+
+
 Ltac easy_rewrite_uip :=
   repeat (try unfold simplification_heq; try unfold solution_left; try unfold eq_rect_r; try rewrite (prop_irrl _ (eq_sym _) eq_refl); simpl).

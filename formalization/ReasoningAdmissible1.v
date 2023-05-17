@@ -41,6 +41,15 @@ Proof.
   exact (ForallT_cons Q x l (f x p) (ForallT_map A l P Q f g)).
 Defined.
 
+
+Fixpoint ForallT_map2 {A} {l : list A} {P Q R : A -> Type} (F : forall a, P a -> Q a -> R a) (f : ForallT P l) (g : ForallT Q l) : ForallT R l.
+Proof.
+  dependent destruction f.
+  apply ForallT_nil.
+  dependent destruction g.
+  exact (ForallT_cons R x l (F x p q) (ForallT_map2 A l P Q R F f g)).
+Defined.
+
 Lemma ForallT_map_ForalT_nil {A} {l : list A} {P Q : A -> Type} {f : forall a, P a -> Q a}
   : ForallT_map f (ForallT_nil P) = ForallT_nil Q.
 Proof.

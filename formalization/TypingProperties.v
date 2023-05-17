@@ -811,6 +811,66 @@ Section InverseTyping.
     apply r_has_type_rw_has_type_rw in w2.
     exact (pair w1 w2).
   Defined.
+
+
+  Fixpoint has_type_rw_Cond_inverse Γ Δ e c1 c2 τ (w : Γ ;;; Δ ||- (IF e THEN c1 ELSE c2 END) : τ) :
+    (((Δ ++ Γ) |- e : BOOL) * (Γ ;;; Δ ||- c1 : τ) * (Γ ;;; Δ ||- c2 : τ))%type.
+  Proof.
+    apply has_type_rw_r_has_type_rw in w.
+    dependent destruction w.
+    apply r_has_type_ro_has_type_ro in r.
+    apply r_has_type_rw_has_type_rw in w1.
+    apply r_has_type_rw_has_type_rw in w2.
+    repeat split; auto.
+  Defined.
+
+  Fixpoint has_type_rw_CaseList_inverse Γ Δ l τ (w : Γ ;;; Δ ||- (CaseList l) : τ) :
+    (ForallT (fun ec : exp * exp => (((Δ ++ Γ) |- fst ec : BOOL) * (Γ ;;; Δ ||- snd ec : τ))%type) l).
+  Proof.
+    apply has_type_rw_r_has_type_rw in w.
+    dependent destruction w.
+    clear l1.
+    dependent induction f.
+    apply ForallT_nil.
+    apply ForallT_cons.
+    destruct p.
+    split.
+    apply r_has_type_ro_has_type_ro; auto.
+    apply r_has_type_rw_has_type_rw; auto.
+    exact IHf.    
+  Defined.
+
+  Fixpoint has_type_rw_While_inverse {Γ Δ} {e c} (w : Γ ;;; Δ ||-(WHILE e DO c END) : UNIT) :
+    ((Δ ++ Γ) |- e : BOOL) * (Γ ;;; Δ ||- c : UNIT)%type.
+  Proof.
+    apply has_type_rw_r_has_type_rw in w.
+    dependent destruction w.
+    apply r_has_type_ro_has_type_ro in r.
+    apply r_has_type_rw_has_type_rw in w.
+    repeat split; auto.
+  Defined.
+  
+  Fixpoint has_type_rw_Assign_inverse {Γ Δ} {k} {e} (w : Γ ;;; Δ ||-(Assign k e) : UNIT) :
+    {τ & (assignable Δ τ k) * ((Δ ++ Γ) |- e : τ)} %type.
+  Proof.
+    apply has_type_rw_r_has_type_rw in w.
+    dependent destruction w.
+    exists τ.
+    apply r_has_type_ro_has_type_ro in r.
+    repeat split; auto.
+  Defined.
+
+  Fixpoint has_type_rw_Newvar_inverse {Γ Δ} {e c} {τ} (w : Γ ;;; Δ ||- (NEWVAR e IN c) : τ) :
+    {σ &     ((Δ ++ Γ) |- e : σ) * (Γ ;;; (σ :: Δ) ||- c : τ) }%type.
+  Proof.
+    apply has_type_rw_r_has_type_rw in w.
+    dependent destruction w.
+    exists σ.
+    apply r_has_type_ro_has_type_ro in r.
+    apply r_has_type_rw_has_type_rw in w.
+    repeat split; auto.
+  Defined.
+  
 End InverseTyping.
 
 
@@ -920,6 +980,24 @@ Section InferTyping.
     exact eq_refl.
   Defined.
 
+  Fixpoint has_type_rw_While_infer {Γ Δ} {e} {c} {τ} (w : Γ ;;; Δ ||- (While e c) : τ) : τ = UNIT.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_rw_While_infer _ _ _ _ _ h).
+    exact eq_refl.
+  Defined.
+
+  Fixpoint has_type_rw_Assign_infer {Γ Δ} {k} {e} {τ} (w : Γ ;;; Δ ||- (Assign k e) : τ) : τ = UNIT.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_rw_Assign_infer _ _ _ _ _ h).
+    exact eq_refl.
+  Defined.
+
+    
+  
 End InferTyping.
 
   (* Fixpoint has_type_rw_Assign Γ Δ e τ k (w : Γ ;;; Δ ||- (LET k := e)) :   : forall (Γ : list datatype) (Δ : ro_ctx) (e : exp) (τ : datatype) (k : nat), *)
