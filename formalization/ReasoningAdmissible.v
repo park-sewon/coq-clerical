@@ -10,8 +10,9 @@ Require Import Clerical.Semantics.
 Require Import Clerical.SemanticsProperties.
 Require Import Clerical.Specification.
 Require Import Clerical.ReasoningRules.
-Require Import Clerical.ReasoningAdmissible1.
-Require Import Clerical.ReasoningAdmissible2.
+Require Import Clerical.ReasoningAdmissibleRes0.
+Require Import Clerical.ReasoningAdmissibleRes1.
+Require Import Clerical.ReasoningAdmissibleRes2.
 
 Axiom magic : forall A, A.
 

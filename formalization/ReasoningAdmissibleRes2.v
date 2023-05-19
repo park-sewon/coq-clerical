@@ -10,7 +10,8 @@ Require Import Clerical.Semantics.
 Require Import Clerical.SemanticsProperties.
 Require Import Clerical.Specification.
 Require Import Clerical.ReasoningRules.
-Require Import Clerical.ReasoningAdmissible1.
+Require Import Clerical.ReasoningAdmissibleRes0.
+Require Import Clerical.ReasoningAdmissibleRes1.
 Require Import Clerical.ReasoningSoundness.
 
 Lemma pdom_neg_is_empty_to_evidence {X} (S : pdom X) : pdom_neg_is_empty S -> exists x : flat X, x ∈ S.
