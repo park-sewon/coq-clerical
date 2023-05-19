@@ -94,13 +94,13 @@ Definition post {X Y : Type} := X -> Y -> Prop.
 Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
 (*  partial correctness triple for read only expressions *)
 (** logical rules *)
-| ro_imply_prt : forall Γ e τ (w : Γ |- e : τ) P Q P' Q',
+| ro_imply_prt : forall Γ e τ (w w' : Γ |- e : τ) P Q P' Q',
 
     P' ->> P -> 
     w |- {{ P }} e {{ Q }} -> 
     Q ->>> Q' -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- {{ P'}}  e {{ Q' }}
+    w' |- {{ P'}}  e {{ Q' }}
 
 | ro_exfalso_prt : forall Γ e τ (w : Γ |- e : τ) Q,
     
@@ -269,13 +269,13 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
                                                         
 with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
 (** logical rules *)
-| ro_imply_tot : forall Γ e τ (w : Γ |- e : τ) P Q P' Q',
+| ro_imply_tot : forall Γ e τ (w w' : Γ |- e : τ) P Q P' Q',
 
     P' ->> P -> 
     w |- [{ P }] e [{ Q }] -> 
     Q ->>> Q' -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- [{ P'}]  e [{ Q' }]
+    w' |- [{ P'}]  e [{ Q' }]
 
 | ro_exfalso_tot : forall Γ e τ (w : Γ |- e : τ) Q,
     
@@ -449,13 +449,13 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
                                                         
 with proves_rw_prt : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_prt w -> Type :=
 (** logical rules *)
-| rw_imply_prt : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ ϕ' ψ',
+| rw_imply_prt : forall Γ Δ e τ (w w' : Γ ;;; Δ ||- e : τ) ϕ ψ ϕ' ψ',
     
     ϕ' ->> ϕ -> 
     w ||- {{ ϕ }} e {{ ψ }} -> 
     ψ ->>> ψ' -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w ||- {{ ϕ'}}  e {{ ψ' }}
+    w' ||- {{ ϕ'}}  e {{ ψ' }}
 
 | rw_exfalso_prt : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ψ,
     
@@ -554,13 +554,13 @@ with proves_rw_prt : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_prt w -> T
                                   
 with proves_rw_tot : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_tot w -> Type :=
 (** logical rules *)
-| rw_imply_tot : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ ϕ' ψ',
+| rw_imply_tot : forall Γ Δ e τ (w w' : Γ ;;; Δ ||- e : τ) ϕ ψ ϕ' ψ',
     
     ϕ' ->> ϕ -> 
     w ||- [{ ϕ }] e [{ ψ }] -> 
     ψ ->>> ψ' -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w ||- [{ ϕ'}]  e [{ ψ' }]
+    w' ||- [{ ϕ'}]  e [{ ψ' }]
 
 | rw_exfalso_tot : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ψ,
     

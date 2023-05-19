@@ -817,14 +817,15 @@ Proof.
       (*     Q ->>> Q' ->  *)
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w |- {{ P'}}  e {{ Q' }} *)
-
-
+      
       intros γ m.
+      rewrite (sem_ro_exp_unique _ _ _ w' w).
       simpl; simpl in m.
       apply a in m.
       pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip γ m) as H.
       simpl in H.
       split; destruct H as [h1 h2]; auto.
+
       intros t1 t2 t3 t4.
       apply a0, (h2 _ t2 _ t4).
       
@@ -1691,6 +1692,7 @@ Proof.
 
       intros γ m; simpl; simpl in m.
       apply a in m.
+      rewrite (sem_ro_exp_unique _ _ _ w' w).
       pose proof (proves_ro_tot_sound _ _ _ _ _ _ trip γ m) as H.
       simpl in H.
       split; destruct H as [h1 h2]; auto.
@@ -2638,6 +2640,7 @@ Proof.
       (*     w ||- {{ ϕ'}}  e {{ ψ' }} *)
       
       intros γ δ m; simpl; simpl in m.
+      rewrite (sem_rw_exp_unique _ _ _ _ w' w).
       apply a in m.      
       pose proof (proves_rw_prt_sound _ _ _ _ _ _ _  trip γ δ m) as [h1 h2]; split; auto.
       intros t1 t2 t3 t4.
@@ -3199,6 +3202,7 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w ||- [{ ϕ'}]  e [{ ψ' }] *)
       intros γ δ m; simpl; simpl in m.
+      rewrite (sem_rw_exp_unique _ _ _ _ w' w).
       apply a in m.
       pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip γ δ m) as H.
       simpl in H.

@@ -28,7 +28,7 @@ Proof.
   exact p.
 Defined.  
 
-Lemma proves_ro_tot_pick_from_two_post {Γ} {e} {τ} (w : Γ |- e : τ) ϕ ψ1 ψ2 (p : w |- [{ϕ}] e [{ψ1}]) (q : w |- [{ϕ}] e [{ψ2}]) :
+Lemma proves_ro_tot_pick_from_two_post {Γ} {e} {τ} {w : Γ |- e : τ} {ϕ} {ψ1 ψ2} (p : w |- [{ϕ}] e [{ψ1}]) (q : w |- [{ϕ}] e [{ψ2}]) :
   forall γ, ϕ γ -> exists y, ψ1 y γ /\ ψ2 y γ.
 Proof.
   intros γ H.
@@ -3415,16 +3415,43 @@ Proof.
       simpl.
       pose proof (p2 _ H0) as [y1 [i1 i2]].
       pose proof (q2 _ H0) as [y2 [j1 j2]].
-      
       assert (y1 = y2).
-      pose proof 
-      
-      exists y.
-      
-      apply magic.
+      {
+        Require Import Lra.
+        destruct (lem (y1 = y2)); auto.
+        assert (y1 - y2 <> 0)%R as H2 by lra.
+        apply Rabs_pos_lt in H2.
+        pose proof (archimed_pow2 _ H2) as [k o].
 
-    }
+        apply r_proves_ro_tot_proves_ro_tot in p1, q1.
+        pose proof (proves_ro_tot_pick_from_two_post p1 q1 (-k +1, γ)%Z H0) as [z [o1 o2]]. 
+        apply i2 in o1.
+        apply j2 in o2.
+        pose proof (Rplus_lt_compat _ _ _ _ o1 o2).
+        rewrite <- Rabs_Ropp in H3 at 1.
+        Search (Rabs (- _))%R.
+        pose proof (Rabs_triang (- (z - y1)) (z - y2))%R.
+        replace (- (z - y1) + (z - y2))%R with (y1 - y2)%R in H4 by ring.
+        pose proof (Rle_lt_trans _ _ _ H4 H3).
+        replace (powerRZ 2 (- (- k + 1)) + powerRZ 2 (- (- k + 1)))%R with
+          (powerRZ 2 (- (- k + 1)) * powerRZ 2 1)%R in H5.
 
+        assert (2 <> 0)%R by lra.
+        rewrite <- (powerRZ_add _ _ _ H6) in H5.
+        replace (- (- k + 1) + 1)%Z with k in H5 by ring.
+        pose proof (Rlt_trans _ _ _ o H5).
+        contradict (Rlt_irrefl _ H7).
+
+        simpl.
+        ring.
+      }
+
+      induction H1.
+      exists y1.
+      repeat split; auto.
+      intros x z [a b].
+      exact (i2  x z a).
+    }   
   +
     apply magic.
     
