@@ -1093,3 +1093,15 @@ Proof.
   apply has_type_rw_r_has_type_rw.
   exact w.
 Defined.
+
+
+Lemma has_type_rw_move
+     : forall (Γ : list datatype) (Δ1 : ro_ctx) (Δ2 : list datatype) (e : exp) (τ : datatype),
+    (Δ2 ++ Γ);;; Δ1 ||- e : τ -> Γ;;; (Δ1 ++ Δ2) ||- e : τ.
+Proof.
+  intros.
+  apply r_has_type_rw_has_type_rw.
+  apply has_type_rw_r_has_type_rw in H.
+  apply r_has_type_rw_move.
+  exact H.
+Defined.

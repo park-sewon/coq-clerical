@@ -241,3 +241,49 @@ Qed.
 
 Ltac easy_rewrite_uip :=
   repeat (try unfold simplification_heq; try unfold solution_left; try unfold eq_rect_r; try rewrite (prop_irrl _ (eq_sym _) eq_refl); simpl).
+
+
+Ltac use_eq_l id :=
+  induction id; clear id.
+Ltac use_eq_r id :=
+  induction (eq_sym id); clear id.
+Ltac unfold_existT id :=
+  repeat apply projT2_eq in id.
+
+Inductive ltac_No_arg : Set :=
+  | ltac_no_arg : ltac_No_arg.
+Ltac unfold_existT_mul x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 :=
+  match type of x1 with 
+  | ltac_No_arg => idtac "base case reached"
+  | _ =>
+      unfold_existT x1; 
+      unfold_existT_mul x2 x3 x4 x5 x6 x7 x8 x9 x10 ltac_no_arg
+  end.
+Ltac unfold_existT_mul' x1 x2 x3 x4 :=
+  match type of x1 with 
+  | ltac_no_arg => idtac "base case reached"
+  | _ =>
+      unfold_existT x1; 
+      unfold_existT_mul' x2 x3 x4 ltac_no_arg
+  end.
+
+Tactic Notation "unwind" constr(x1) :=
+  unfold_existT_mul x1 ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg.
+Tactic Notation "unwind" constr(x1) constr(x2):=
+  unfold_existT_mul x1 x2 ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg.
+Tactic Notation "unwind" constr(x1) constr(x2) constr(x3):=
+  unfold_existT_mul x1 x2 x3 ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg.
+Tactic Notation "unwind" constr(x1) constr(x2) constr(x3) constr(x4):=
+  unfold_existT_mul x1 x2 x3 x4 ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg.
+Tactic Notation "unwind" constr(x1) constr(x2) constr(x3) constr(x4) constr(x5):=
+  unfold_existT_mul x1 x2 x3 x4 x5 ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg.
+Tactic Notation "unwind" constr(x1) constr(x2) constr(x3) constr(x4) constr(x5) constr(x6):=
+  unfold_existT_mul x1 x2 x3 x4 x5 x6 ltac_no_arg ltac_no_arg ltac_no_arg ltac_no_arg.
+Tactic Notation "unwind" constr(x1) constr(x2) constr(x3) constr(x4) constr(x5) constr(x6) constr(x7):=
+  unfold_existT_mul x1 x2 x3 x4 x5 x6 x7 ltac_no_arg ltac_no_arg ltac_no_arg.
+Tactic Notation "unwind" constr(x1) constr(x2) constr(x3) constr(x4) constr(x5) constr(x6) constr(x7) constr(x8):=
+  unfold_existT_mul x1 x2 x3 x4 x5 x6 x7 x8 ltac_no_arg ltac_no_arg.
+Tactic Notation "unwind" constr(x1) constr(x2) constr(x3) constr(x4) constr(x5) constr(x6) constr(x7) constr(x8) constr(x9):=
+  unfold_existT_mul x1 x2 x3 x4 x5 x6 x7 x8 x9 ltac_no_arg.
+Tactic Notation "unwind" constr(x1) constr(x2) constr(x3) constr(x4) constr(x5) constr(x6) constr(x7) constr(x8) constr(x9) constr(x10):=
+  unfold_existT_mul x1 x2 x3 x4 x5 x6 x7 x8 x9 x10.
