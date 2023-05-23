@@ -217,6 +217,18 @@ Section TediousList.
     reflexivity.
   Defined.
 
+  
+  Lemma tedious_equiv_snd : forall Γ Δ (x : sem_ro_ctx Γ) (y : sem_ro_ctx Δ), snd_app (x; y) = y.
+  Proof. intros. unfold snd_app. rewrite tedious_equiv_1. reflexivity. Defined.
+  Lemma tedious_equiv_fst : forall Γ Δ (x : sem_ro_ctx Γ) (y : sem_ro_ctx Δ), fst_app (x; y) = x.
+  Proof. intros. unfold fst_app. rewrite tedious_equiv_1. reflexivity. Defined.
+
+  Lemma tedious_equiv_0 : forall Δ Γ x,  tedious_sem_app Δ Γ (tedious_prod_sem Δ Γ x) = x.
+  Proof.
+    intros.
+    destruct x.
+    apply tedious_equiv_1.
+  Defined.
 
 End TediousList.
 Notation " ( γ ; δ ) " := (tedious_prod_sem _ _  (γ, δ)).

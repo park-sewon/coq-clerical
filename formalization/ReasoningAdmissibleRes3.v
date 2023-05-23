@@ -2778,11 +2778,6 @@ Proof.
     auto.
 Defined.
 
-(* Fixpoint r_admissible_gen_rw_prt Γ Δ1 Δ2 e τ (w : Γ ;;; Δ1 ||- e : τ) ϕ ψ (p : w ||~ {{ϕ}} e {{ψ}}) : *)
-(*   (has_type_rw_add_auxiliary _ _ _ _ w Δ2) ||~ {{fun x => ϕ (fst x, fst_app (snd x))}} e {{fun y x => ψ y (fst x, fst_app (snd x))}} *)
-(* with r_admissible_gen_rw_tot Γ Δ1 Δ2 e τ (w : Γ ;;; Δ1 ||- e : τ) ϕ ψ (p : w ||~ [{ϕ}] e [{ψ}]) : *)
-(*   (has_type_rw_add_auxiliary _ _ _ _ w Δ2) ||~ [{fun x => ϕ (fst x, fst_app (snd x))}] e [{fun y x => ψ y (fst x, fst_app (snd x))}]. *)
-(* Admitted. *)
 
 
 
@@ -3267,12 +3262,7 @@ Proof.
     unfold snd_app; simpl.
     auto.
 Defined.
-Lemma tedious_equiv_0 : forall Δ Γ x,  tedious_sem_app Δ Γ (tedious_prod_sem Δ Γ x) = x.
-Proof.
-  intros.
-  destruct x.
-  apply tedious_equiv_1.
-Defined.
+
 
 
 Fixpoint has_type_rw_Case_inverse Γ Δ e1 c1 e2 c2 τ (w : Γ ;;; Δ ||- (Case e1 c1 e2 c2) : τ) :
@@ -3948,28 +3938,6 @@ Proof.
     }
 Defined.
 
-Lemma r_proves_rw_prt_ctx_rewrite_ro : forall {Γ1 Γ2 Δ} {e} {τ} (eq : Γ1 = Γ2) {w : Γ1 ;;; Δ ||- e : τ} {ϕ} {ψ},
-    w ||~ {{ϕ}} e {{ψ}} -> (tr (fun Γ => Γ ;;; Δ ||- e : τ)  eq w) ||~ {{fun x => ϕ (fst x, tr sem_ro_ctx (eq_sym eq) (snd x))}} e {{fun y x => ψ y (fst x, tr sem_ro_ctx (eq_sym eq) (snd x))}}.
-Proof. intros. destruct eq. simpl. replace (fun x : sem_ro_ctx Δ * sem_ro_ctx Γ1 => ϕ (fst x, snd x)) with ϕ. replace (fun y x => ψ y (fst x, snd x)) with ψ. exact X.
-       apply dfun_ext. intro x. apply dfun_ext. intro y.
-       destruct y; auto.
-       apply dfun_ext. intro x.
-       destruct x; auto.
-Defined.
-
-Lemma r_proves_rw_tot_ctx_rewrite_ro : forall {Γ1 Γ2 Δ} {e} {τ} (eq : Γ1 = Γ2) {w : Γ1 ;;; Δ ||- e : τ} {ϕ} {ψ},
-    w ||~ [{ϕ}] e [{ψ}] -> (tr (fun Γ => Γ ;;; Δ ||- e : τ)  eq w) ||~ [{fun x => ϕ (fst x, tr sem_ro_ctx (eq_sym eq) (snd x))}] e [{fun y x => ψ y (fst x, tr sem_ro_ctx (eq_sym eq) (snd x))}].
-Proof. intros. destruct eq. simpl. replace (fun x : sem_ro_ctx Δ * sem_ro_ctx Γ1 => ϕ (fst x, snd x)) with ϕ. replace (fun y x => ψ y (fst x, snd x)) with ψ. exact X.
-       apply dfun_ext. intro x. apply dfun_ext. intro y.
-       destruct y; auto.
-       apply dfun_ext. intro x.
-       destruct x; auto.
-Defined.
-
-Lemma tedious_equiv_snd : forall Γ Δ (x : sem_ro_ctx Γ) (y : sem_ro_ctx Δ), snd_app (x; y) = y.
-Proof. intros. unfold snd_app. rewrite tedious_equiv_1. reflexivity. Defined.
-Lemma tedious_equiv_fst : forall Γ Δ (x : sem_ro_ctx Γ) (y : sem_ro_ctx Δ), fst_app (x; y) = x.
-Proof. intros. unfold fst_app. rewrite tedious_equiv_1. reflexivity. Defined.
 Definition app_nil_r := 
 fun (A : Type) (l : list A) =>
 list_ind (fun l0 : list A => l0 ++ nil = l0)
