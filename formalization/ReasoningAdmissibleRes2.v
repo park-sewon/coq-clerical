@@ -1448,6 +1448,1121 @@ Proof. intros. destruct eq. simpl. replace (fun x : sem_ro_ctx Δ * sem_ro_ctx �
        destruct x; auto.
 Defined.
 
+
+Axiom magic : forall T, T.
+
+
+Lemma r_admissible_ro_prt_post_weaken {Γ} {e} {τ} {w : Γ |- e : τ} {ϕ} {ψ} {θ} (X : w |~ {{ϕ}} e {{ψ}}) :
+  ψ ->>> θ -> w |~ {{ϕ}} e {{θ}}.
+Proof.
+  intros.
+  assert (ϕ ->> ϕ).
+  intros a b; auto.
+  apply (r_ro_imply_prt _ _ _ _ _ _ _ _ _ H0 X H).
+Defined.
+
+Lemma r_admissible_ro_prt_pre_strengthen {Γ} {e} {τ} {w : Γ |- e : τ} {ϕ} {ψ} {θ} (X : w |~ {{ϕ}} e {{ψ}}) :
+  θ ->> ϕ -> w |~ {{θ}} e {{ψ}}.
+Proof.
+  intros.
+  assert (ψ ->>> ψ).
+  intros a b; auto.
+  apply (r_ro_imply_prt _ _ _ _ _ _ _ _ _ H X H0).
+Defined.
+
+Lemma r_admissible_ro_tot_post_weaken {Γ} {e} {τ} {w : Γ |- e : τ} {ϕ} {ψ} {θ} (X : w |~ [{ϕ}] e [{ψ}]) :
+  ψ ->>> θ -> w |~ [{ϕ}] e [{θ}].
+Proof.
+  intros.
+  assert (ϕ ->> ϕ).
+  intros a b; auto.
+  apply (r_ro_imply_tot _ _ _ _ _ _ _ _ _ H0 X H).
+Defined.
+
+Lemma r_admissible_ro_tot_pre_strengthen {Γ} {e} {τ} {w : Γ |- e : τ} {ϕ} {ψ} {θ} (X : w |~ [{ϕ}] e [{ψ}]) :
+  θ ->> ϕ -> w |~ [{θ}] e [{ψ}].
+Proof.
+  intros.
+  assert (ψ ->>> ψ).
+  intros a b; auto.
+  apply (r_ro_imply_tot _ _ _ _ _ _ _ _ _ H X H0).
+Defined.
+
+Fixpoint r_admissible_ro_prt_pose_readonly Γ e τ (w : Γ |- e : τ) ϕ ψ θ (X : w |~ {{ϕ}} e {{ψ}}) {struct X} :
+  w |~ {{ϕ /\\ θ}} e {{ψ /\\\ fun _ => θ}}
+with r_admissible_ro_tot_pose_readonly Γ e τ (w : Γ |- e : τ) ϕ ψ θ (X : w |~ [{ϕ}] e [{ψ}]) {struct X} :
+  w |~ [{ϕ /\\ θ}] e [{ψ /\\\ fun _ => θ}]
+with r_admissible_rw_prt_pose_readonly Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ θ (X : w ||~ {{ϕ}} e {{ψ}}) {struct X} :
+  w ||~ {{ϕ /\\ fun δγ => θ (snd δγ) }} e {{ψ /\\\ fun _ δγ => θ (snd δγ)}}
+with r_admissible_rw_tot_pose_readonly Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ θ (X : w ||~ [{ϕ}] e [{ψ}]) {struct X} :
+  w ||~ [{ϕ /\\ fun δγ => θ (snd δγ)}] e [{ψ /\\\ fun _ δγ => θ (snd δγ)}].
+Proof.
+  +
+    dependent induction X.
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X).
+    assert ((ϕ /\\ θ) ->> (P /\\ θ)).
+    intros γ p; split; destruct p.
+    apply a; exact H.
+    exact H0.
+    assert ((Q /\\\ fun _ => θ) ->>> (ψ /\\\ fun _ => θ)).
+    intros y γ p; split; destruct p.
+    apply a0; exact H0.
+    exact H1.
+    apply (r_ro_imply_prt _ _ _ _ _ _ _ _ _ H X0 H0).
+
+    pose proof (r_ro_var_prt _ _ _ w (ψ /\\\ (fun _ : sem_datatype τ => θ))).
+    apply (r_admissible_ro_prt_pre_strengthen X).
+    intros a b; split; destruct b; auto.
+    
+    pose proof (r_ro_skip_prt _  w (ψ /\\\ (fun _ => θ))).
+    apply (r_admissible_ro_prt_pre_strengthen X).
+    intros a b; split; destruct b; auto.
+
+    pose proof (r_ro_true_prt _  w (ψ /\\\ (fun _ => θ))).
+    apply (r_admissible_ro_prt_pre_strengthen X).
+    intros a b; split; destruct b; auto.
+    
+    pose proof (r_ro_false_prt _  w (ψ /\\\ (fun _ => θ))).
+    apply (r_admissible_ro_prt_pre_strengthen X).
+    intros a b; split; destruct b; auto.
+    
+    pose proof (r_ro_int_prt _ _  w (ψ /\\\ (fun _ => θ))).
+    apply (r_admissible_ro_prt_pre_strengthen X).
+    intros a b; split; destruct b; auto.
+
+    pose proof (r_admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ r).
+    pose proof (r_rw_ro_prt _ _ _ _ _ _ w' X).
+    simpl in X0.
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X0).
+    intros a b.
+    destruct b; split; auto.
+    intros h1 h2 h3.
+    split; destruct h3; auto.
+
+    pose proof (r_admissible_ro_prt_pose_readonly Γ (e) INTEGER w ϕ (fun y x => ψ (IZR y) x) (fun x => (θ (x))) X).
+    apply (r_ro_coerce_prt _ _ w).
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    exact h2.
+    intros h1 h2 h3.
+    destruct h3.
+    split; auto.
+
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X).
+    apply (r_ro_exp_prt _ _ w _ _ w').
+    apply (r_admissible_ro_prt_post_weaken X0).
+    intros h1 h2 h3.
+    destruct h3; split; auto.
+
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_int_op_plus_prt _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_int_op_mult_prt _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_int_op_minus_prt _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_real_op_plus_prt _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_real_op_mult_prt _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_real_op_minus_prt _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X).
+    apply (r_ro_recip_prt _ _ w _ _ w' _ X0).    
+    intros h1 h2 h3.
+    destruct h3.
+    split.
+    apply a.
+    split.
+    destruct H; auto.
+    auto.
+    destruct H; auto.
+    
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_int_comp_eq_prt _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_int_comp_lt_prt _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_real_lt_prt _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+    auto.
+
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun x : sem_ro_ctx (INTEGER :: Γ) => θ (snd x)) r).
+    apply (r_ro_lim_prt _ _ _ _ _ _ _ X).
+    intros.
+    destruct H.
+    pose proof (e0 _ H).
+    destruct H1.
+    exists x.
+    split.
+    split; auto.
+    destruct H1; auto.
+    intros.
+    destruct H2.
+    destruct H1.
+    pose proof (H4 x0 z H2).
+    exact H5.
+
+  +
+    dependent induction X.
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X).
+    assert ((ϕ /\\ θ) ->> (P /\\ θ)).
+    intros γ p; split; destruct p.
+    apply a; exact H.
+    exact H0.
+    assert ((Q /\\\ fun _ => θ) ->>> (ψ /\\\ fun _ => θ)).
+    intros y γ p; split; destruct p.
+    apply a0; exact H0.
+    exact H1.
+    apply (r_ro_imply_tot _ _ _ _ _ _ _ _ _ H X0 H0).
+
+    pose proof (r_ro_var_tot _ _ _ w (ψ /\\\ (fun _ : sem_datatype τ => θ))).
+    apply (r_admissible_ro_tot_pre_strengthen X).
+    intros a b; split; destruct b; auto.
+    
+    pose proof (r_ro_skip_tot _  w (ψ /\\\ (fun _ => θ))).
+    apply (r_admissible_ro_tot_pre_strengthen X).
+    intros a b; split; destruct b; auto.
+
+    pose proof (r_ro_true_tot _  w (ψ /\\\ (fun _ => θ))).
+    apply (r_admissible_ro_tot_pre_strengthen X).
+    intros a b; split; destruct b; auto.
+    
+    pose proof (r_ro_false_tot _  w (ψ /\\\ (fun _ => θ))).
+    apply (r_admissible_ro_tot_pre_strengthen X).
+    intros a b; split; destruct b; auto.
+    
+    pose proof (r_ro_int_tot _ _  w (ψ /\\\ (fun _ => θ))).
+    apply (r_admissible_ro_tot_pre_strengthen X).
+    intros a b; split; destruct b; auto.
+
+    pose proof (r_admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ θ r).
+    pose proof (r_rw_ro_tot _ _ _ _ _ _ w' X).
+    simpl in X0.
+    apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X0).
+    intros a b.
+    destruct b; split; auto.
+    intros h1 h2 h3.
+    split; destruct h3; auto.
+
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X).
+    apply (r_ro_coerce_tot _ _ w _ _ w').
+    apply (r_admissible_ro_tot_post_weaken X0).
+    intros h1 h2 h3.
+    destruct h3; split; auto.
+    
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X).
+    apply (r_ro_exp_tot _ _ w _ _ w').
+    apply (r_admissible_ro_tot_post_weaken X0).
+    intros h1 h2 h3.
+    destruct h3; split; auto.
+
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_int_op_plus_tot _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_int_op_mult_tot _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_int_op_minus_tot _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_real_op_plus_tot _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_real_op_mult_tot _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_real_op_minus_tot _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X).
+    apply (r_ro_recip_tot _ _ w _ _ w' _ X0).    
+    intros h1 h2 h3.
+    destruct h3.
+    destruct (a _ _ H).
+    
+    split; auto.
+    split; auto.
+    
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_int_comp_eq_tot _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_int_comp_lt_tot _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0; split.
+    apply ψ0.
+    apply H.
+    apply H0.
+    apply H1.
+
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ θ X2).
+    apply (r_ro_real_lt_tot _ _ _ _ _ _ _ _ _ _ X X0).
+    intros.
+    destruct H, H0.
+    destruct (a _ _ _ H H0).
+    split; auto.
+    split; auto.
+
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun x : sem_ro_ctx (INTEGER :: Γ) => θ (snd x)) X).
+    apply (r_ro_lim_tot _ _ _ _ _ _ _ X0).
+    intros.
+    destruct H.
+    pose proof (e0 _ H).
+    destruct H1.
+    exists x.
+    split.
+    split; auto.
+    destruct H1; auto.
+    intros.
+    destruct H2.
+    destruct H1.
+    pose proof (H4 x0 z H2).
+    exact H5.
+
+    
+  +
+    dependent induction X.
+    pose proof (r_admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X).
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    destruct h2; auto.
+    split; auto.
+    intros h1 h2 h3.
+    destruct h3; split; auto.
+    
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app δγ)) r).
+    pose proof (r_ro_rw_prt _ _ _ _ _ _ _ w' X).
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    destruct h2.
+    split; auto.
+    destruct h1.
+    simpl in H0.
+    unfold snd_app; rewrite tedious_equiv_1; auto.
+    intros h1 h2 h3.
+    destruct h2, h3.
+    split; auto.
+    simpl.
+    unfold snd_app in H0; rewrite tedious_equiv_1 in H0; auto.
+    
+    pose proof (r_admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X2).
+    apply (r_rw_sequence_prt _ _ _ _ _ _ _ _ _ _ w' X X0).
+
+    clear IHX.
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγγ' => θ (snd_app ( δγγ'))) r).
+    pose proof (r_admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X).
+    apply (r_rw_new_var_prt Γ Δ e c τ σ w1 w2 (ϕ /\\ (fun δγ : sem_ro_ctx Δ * sem_ro_ctx Γ => θ (snd δγ))) (ψ /\\\ (fun (_ : sem_datatype τ) (δγ : sem_ro_ctx Δ * sem_ro_ctx Γ) => θ (snd δγ))) (θ0 /\\\ (fun (_ : sem_datatype σ) (δγγ' : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγγ'))) w').
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    destruct h2; split; auto.
+    intros h1 h2 h3; auto.
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X1).
+    intros h1 h2.
+    destruct h2; split; auto.
+    unfold snd_app in H0; rewrite tedious_equiv_1 in H0; auto.
+    intros h1 h2 h3; auto.
+
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r).
+    apply (r_rw_assign_prt _ _ _ _ _ w _ (θ0 /\\\ (fun (_ : sem_datatype τ) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ))) _ w').
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X).
+    intros h1 h2.
+    destruct h2; split; auto.
+    intros h1 h2 h3; auto.
+    intros.
+    destruct H; split; auto.
+    simpl; unfold snd_app in H0; rewrite tedious_equiv_1 in H0; auto.
+
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r).
+    pose proof (r_admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X2).
+    apply (r_rw_cond_prt _ _ _ _ _ _ w w1 w2 w' _ (θ0 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ)))).
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X).
+    intros h1 h2.
+    split; destruct h2; auto.
+    intros h1 h2 h3; auto.
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    unfold ro_to_rw_pre in h2.
+    unfold snd_app in h2.
+    destruct h2.
+    destruct h1.
+    rewrite tedious_equiv_1 in H0.
+    split; auto.
+    intros h1 h2 h3; auto.
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X3).
+    intros h1 h2.
+    unfold ro_to_rw_pre in h2.
+    unfold snd_app in h2.
+    destruct h2.
+    destruct h1.
+    rewrite tedious_equiv_1 in H0.
+    split; auto.
+    intros h1 h2 h3; auto.
+
+    clear IHX1 IHX2.
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r).
+    pose proof (r_admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r0).
+    pose proof (r_admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X2).
+    apply (r_rw_case_prt _ _ _ _ _ _ _ wty_e1 wty_e2 wty_c1 wty_c2 wty _ (θ1 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ))) (θ2 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ)))).
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X).
+    intros h1 h2.
+    split; destruct h2.
+    exact H.
+    exact H0.
+    intros h1 h2 h3; auto.
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X3).
+    intros h1 h2.
+    split; destruct h2.
+    exact H.
+    exact H0.
+    intros h1 h2 h3; auto.
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    split; destruct h2.
+    exact H.
+    unfold snd_app in H0.
+    destruct h1.
+    rewrite tedious_equiv_1 in H0.
+    exact H0.
+    intros h1 h2 h3; auto.
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X4).
+    intros h1 h2.
+    split; destruct h2.
+    exact H.
+    unfold snd_app in H0.
+    destruct h1.
+    rewrite tedious_equiv_1 in H0.
+    exact H0.
+    intros h1 h2 h3; auto.
+
+    apply (r_rw_case_list_prt _ _ _ _ wty_l wty (ForallT_map (fun _ p => p /\\\ (fun _ x => θ (snd_app x))) θ0)).
+    clear wty.
+    dependent induction f.
+    apply ForallT2_nil.
+    simpl.
+    apply ForallT2_cons.
+    apply IHf.
+    destruct p.
+    simpl.
+    destruct r.
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r).
+    pose proof (r_admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ r0).
+    split.
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X).    
+    intros h1 h2.
+    destruct h2; split; auto.
+    intros h1 h2 h3; destruct h3; split; auto.
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X0).    
+    intros h1 h2.
+    destruct h2; split; auto.
+    unfold snd_app in H0.
+    destruct h1.
+    rewrite tedious_equiv_1 in H0.
+    auto.
+    intros h1 h2 h3; auto.
+    assert
+      (wty ||~ {{(ϕ /\\ (fun δγ : sem_ro_ctx Δ * sem_ro_ctx Γ => θ (snd δγ)))}} (WHILE e DO c END) {{y
+                                                                                                    | ((fun _ : unit => (ϕ /\\ (fun δγ : sem_ro_ctx Δ * sem_ro_ctx Γ => θ (snd δγ))) /\\
+                                                                                                                                                                                     ro_to_rw_pre
+                                                                                                                                                                                     ((θ0 /\\\ (fun _ δγ => θ (snd_app δγ))) false))) y}}).
+    apply (r_rw_while_prt _ _ _ _ wty_e wty_c wty).
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r).
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    split; destruct h2; auto.
+    intros h1 h2 h3.
+    destruct h3; auto.
+    split; auto.
+    pose proof (r_admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X).
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    destruct h2; split; auto.
+    unfold snd_app in H0.
+    destruct h1; rewrite tedious_equiv_1 in H0.
+    exact H0.
+    intros h1 h2 h3.
+    auto.
+    apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2; auto.
+    intros h1 h2 h3.
+    destruct h3; split; auto.
+    destruct H0.
+    destruct H.
+    split; auto.
+    destruct H; auto.
+
+  +
+    dependent induction X.
+    pose proof (r_admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ θ X).
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    destruct h2; auto.
+    split; auto.
+    intros h1 h2 h3.
+    destruct h3; split; auto.
+    
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app δγ)) r).
+    pose proof (r_ro_rw_tot _ _ _ _ _ _ _ w' X).
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    destruct h2.
+    split; auto.
+    destruct h1.
+    simpl in H0.
+    unfold snd_app; rewrite tedious_equiv_1; auto.
+    intros h1 h2 h3.
+    destruct h2, h3.
+    split; auto.
+    simpl.
+    unfold snd_app in H0; rewrite tedious_equiv_1 in H0; auto.
+    
+    pose proof (r_admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ θ X2).
+    apply (r_rw_sequence_tot _ _ _ _ _ _ _ _ _ _ w' X X0).
+
+    clear IHX.
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγγ' => θ (snd_app ( δγγ'))) r).
+    pose proof (r_admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ θ X).
+    apply (r_rw_new_var_tot Γ Δ e c τ σ w1 w2 (ϕ /\\ (fun δγ : sem_ro_ctx Δ * sem_ro_ctx Γ => θ (snd δγ))) (ψ /\\\ (fun (_ : sem_datatype τ) (δγ : sem_ro_ctx Δ * sem_ro_ctx Γ) => θ (snd δγ))) (θ0 /\\\ (fun (_ : sem_datatype σ) (δγγ' : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγγ'))) w').
+    apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    destruct h2; split; auto.
+    intros h1 h2 h3; auto.
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X1).
+    intros h1 h2.
+    destruct h2; split; auto.
+    unfold snd_app in H0; rewrite tedious_equiv_1 in H0; auto.
+    intros h1 h2 h3; auto.
+
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r).
+    apply (r_rw_assign_tot _ _ _ _ _ w _ (θ0 /\\\ (fun (_ : sem_datatype τ) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ))) _ w').
+    apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X).
+    intros h1 h2.
+    destruct h2; split; auto.
+    intros h1 h2 h3; auto.
+    intros.
+    destruct H; split; auto.
+    simpl; unfold snd_app in H0; rewrite tedious_equiv_1 in H0; auto.
+
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r).
+    pose proof (r_admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ θ X2).
+    apply (r_rw_cond_tot _ _ _ _ _ _ w w1 w2 w' _ (θ0 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ)))).
+    apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X).
+    intros h1 h2.
+    split; destruct h2; auto.
+    intros h1 h2 h3; auto.
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    unfold ro_to_rw_pre in h2.
+    unfold snd_app in h2.
+    destruct h2.
+    destruct h1.
+    rewrite tedious_equiv_1 in H0.
+    split; auto.
+    intros h1 h2 h3; auto.
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X3).
+    intros h1 h2.
+    unfold ro_to_rw_pre in h2.
+    unfold snd_app in h2.
+    destruct h2.
+    destruct h1.
+    rewrite tedious_equiv_1 in H0.
+    split; auto.
+    intros h1 h2 h3; auto.
+
+    clear IHX1 IHX2.
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r).
+    pose proof (r_admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ θ X1).
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r0).
+    pose proof (r_admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ θ X2).
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r1).
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r2).
+
+    apply (r_rw_case_tot _ _ _ _ _ _ _ wty_e1 wty_e2 wty_c1 wty_c2 wty _ (θ1 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ))) (θ2 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ)))
+                       _
+                       (ϕ1 /\\ (fun δγ : sem_ro_ctx (Δ ++ Γ) => θ (snd_app δγ)))      
+                       (ϕ2 /\\ (fun δγ : sem_ro_ctx (Δ ++ Γ) => θ (snd_app δγ)))
+          ).
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X).
+    intros h1 h2.
+    split; destruct h2.
+    exact H.
+    exact H0.
+    intros h1 h2 h3; auto.
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X3).
+    intros h1 h2.
+    split; destruct h2.
+    exact H.
+    exact H0.
+    intros h1 h2 h3; auto.
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    split; destruct h2.
+    exact H.
+    unfold snd_app in H0.
+    destruct h1.
+    rewrite tedious_equiv_1 in H0.
+    exact H0.
+    intros h1 h2 h3; auto.
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X4).
+    intros h1 h2.
+    split; destruct h2.
+    exact H.
+    unfold snd_app in H0.
+    destruct h1.
+    rewrite tedious_equiv_1 in H0.
+    exact H0.
+    intros h1 h2 h3; auto.
+    apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X5).
+    intros h1 h2.
+    split; destruct h2.
+    exact H.
+    exact H0.
+    intros h1 h2 h3; auto.
+    destruct h3.
+    auto.
+    apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X6).
+    intros h1 h2.
+    split; destruct h2.
+    exact H.
+    exact H0.
+    intros h1 h2 h3; auto.
+    destruct h3.
+    auto.
+    intros.
+    destruct H.
+    destruct (o _ H). 
+    left; split; auto.
+    right; split; auto.
+
+    
+    apply (r_rw_case_list_tot _ _ _ _ wty_l wty
+                            (ForallT_map (fun _ p => p /\\\ (fun _ x => θ (snd_app x))) θ0)
+                            (ForallT_map (fun _ p => p /\\ (fun x => θ (snd_app x))) ϕi)
+          ).
+    clear wty.
+    clear f0.
+    dependent induction f.
+    apply ForallT3_nil.
+    simpl.
+    apply ForallT3_cons.
+    simpl.
+    apply IHf.
+    repeat split.
+    destruct j as [[j _] _].
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) j) as i.
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a i).
+    intros h1 h2; auto.
+    intros h1 h2 h3; auto.
+    destruct j as [[_ j] _].
+    pose proof (r_admissible_rw_tot_pose_readonly _ _ _ _ _ _ _  θ j) as i.
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a i).
+    intros h1 h2; auto.
+    destruct h2; split; auto.
+    destruct h1; unfold snd_app in H0;  auto.
+    rewrite tedious_equiv_1 in H0; auto.
+    intros h1 h2 h3; auto.
+    destruct j as [_ j].
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) j) as i.
+    apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a i).
+    intros h1 h2; auto.
+    intros h1 h2 h3; auto.
+    destruct h3; auto.
+    intros.
+    destruct H.
+    pose proof (f0 x H).
+    clear f f0 wty wty_l θ0.
+
+    induction ϕi.
+    simpl in H1; simpl; auto.
+    simpl.
+    simpl in H1.
+    destruct H1.
+    left; split; auto.
+    right.
+    apply IHϕi.
+    exact H1.
+
+    assert
+      (wty ||~ [{(ϕ /\\ (fun δγ : sem_ro_ctx Δ * sem_ro_ctx Γ => θ (snd δγ)))}] (WHILE e DO c END) [{y
+                                                                                                    | ((fun _ : unit => (ϕ /\\ (fun δγ : sem_ro_ctx Δ * sem_ro_ctx Γ => θ (snd δγ))) /\\
+                                                                                                                                                                                     ro_to_rw_pre
+                                                                                                                                                                                     ((θ0 /\\\ (fun _ δγ => θ (snd_app δγ))) false))) y}]).
+    apply (r_rw_while_tot _ _ _ _ wty_e wty_c wty _ _ ψ0).
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r).
+    apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    split; destruct h2; auto.
+    intros h1 h2 h3.
+    destruct h3; auto.
+    split; auto.
+    pose proof (r_admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ (fun x => θ ((fst_app x))) X).
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    destruct h2; split; auto.
+    destruct H; split; auto.
+    destruct H.
+    unfold snd_app in H1.
+    rewrite tedious_equiv_1 in H1.
+    exact H1.
+    intros h1 h2 h3.
+    destruct h3.
+    destruct H.
+    split; auto.
+    split; auto.
+    intros.
+    destruct H.
+    apply n; auto.
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2; auto.
+    intros h1 h2 h3.
+    destruct h3; split; auto.
+    destruct H0.
+    destruct H.
+    split; auto.
+    destruct H; auto.
+Defined.
+
+Fixpoint r_admissible_rw_tot_pose_readonly_ext Γ Δ Ω e τ (w : Γ ;;; (Δ ++ Ω) ||- e : τ) (w' : (Ω ++ Γ) ;;; Δ ||- e : τ) ϕ ψ θ (X : w ||~ [{ϕ}] e [{ψ}]) {struct X} :
+  w ||~ [{fun x => ϕ x /\ θ (snd_app (fst x), snd x)}] e [{fun y x => ψ y x /\ θ (snd_app (fst x), snd x)}].
+Proof.
+  dependent induction X.
+  {
+    apply (r_admissible_rw_tot_pose_readonly_ext _ _ _ _ _ _ w' _ _ θ) in X.
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    destruct h2; split; auto.
+    intro.
+    destruct H; split; auto.
+  }
+
+  {
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ w0 _ _
+                  (fun x => θ (snd_app (fst_app x), snd_app x))
+                  r).
+    apply (r_ro_rw_tot _ _ _ _ _ _ _ w) in X.
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    destruct h2; split; auto.
+    unfold snd_app, fst_app; rewrite tedious_equiv_0.
+    destruct h1; simpl.
+    simpl in H0.
+    exact H0.
+    destruct h2.
+    simpl.
+    intro.
+    destruct H.
+    rewrite tedious_equiv_fst in H0.
+    rewrite tedious_equiv_snd in H0.
+    auto.
+  }
+
+  {
+    pose proof (has_type_rw_Seq_inverse _ _ _ _ _ w') as [w1' w2'].
+    pose proof (r_admissible_rw_tot_pose_readonly_ext _ _ _ _ _ _ w1' _ _ θ X1).
+    pose proof (r_admissible_rw_tot_pose_readonly_ext _ _ _ _ _ _ w2' _ _ θ X2).
+    apply (r_rw_sequence_tot _ _ _ _ _ _ _ _ _ _ w X X0).
+  }
+  {    
+    (* clear IHX. *)
+    pose proof (has_type_rw_Newvar_inverse w') as [σ' [w1' w2']].
+    
+    assert (σ = σ').
+    rewrite app_assoc in w1'.
+    apply (has_type_ro_unambiguous _ _ _ _  w1 w1'). 
+    induction H.
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun x => θ (snd_app (fst_app x), snd_app x)) r).
+    pose proof (r_admissible_rw_tot_pose_readonly_ext _ _ _ _ _ _ w2' _ _ θ X).
+    simpl in X0, X1.
+    apply (r_rw_new_var_tot _ _ e c τ σ w1 w2 _ _
+             (fun y => (θ0 /\\\ (fun (_ : sem_datatype σ) (x : sem_ro_ctx ((Δ ++ Ω) ++ Γ)) => θ (snd_app (fst_app x), snd_app x))) y)
+             w).
+    apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    destruct h2; split; auto.
+    intros h1 h2 h3; auto.
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X1).
+    intros h1 h2.
+    destruct h2; split; auto.
+    unfold snd_app in H0; rewrite tedious_equiv_1 in H0; auto.
+    rewrite tedious_equiv_fst in H0.
+    destruct h1.
+    simpl; simpl in H0.
+    destruct s.
+    simpl; simpl in H0.
+    unfold snd_app.
+    simpl.
+    destruct (tedious_sem_app Δ Ω s1).
+    exact H0.
+    intros h2 h3 h4; auto.
+    split; destruct h4; auto.
+    destruct h3.
+    destruct s.
+    simpl; simpl in H0.
+    unfold snd_app.
+    unfold snd_app in H0.
+    simpl in H0.
+    destruct (tedious_sem_app Δ Ω s1).
+    exact H0.
+  }
+  
+  {
+    pose proof (has_type_rw_Assign_inverse  w') as [σ [a' w0']].
+    assert (τ = σ).
+    rewrite app_assoc in w0'.
+    apply (has_type_ro_unambiguous _ _ _ _  w0 w0'). 
+    induction H.
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun x => θ (snd_app (fst_app x), snd_app x)) r).
+    apply (r_rw_assign_tot _ _ _ _ _ _ _
+             _
+          _ _ X).
+    intros.
+    destruct H.
+    split.
+    apply ψ0.
+    exact H.
+    unfold update'.
+    simpl.
+    Search update.
+    rewrite (tedious_equiv_2 δ).
+    rewrite <- (assign_concat_fst _ _ _ _ a' _ x
+      ).
+    rewrite tedious_equiv_snd.
+    rewrite tedious_equiv_snd in H0.
+    rewrite tedious_equiv_fst in H0.
+    exact H0.
+  }
+  {
+    pose proof (has_type_rw_Cond_inverse _ _ _ _ _ _ w') as [[w0' w1'] w2'].
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun x => θ (snd_app (fst_app x), snd_app x)) r).
+    pose proof (r_admissible_rw_tot_pose_readonly_ext _ _ _ _ _ _ w1' _ _  θ X1).
+    pose proof (r_admissible_rw_tot_pose_readonly_ext _ _ _ _ _ _ w2' _ _  θ X2).
+    apply (r_rw_cond_tot _ _ _ _ _ _ w0 w1 w2 w _ _ _ X). 
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    unfold ro_to_rw_pre in h2.
+    unfold snd_app in h2.
+    destruct h2.
+    destruct h1.
+    rewrite tedious_equiv_1 in H0.
+    rewrite tedious_equiv_fst in H0.
+    split; auto.    
+    intros h1 h2 h3; auto.
+
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X3).
+    intros h1 h2.
+    unfold ro_to_rw_pre in h2.
+    unfold snd_app in h2.
+    destruct h2.
+    destruct h1.
+    rewrite tedious_equiv_1 in H0.
+    rewrite tedious_equiv_fst in H0.
+    split; auto.
+    intros h1 h2 h3; auto.
+  }
+  
+  {  
+    apply magic.
+  }
+  
+    (* pose proof (has_type_rw_Case_inverse _ _ _ _ _ _ w') as [[w0' w1'] w2']. *)
+
+    (* pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r). *)
+    (* pose proof (r_admissible_rw_tot_pose_readonly_ext _ _ _ _ _ _ _ θ X1). *)
+    (* pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r0). *)
+    (* pose proof (r_admissible_rw_tot_pose_readonly_ext _ _ _ _ _ _ _ θ X2). *)
+    (* pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r1). *)
+    (* pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) r2). *)
+
+    (* apply (r_rw_case_tot _ _ _ _ _ _ _ wty_e1 wty_e2 wty_c1 wty_c2 wty _ (θ1 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ))) (θ2 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ))) *)
+    (*                    _ *)
+    (*                    (ϕ1 /\\ (fun δγ : sem_ro_ctx (Δ ++ Γ) => θ (snd_app δγ)))       *)
+    (*                    (ϕ2 /\\ (fun δγ : sem_ro_ctx (Δ ++ Γ) => θ (snd_app δγ))) *)
+    (*       ). *)
+    (* apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X). *)
+    (* intros h1 h2. *)
+    (* split; destruct h2. *)
+    (* exact H. *)
+    (* exact H0. *)
+    (* intros h1 h2 h3; auto. *)
+    (* apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X3). *)
+    (* intros h1 h2. *)
+    (* split; destruct h2. *)
+    (* exact H. *)
+    (* exact H0. *)
+    (* intros h1 h2 h3; auto. *)
+    (* apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X0). *)
+    (* intros h1 h2. *)
+    (* split; destruct h2. *)
+    (* exact H. *)
+    (* unfold snd_app in H0. *)
+    (* destruct h1. *)
+    (* rewrite tedious_equiv_1 in H0. *)
+    (* exact H0. *)
+    (* intros h1 h2 h3; auto. *)
+    (* apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X4). *)
+    (* intros h1 h2. *)
+    (* split; destruct h2. *)
+    (* exact H. *)
+    (* unfold snd_app in H0. *)
+    (* destruct h1. *)
+    (* rewrite tedious_equiv_1 in H0. *)
+    (* exact H0. *)
+    (* intros h1 h2 h3; auto. *)
+    (* apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X5). *)
+    (* intros h1 h2. *)
+    (* split; destruct h2. *)
+    (* exact H. *)
+    (* exact H0. *)
+    (* intros h1 h2 h3; auto. *)
+    (* destruct h3. *)
+    (* auto. *)
+    (* apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X6). *)
+    (* intros h1 h2. *)
+    (* split; destruct h2. *)
+    (* exact H. *)
+    (* exact H0. *)
+    (* intros h1 h2 h3; auto. *)
+    (* destruct h3. *)
+    (* auto. *)
+    (* intros. *)
+    (* destruct H. *)
+    (* destruct (o _ H).  *)
+    (* left; split; auto. *)
+    (* right; split; auto. *)
+
+  {
+    pose proof (has_type_rw_CaseList_inverse _ _ _ _ w') as wty_l'.
+    apply (r_rw_case_list_tot _ _ _ _ wty_l w
+                            (ForallT_map (fun _ p => p /\\\ (fun _ x => θ (snd_app (fst_app x), snd_app x))) θ0)
+                            (ForallT_map (fun _ p => p /\\ (fun x => θ (snd_app (fst_app x), snd_app x))) ϕi)
+          ).
+    clear w w' f0.
+
+    dependent induction f.
+    apply ForallT3_nil.
+    simpl.
+    apply ForallT3_cons.
+    simpl.
+    dependent destruction wty_l'.
+    apply IHf.
+    apply wty_l'.
+    repeat split.
+    destruct j as [[j _] _].
+    pose proof (r_admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun x => θ (snd_app (fst_app x), snd_app x)) j) as i.
+    apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a i).
+    intros h1 h2; auto.
+    intros h1 h2 h3; auto.
+    destruct j as [[_ j] _].
+    dependent destruction wty_l'.
+    destruct p0 as [w1' w2'].
+    pose proof (r_admissible_rw_tot_pose_readonly_ext _ _ _ _ _ _ w2' _ _ θ j) as i.
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a i).
+    intros h1 h2; auto.
+    destruct h2; split; auto.
+    destruct h1; unfold snd_app in H0;  auto.
+    rewrite tedious_equiv_1 in H0; auto.
+    rewrite tedious_equiv_fst in H0.
+    simpl.
+    exact H0.
+    intros h1 h2 h3; auto.
+    destruct j as [_ j].
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun x => θ (snd_app (fst_app x), snd_app x)) j) as i.
+    apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a i).
+    intros h1 h2; auto.
+    intros h1 h2 h3; auto.
+    destruct h3; auto.
+
+    intros.
+    destruct H.
+    pose proof (f0 x H).
+    clear f f0 w wty_l wty_l' w' θ0.
+
+    induction ϕi.
+    simpl in H1; simpl; auto.
+    simpl.
+    simpl in H1.
+    destruct H1.
+    left; split; auto.
+    right.
+    apply IHϕi.
+    exact H1.
+  }
+
+  {
+    assert
+      (w ||~ [{(ϕ /\\ (fun x => θ (snd_app (fst x), snd x)))}]
+         (WHILE e DO c END)
+         [{y | ((fun _ : unit => (ϕ /\\ (fun x => θ (snd_app (fst x), snd x))) /\\
+                                   ro_to_rw_pre
+                                   ((θ0 /\\\ (fun _ x => θ (snd_app (fst_app x), snd_app x))) false))) y}]).
+    apply (r_rw_while_tot _ _ _ _ wty_e wty_c w _ _ ψ0).
+    pose proof (r_admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun x => θ (snd_app (fst_app x), snd_app x)) r).
+    apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    split; destruct h2; auto.
+    intros h1 h2 h3.
+    destruct h3; auto.
+    split; auto.
+
+    pose proof (has_type_rw_While_inverse w') as [we' wc'].
+    pose proof (has_type_rw_add_auxiliary _ _ _ _ wc' (Δ ++ Ω)) as wc''.
+    rewrite <- app_assoc in wc''.
+    pose proof (r_admissible_rw_tot_pose_readonly_ext _ _ _ _ _ _ wc'' _ _ (fun x => θ (fst x, fst_app (snd x)))
+                  X).
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2.
+    destruct h2; split; auto.
+    destruct H; split; auto.
+    destruct H.
+    simpl.
+    rewrite tedious_equiv_fst in H1.
+    rewrite tedious_equiv_snd in H1.
+    exact H1.
+    intros h1 h2 h3.
+    destruct h3.
+    destruct H.
+    split; auto.
+    split; auto.
+    intros.
+    destruct H.
+    apply n; auto.
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X0).
+    intros h1 h2; auto.
+    intros h1 h2 h3.
+    destruct h3; split; auto.
+    destruct H0.
+    destruct H.
+    split; auto.
+    destruct H; auto.
+  }
+Defined.
+
+
 Fixpoint r_admissible_gen_rw_prt Γ Δ1 Δ2 e τ (w : Γ ;;; Δ1 ||- e : τ) ϕ ψ (p : w ||~ {{ϕ}} e {{ψ}}) :
   (has_type_rw_add_auxiliary _ _ _ _ w Δ2) ||~ {{fun x => ϕ (fst x, fst_app (snd x))}} e {{fun y x => ψ y (fst x, fst_app (snd x))}}
 with r_admissible_gen_rw_tot Γ Δ1 Δ2 e τ (w : Γ ;;; Δ1 ||- e : τ) ϕ ψ (p : w ||~ [{ϕ}] e [{ψ}]) :
@@ -1832,8 +2947,8 @@ Proof.
   reflexivity.
 Defined.
 
-Axiom magic : forall T, T.
-Fixpoint r_admissible_move_rw_tot Γ Δ1 Δ2 e τ (w : (Δ2 ++ Γ) ;;; Δ1 ||- e : τ) ϕ ψ (p : w ||~ [{ϕ}] e [{ψ}]) :
+  
+Fixpoint r_admissible_move_rw_tot Γ Δ1 Δ2 e τ (w : (Δ2 ++ Γ) ;;; Δ1 ||- e : τ) ϕ ψ (p : w ||~ [{ϕ}] e [{ψ}]) {struct p} :
   (has_type_rw_move Γ Δ1 Δ2 e τ w) ||~ [{fun x => ϕ (fst_app (fst x), (snd_app (fst x); snd x))}] e [{fun y x => ψ y (fst_app (fst x), (snd_app (fst x); snd x))}].
 Proof.
   dependent induction p.
@@ -2208,162 +3323,197 @@ Proof.
   }
 
   {
-    (* pose proof (r_proves_ro_tot_ctx_rewrite (app_assoc Δ Δ2 Γ) r). *)
-    (* pose proof (r_proves_rw_tot_ctx_rewrite_ro (eq_sym (app_assoc Δ2 Γ Δ)) p). *)
-    (* apply r_admissible_move_rw_tot in X0. *)
-    (* simpl in X0. *)
-    (* Check has_type_rw_move (Γ ++ Δ) Δ Δ2 c UNIT *)
-    (*       (tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (eq_sym (app_assoc Δ2 Γ Δ)) wty_c). *)
-    (* pose proof r_admissible_gen_rw_tot. *)
+    pose proof (r_proves_ro_tot_ctx_rewrite (app_assoc Δ Δ2 Γ) r).
+    pose proof (r_proves_rw_tot_ctx_rewrite_ro (eq_sym (app_assoc Δ2 Γ Δ)) p).
     (* apply (r_admissible_gen_rw_tot _ _ Δ2) in X0. *)
-    (* Check has_type_rw_add_auxiliary (Γ ++ Δ) (Δ ++ Δ2) c UNIT *)
-    (*      (has_type_rw_move (Γ ++ Δ) Δ Δ2 c UNIT *)
-    (*                        (tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (eq_sym (app_assoc Δ2 Γ Δ)) wty_c)) Δ2. *)
-    (* pose proof (r_proves_rw_tot_ctx_rewrite_ro (eq_sym (app_assoc Γ Δ Δ2)) X0). *)
-    (* Check r_rw_while_tot. *)
-    (* pose proof (r_rw_while_tot _ _ _ _ *)
-    (*                       (tr (fun Γ : ro_ctx => Γ |- e : BOOL) (app_assoc Δ Δ2 Γ) wty_e) *)
-    (*                       (tr (fun Γ : ro_ctx => Γ;;; (Δ ++ Δ2) ||- c : UNIT) (eq_sym (app_assoc Γ Δ Δ2)) *)
-    (*      (has_type_rw_add_auxiliary (Γ ++ Δ) (Δ ++ Δ2) c UNIT *)
-    (*         (has_type_rw_move (Γ ++ Δ) Δ Δ2 c UNIT *)
-    (*            (tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (eq_sym (app_assoc Δ2 Γ Δ)) wty_c)) Δ2)) *)
-    (*                       (has_type_rw_move Γ Δ Δ2 (WHILE e DO c END) UNIT w) *)
-    (*                       (fun x => ϕ (fst_app (fst x), (snd_app (fst x); snd x))) *)
-    (*                       (fun y x => θ y (tr sem_ro_ctx (eq_sym (app_assoc Δ Δ2 Γ)) x)) *)
-    (*                       (fun x => ψ0 (fst_app (fst x), ((snd_app (snd_app (snd x)); fst_app (snd x)); fst_app (snd_app (snd x)))))  *)
-    (*            ). *)
-    (* assert (tr (fun Γ : ro_ctx => Γ |- e : BOOL) (app_assoc Δ Δ2 Γ) wty_e *)
-    (*    |~ [{rw_to_ro_pre *)
-    (*           (fun x : sem_ro_ctx (Δ ++ Δ2) * sem_ro_ctx Γ => ϕ (fst_app (fst x), (snd_app (fst x); snd x)))}] e [{y *)
-    (*                                                                                                               | (fun x : sem_ro_ctx ((Δ ++ Δ2) ++ Γ) => θ y (tr sem_ro_ctx (eq_sym (app_assoc Δ Δ2 Γ)) x))}] ). *)
+
+    apply r_admissible_move_rw_tot in X0.
+    simpl in X0.
+    Check has_type_rw_move (Γ ++ Δ) Δ Δ2 c UNIT
+          (tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (eq_sym (app_assoc Δ2 Γ Δ)) wty_c).
+    pose proof r_admissible_gen_rw_tot.
+    apply (r_admissible_gen_rw_tot _ _ Δ2) in X0.
+    pose proof (r_proves_rw_tot_ctx_rewrite_ro (eq_sym (app_assoc Γ Δ Δ2)) X0).
+    assert ((Δ2 ++ (Γ ++ Δ ++ Δ2));;; (Δ ) ||- c : UNIT) as www.
+    pose proof (has_type_rw_add_auxiliary _ _ _ _ wty_c Δ2).
+    rewrite app_assoc.
+    rewrite app_assoc.
+    exact H.
+
+    pose proof r_admissible_rw_tot_pose_readonly_ext.
+    pose proof (r_admissible_rw_tot_pose_readonly_ext _ _ _ _ _ _ www _ _
+                  (fun x => fst x = snd_app (snd_app (snd x)))  X2)
+    .
+    simpl in X4.
+
+    pose proof (r_rw_while_tot _ _ _ _
+                          (tr (fun Γ : ro_ctx => Γ |- e : BOOL) (app_assoc Δ Δ2 Γ) wty_e)
+                          (tr (fun Γ : ro_ctx => Γ;;; (Δ ++ Δ2) ||- c : UNIT) (eq_sym (app_assoc Γ Δ Δ2))
+         (has_type_rw_add_auxiliary (Γ ++ Δ) (Δ ++ Δ2) c UNIT
+            (has_type_rw_move (Γ ++ Δ) Δ Δ2 c UNIT
+               (tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (eq_sym (app_assoc Δ2 Γ Δ)) wty_c)) Δ2))
+                          (has_type_rw_move Γ Δ Δ2 (WHILE e DO c END) UNIT w)
+                          (fun x => ϕ (fst_app (fst x), (snd_app (fst x); snd x)))
+                          (fun y x => θ y (tr sem_ro_ctx (eq_sym (app_assoc Δ Δ2 Γ)) x))
+                          (fun x => ψ0 (fst_app (fst x), ((snd_app (fst x) ; fst_app (snd x)); fst_app (snd_app (snd x)))) /\ snd_app (fst x) = snd_app (snd_app (snd x)))
+
+                                        (* ((snd_app (snd_app (snd x)); fst_app (snd x)); fst_app (snd_app (snd x))))) *)
+               ).
+    assert (tr (fun Γ : ro_ctx => Γ |- e : BOOL) (app_assoc Δ Δ2 Γ) wty_e
+       |~ [{rw_to_ro_pre
+              (fun x : sem_ro_ctx (Δ ++ Δ2) * sem_ro_ctx Γ => ϕ (fst_app (fst x), (snd_app (fst x); snd x)))}] e [{y
+                                                                                                                  | (fun x : sem_ro_ctx ((Δ ++ Δ2) ++ Γ) => θ y (tr sem_ro_ctx (eq_sym (app_assoc Δ Δ2 Γ)) x))}] ).
     
-    (* apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X); *)
-    (*   try (intros h1 h2; auto); try (intros h1 h2 h3; auto). *)
-    (* rewrite (tedious_equiv_2 h1). *)
-    (* rewrite (tedious_equiv_2 (fst_app h1)). *)
-    (* rewrite eq_sym_app_assoc_tr. *)
-    (* rewrite (tedious_equiv_2 h1) in h2. *)
-    (* unfold rw_to_ro_pre in h2. *)
-    (* rewrite tedious_equiv_1 in h2. *)
-    (* simpl in h2. *)
-    (* unfold rw_to_ro_pre.  *)
-    (* rewrite tedious_equiv_1. *)
-    (* exact h2. *)
+    apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    rewrite (tedious_equiv_2 h1).
+    rewrite (tedious_equiv_2 (fst_app h1)).
+    rewrite eq_sym_app_assoc_tr.
+    rewrite (tedious_equiv_2 h1) in h2.
+    unfold rw_to_ro_pre in h2.
+    rewrite tedious_equiv_1 in h2.
+    simpl in h2.
+    unfold rw_to_ro_pre.
+    rewrite tedious_equiv_1.
+    exact h2.
+    simpl in X5.
+    assert (tr (fun Γ : ro_ctx => Γ;;; (Δ ++ Δ2) ||- c : UNIT) (eq_sym (app_assoc Γ Δ Δ2))
+         (has_type_rw_add_auxiliary (Γ ++ Δ) (Δ ++ Δ2) c UNIT
+            (has_type_rw_move (Γ ++ Δ) Δ Δ2 c UNIT (tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (eq_sym (app_assoc Δ2 Γ Δ)) wty_c)) Δ2)
+       ||~ [{(fun δγδ' : sem_ro_ctx (Δ ++ Δ2) * sem_ro_ctx (Γ ++ Δ ++ Δ2) =>
+              ro_to_rw_pre (fun x : sem_ro_ctx ((Δ ++ Δ2) ++ Γ) => θ true (tr sem_ro_ctx (eq_sym (app_assoc Δ Δ2 Γ)) x)) (fst δγδ', fst_app (snd δγδ')) /\
+              fst δγδ' = snd_app (snd δγδ'))}] c [{_
+       | (fun δγδ' : sem_ro_ctx (Δ ++ Δ2) * sem_ro_ctx (Γ ++ Δ ++ Δ2) =>
+          ϕ (fst_app (fst δγδ'), (snd_app (fst δγδ'); fst_app (snd δγδ'))) /\
+          ψ0 (fst_app (fst δγδ'), ((snd_app (fst δγδ'); fst_app (snd δγδ')); fst_app (snd_app (snd δγδ')))) /\
+          snd_app (fst δγδ') = snd_app (snd_app (snd δγδ')))}]).
+    simpl in X2.
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X4);
+      try (intros t1 t2; auto); try (intros t1 t2 t3; auto); simpl.
 
-    (* assert (tr (fun Γ : ro_ctx => Γ;;; (Δ ++ Δ2) ||- c : UNIT) (eq_sym (app_assoc Γ Δ Δ2)) *)
-    (*      (has_type_rw_add_auxiliary (Γ ++ Δ) (Δ ++ Δ2) c UNIT *)
-    (*         (has_type_rw_move (Γ ++ Δ) Δ Δ2 c UNIT *)
-    (*            (tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (eq_sym (app_assoc Δ2 Γ Δ)) wty_c)) Δ2) *)
-    (*    ||~ [{(fun δγδ' : sem_ro_ctx (Δ ++ Δ2) * sem_ro_ctx (Γ ++ Δ ++ Δ2) => *)
-    (*           ro_to_rw_pre *)
-    (*             ((fun (y : sem_datatype BOOL) (x : sem_ro_ctx ((Δ ++ Δ2) ++ Γ)) => *)
-    (*               θ y (tr sem_ro_ctx (eq_sym (app_assoc Δ Δ2 Γ)) x)) true) (fst δγδ', fst_app (snd δγδ')) /\ *)
-    (*           fst δγδ' = snd_app (snd δγδ'))}] c [{_ *)
-    (*    | (fun δγδ' : sem_ro_ctx (Δ ++ Δ2) * sem_ro_ctx (Γ ++ Δ ++ Δ2) => *)
-    (*       (fun x : sem_ro_ctx (Δ ++ Δ2) * sem_ro_ctx Γ => ϕ (fst_app (fst x), (snd_app (fst x); snd x))) *)
-    (*         (fst δγδ', fst_app (snd δγδ')) /\ *)
-    (*       (fun x : sem_ro_ctx (Δ ++ Δ2) * sem_ro_ctx (Γ ++ Δ ++ Δ2) => *)
-    (*        ψ0 (fst_app (fst x), ((snd_app (snd_app (snd x)); fst_app (snd x)); fst_app (snd_app (snd x))))) δγδ')}]). *)
+    unfold ro_to_rw_pre in t2.
+    destruct t1.
+    simpl.
+    simpl in t2.
+    unfold ro_to_rw_pre.
+    rewrite eq_sym_twice.
+    rewrite eq_sym_twice.
+    rewrite (tedious_equiv_2 s0).
+    rewrite (tedious_equiv_2 (snd_app s0)).
+    rewrite app_assoc_tr.
+    rewrite tedious_equiv_fst.
+    rewrite app_assoc_tr.
+    split; destruct t2.
+    rewrite (tedious_equiv_2 s) in H.
+    rewrite eq_sym_app_assoc_tr in H.
+    rewrite tedious_equiv_fst.
+    split.
+    exact H.
+    rewrite tedious_equiv_snd.
+    rewrite H0; reflexivity.
     
-    (* apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X2); *)
-    (*   try (intros t1 t2; auto); try (intros t1 t2 t3; auto); simpl. *)
+    rewrite tedious_equiv_snd.
+    rewrite tedious_equiv_snd.
+    rewrite H0.
+    reflexivity.
 
-    (* unfold ro_to_rw_pre in t2. *)
-    (* destruct t1. *)
-    (* simpl. *)
-    (* simpl in t2. *)
-    (* unfold ro_to_rw_pre. *)
-    (* rewrite eq_sym_twice. *)
-    (* rewrite eq_sym_twice. *)
-    (* rewrite (tedious_equiv_2 s0). *)
-    (* rewrite (tedious_equiv_2 (snd_app s0)). *)
-    (* rewrite app_assoc_tr. *)
-    (* rewrite tedious_equiv_fst. *)
-    (* rewrite app_assoc_tr. *)
-    (* split; destruct t2. *)
-    (* rewrite (tedious_equiv_2 s) in H. *)
-    (* rewrite eq_sym_app_assoc_tr in H. *)
-    (* rewrite tedious_equiv_fst. *)
-    (* exact H. *)
-    (* rewrite tedious_equiv_snd. *)
-    (* rewrite H0; reflexivity. *)
-    (* destruct t2. *)
-    (* simpl. *)
-    (* simpl. *)
-    (* rewrite (tedious_equiv_2 s0). *)
-    (* rewrite (tedious_equiv_2 (snd_app s0)). *)
+    destruct t2.
+    simpl.
+    simpl.
+    rewrite (tedious_equiv_2 s0).
+    rewrite (tedious_equiv_2 (snd_app s0)).
 
-    (* rewrite (tedious_equiv_2 s). *)
-    (* rewrite tedious_equiv_fst. *)
-    (* rewrite tedious_equiv_fst. *)
-    (* rewrite tedious_equiv_snd. *)
-    (* rewrite tedious_equiv_snd. *)
-    (* rewrite tedious_equiv_fst. *)
-    (* rewrite eq_sym_twice. *)
-    (* rewrite eq_sym_twice.    *)
-    (* rewrite app_assoc_tr. *)
-    (* rewrite tedious_equiv_fst. *)
-    (* rewrite app_assoc_tr. *)
-    (* rewrite tedious_equiv_fst. *)
-    (* rewrite tedious_equiv_snd. *)
-    (* intros [x y]. *)
-    (* split. *)
-    (* exact x. *)
+    rewrite (tedious_equiv_2 s).
+    rewrite tedious_equiv_fst.
+    rewrite tedious_equiv_fst.
+    rewrite tedious_equiv_snd.
+    rewrite tedious_equiv_snd.
+    rewrite tedious_equiv_fst.
+    rewrite eq_sym_twice.
+    rewrite eq_sym_twice.
+    rewrite app_assoc_tr.
+    rewrite tedious_equiv_fst.
+    rewrite app_assoc_tr.
+    rewrite tedious_equiv_fst.
+    intro.
+    destruct H.
+    rewrite tedious_equiv_snd in H0.
+    rewrite H0.
+    split.
+    destruct H.
+    rewrite H0 in H.
+    exact H.
+    split.
+    destruct H.
+    rewrite <- H0.
+    exact H1.
+    rewrite <- H0.
+    rewrite tedious_equiv_snd.
+    reflexivity.
 
-    (* ; exact x. *)
-
-    (* pose proof (X3 X4 X5). *)
-
-    (* assert ((forall (δ : sem_ro_ctx (Δ ++ Δ2)) (γ : sem_ro_ctx Γ), *)
-    (*     (fun x : sem_ro_ctx (Δ ++ Δ2) * sem_ro_ctx Γ => ϕ (fst_app (fst x), (snd_app (fst x); snd x))) (δ, γ) -> *)
-    (*     ~ *)
-    (*     (exists f : nat -> sem_ro_ctx (Δ ++ Δ2), *)
-    (*        f 0 = δ /\ *)
-    (*        (forall n : nat, *)
-    (*         (fun x : sem_ro_ctx (Δ ++ Δ2) * sem_ro_ctx (Γ ++ Δ ++ Δ2) => *)
-    (*          ψ0 (fst_app (fst x), ((snd_app (fst x); fst_app (snd x)); fst_app (snd_app (snd x))))) *)
-    (*           (f (S n), (γ; f n)))))). *)
-
-    (* intros. *)
-    (* intro. *)
-    (* simpl in H. *)
-    (* simpl in H0. *)
-    (* pose proof (n _ _ H). *)
-    (* contradict H1. *)
-    (* destruct H0. *)
-    (* exists (fun n => fst_app (x n)). *)
-    (* destruct H0. *)
-    (* split. *)
-    (* rewrite H0; reflexivity. *)
-
-    (* intros. *)
-    (* pose proof (H1 n0). *)
-    (* rewrite tedious_equiv_snd in H2. *)
-    
-    (* rewrite tedious_equiv_fst in H2. *)
-    (* exac *)
-
-    (* n : forall (δ : sem_ro_ctx Δ) (γ : sem_ro_ctx (Δ2 ++ Γ)), *)
-    (*   ϕ (δ, γ) -> ~ (exists f : nat -> sem_ro_ctx Δ, f 0 = δ /\ (forall n : nat, ψ0 (f (S n), (γ; f n)))) *)
-
-
-    (* destruct t2. *)
     
 
-    (* rewrite H0. *)
-    (* rewrite H0 in H. *)
-    
-    (* simpl. *)
-    
-    (* rewrite (tedious_equiv_2 s) in t2. *)
-    (* rewrite eq_sym_app_assoc_tr in t2. *)
-    (* simpl. *)
-    (* unfold ro_to_rw_pre. *)
-    (* exact t2.   *)
-    (* pose proof (X0 X1 X2). *)
+    pose proof (X5 X6 X7).
 
+    assert ((forall (δ : sem_ro_ctx (Δ ++ Δ2)) (γ : sem_ro_ctx Γ),
+        ϕ (fst_app δ, (snd_app δ; γ)) ->
+        ~
+        (exists f : nat -> sem_ro_ctx (Δ ++ Δ2),
+           f 0 = δ /\
+           (forall n : nat,
+            ψ0 (fst_app (f (S n)), ((snd_app (f (S n)); fst_app (γ; f n)); fst_app (snd_app (γ; f n)))) /\ snd_app (f (S n)) = snd_app (snd_app (γ; f n)))))).
+    intros.
+    intro.
+    simpl in H.
+    simpl in H0.
+    pose proof (n _ _ H).
+    contradict H1.
+    destruct H0.
+    exists (fun n => fst_app (x n)).
+    destruct H0.
+    split.
+    rewrite H0; reflexivity.
 
-    apply magic.
+    intros.
+    assert (forall n,  snd_app (x n) = snd_app δ).
+    intro.
+    induction n1.
+    rewrite H0; reflexivity.
+    pose proof (H1 n1).
+    rewrite tedious_equiv_snd in H2.    
+    rewrite tedious_equiv_fst in H2.
+    destruct H2.
+    
+    rewrite H3.
+    rewrite IHn1.
+    reflexivity.
+
+    
+    
+    pose proof (H1 n0).
+    rewrite tedious_equiv_snd in H3.    
+    rewrite tedious_equiv_fst in H3.
+    destruct H3.
+    rewrite H2 in H3.
+    exact H3.
+
+    pose proof (X8 H).
+
+    apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X9);
+      try (intros t1 t2; auto); try (intros t1 t2 t3; auto); simpl.
+    intros.
+    destruct H0.
+    split.
+    exact H0.
+    destruct t2.
+    simpl.
+    simpl in H1.
+    rewrite (tedious_equiv_2 s) in H1.
+    unfold ro_to_rw_pre in H1.
+    rewrite eq_sym_app_assoc_tr in H1.
+    exact H1.
+
+    
   }
   
 Defined.
