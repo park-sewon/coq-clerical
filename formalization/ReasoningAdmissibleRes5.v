@@ -17,24 +17,24 @@ Require Import Clerical.ReasoningAdmissibleRes2.
 Require Import Clerical.ReasoningAdmissibleRes3.
 
 
-Fixpoint r_admissible_ro_conj_prt Γ e τ (w : Γ |- e : τ) ϕ ψ1 ψ2 {struct e} : w |~ {{ϕ}} e {{ψ1}} -> w |~ {{ϕ}} e {{ψ2}} ->  w |~ {{ϕ}} e {{ψ1 /\\\ ψ2}}
-with r_admissible_ro_conj_tot Γ e τ (w : Γ |- e : τ) ϕ ψ1 ψ2 {struct e} : w |~ [{ϕ}] e [{ψ1}] -> w |~ [{ϕ}] e [{ψ2}] ->  w |~ [{ϕ}] e [{ψ1 /\\\ ψ2}]
-with r_admissible_rw_conj_prt Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ1 ψ2 {struct e} : w ||~ {{ϕ}} e {{ψ1}} -> w ||~ {{ϕ}} e {{ψ2}} ->  w ||~ {{ϕ}} e {{ψ1 /\\\ ψ2}}
-with r_admissible_rw_conj_tot Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ1 ψ2 {struct e} : w ||~ [{ϕ}] e [{ψ1}] -> w ||~ [{ϕ}] e [{ψ2}] ->  w ||~ [{ϕ}] e [{ψ1 /\\\ ψ2}].
+Fixpoint r_admissible_ro_disj_prt Γ e τ (w : Γ |- e : τ) ϕ1 ϕ2 ψ {struct e} : w |~ {{ϕ1}} e {{ψ}} -> w |~ {{ϕ2}} e {{ψ}} ->  w |~ {{ϕ1 \// ϕ2}} e {{ψ}}
+with r_admissible_ro_disj_tot  Γ e τ (w : Γ |- e : τ) ϕ1 ϕ2 ψ {struct e} : w |~ [{ϕ1}] e [{ψ}] -> w |~ [{ϕ2}] e [{ψ}] ->  w |~ [{ϕ1 \// ϕ2}] e [{ψ}]
+with r_admissible_rw_disj_prt Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ1 ϕ2 ψ {struct e} : w ||~ {{ϕ1}} e {{ψ}} -> w ||~ {{ϕ2}} e {{ψ}} ->  w ||~ {{ϕ1 \// ϕ2}} e {{ψ}}
+with r_admissible_rw_disj_tot Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ1 ϕ2 ψ {struct e} : w ||~ [{ϕ1}] e [{ψ}] -> w ||~ [{ϕ2}] e [{ψ}] ->  w ||~ [{ϕ1 \// ϕ2}] e [{ψ}].
 Proof.
   +
     intros t1 t2.
     dependent destruction e. 
 
-    pose proof (r_ro_var_prt _ _ _ w (ψ1 /\\\ ψ2)).
+    pose proof (r_ro_var_prt _ _ _ w (ψ)).
     pose proof (r_ro_var_prt_inv t1).
     pose proof (r_ro_var_prt_inv t2).
     apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
-    split.
-    apply H; auto.
-    apply H0; auto.
-    
+    destruct h2.
+    apply H; exact H1.
+    apply H0; exact H1.
+        
     destruct b.
     induction (has_type_ro_unambiguous _ _ _ _ (has_type_ro_True Γ) w).
     pose proof (r_ro_true_prt _ w (ψ1 /\\\ ψ2)).
@@ -70,8 +70,8 @@ Proof.
     pose proof (has_type_ro_OpZplus_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_int_op_plus_prt_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_int_op_plus_prt_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_int_op_plus_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -83,8 +83,8 @@ Proof.
     pose proof (has_type_ro_OpZminus_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_int_op_minus_prt_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_int_op_minus_prt_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_int_op_minus_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -96,8 +96,8 @@ Proof.
     pose proof (has_type_ro_OpZmult_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_int_op_mult_prt_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_int_op_mult_prt_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_int_op_mult_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -109,8 +109,8 @@ Proof.
     pose proof (has_type_ro_OpZlt_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_int_comp_lt_prt_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_int_comp_lt_prt_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_int_comp_lt_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -122,8 +122,8 @@ Proof.
     pose proof (has_type_ro_OpZeq_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_int_comp_eq_prt_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_int_comp_eq_prt_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_int_comp_eq_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -135,8 +135,8 @@ Proof.
     pose proof (has_type_ro_OpRplus_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_real_op_plus_prt_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_real_op_plus_prt_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_real_op_plus_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -148,8 +148,8 @@ Proof.
     pose proof (has_type_ro_OpRminus_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_real_op_minus_prt_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_real_op_minus_prt_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_real_op_minus_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -161,8 +161,8 @@ Proof.
     pose proof (has_type_ro_OpRlt_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_real_lt_prt_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_real_lt_prt_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_real_lt_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -174,8 +174,8 @@ Proof.
     pose proof (has_type_ro_OpRmult_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_real_op_mult_prt_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_real_op_mult_prt_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_real_op_mult_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -188,7 +188,7 @@ Proof.
     pose proof (has_type_ro_OpRrecip_inverse _ _ w) as w'. 
     pose proof (r_ro_recip_prt_inv w' t1) as [θ1 [p1 p2]]. 
     pose proof (r_ro_recip_prt_inv w' t2) as [θ2 [q1 q2]]. 
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p1 q1).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ p1 q1).
     apply (r_ro_recip_prt _ _  w' _ _ _ _  X).
     intros y γ h.
     split.
@@ -209,14 +209,14 @@ Proof.
     pose proof (has_type_ro_OpZRcoerce_inverse _ _ w) as w'. 
     pose proof (r_ro_coerce_prt_inv w' t1) as p. 
     pose proof (r_ro_coerce_prt_inv w' t2) as q. 
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p q).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ p q).
     apply (r_ro_coerce_prt _ _ _ _ _ _  X).
     
     induction (eq_sym (has_type_ro_OpZRexp_infer _ _ _ w)).
     pose proof (has_type_ro_OpZRexp_inverse _ _ w) as w'. 
     pose proof (r_ro_exp_prt_inv w' t1) as p. 
     pose proof (r_ro_exp_prt_inv w' t2) as q. 
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p q).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ p q).
     apply (r_ro_exp_prt _ _ _ _ _ _  X).
     
     induction (has_type_ro_unambiguous _ _ _ _ (has_type_ro_Skip Γ) w).
@@ -234,7 +234,7 @@ Proof.
     
     apply (r_ro_sequence_prt_inv r1 r2) in t1 as [θ1 [p1 p2]].
     apply (r_ro_sequence_prt_inv r1 r2) in t2 as [θ2 [q1 q2]].
-    pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _ p1 q1).
+    pose proof (r_admissible_rw_disj_prt _ _ _ _ _ _ _ _ p1 q1).
     assert (r2 ||~ {{(θ1 /\\\ θ2) tt}} e2 {{y | (fun x : sem_ro_ctx nil * sem_ro_ctx Γ => ψ1 y (fst x; snd x))}}).
     apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p2);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -243,7 +243,7 @@ Proof.
     apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a q2);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     destruct h2; auto.
-    pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _ X0 X1).
+    pose proof (r_admissible_rw_disj_prt _ _ _ _ _ _ _ _ X0 X1).
     
     pose proof (r_rw_sequence_prt _ _ _ _ _ _ _ _ _ _ h X X2).
     pose proof (r_rw_ro_prt _ _ _ _ _ _ (has_type_ro_rw Γ (e1;; e2) τ h) X3).
@@ -254,7 +254,7 @@ Proof.
 
     apply (r_ro_cond_prt_inv r1 r2 r3) in t1 as [θ1 [[p1 p2] p3]].
     apply (r_ro_cond_prt_inv r1 r2 r3) in t2 as [θ2 [[q1 q2] q3]].
-    pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p1 q1).
+    pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ p1 q1).
     assert (r2 ||~ {{ro_to_rw_pre ((θ1 /\\\ θ2) true)}} e2 {{y | (fun x : sem_ro_ctx nil * sem_ro_ctx Γ => ψ1 y (fst x; snd x))}}).
     apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p2);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -263,7 +263,7 @@ Proof.
     apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a q2);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     destruct h2; auto.
-    pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _ X0 X1).
+    pose proof (r_admissible_rw_disj_prt _ _ _ _ _ _ _ _ X0 X1).
     assert (r3 ||~ {{ro_to_rw_pre ((θ1 /\\\ θ2) false)}} e3 {{y | (fun x : sem_ro_ctx nil * sem_ro_ctx Γ => ψ1 y (fst x; snd x))}}).
     apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p3);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -272,7 +272,7 @@ Proof.
     apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a q3);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     destruct h2; auto.
-    pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _ X3 X4).
+    pose proof (r_admissible_rw_disj_prt _ _ _ _ _ _ _ _ X3 X4).
     assert (r1 |~ {{rw_to_ro_pre (fun x => ϕ (snd x))}} e1 {{y | (θ1 /\\\ θ2) y}}).
     apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -289,8 +289,8 @@ Proof.
         [θ11 [θ12 [[[p1 p2] p3] p4]]].
       pose proof (@r_ro_case_prt_inv _ _ _ _ _ _ _ _ w1 w2 w3 w4 _ _ t2) as
         [θ21 [θ22 [[[q1 q2] q3] q4]]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p1 q1).
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p2 q2).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ p1 q1).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ p2 q2).
       assert (w3 ||~ {{ro_to_rw_pre ((θ11 /\\\ θ21)  true)}} e2 {{y | @ro_to_rw_pre Γ nil (ψ1 y)}}).
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p3);
         try (intros h1 [ch2 h3]; auto); try (intros h1 h2 h3; auto).
@@ -304,8 +304,8 @@ Proof.
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a q4);
         try (intros h1 [h2 h3]; auto); try (intros h1 h2 h3; auto).
       
-      pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _ X1 X2).
-      pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _ X3 X4).
+      pose proof (r_admissible_rw_disj_prt _ _ _ _ _ _ _ _ X1 X2).
+      pose proof (r_admissible_rw_disj_prt _ _ _ _ _ _ _ _ X3 X4).
 
       pose proof (r_rw_case_prt).
       pose proof (r_rw_case_prt _ _ _ _ _ _ _ w1 w2 w3 w4 h (fun x => ϕ (snd x)) _ _ _ X X0 X5 X6).
@@ -348,10 +348,10 @@ Proof.
       apply X.
       apply X1.
       destruct X0, X2.
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ r r1).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ r r1).
       split.
       apply X0.
-      apply r_admissible_rw_conj_prt.
+      apply r_admissible_rw_disj_prt.
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a r0);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
       destruct h2; auto.
@@ -388,7 +388,7 @@ Proof.
         destruct h2; auto.
       }
 
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _  x1 x2) as trip_e.
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _  x1 x2) as trip_e.
       clear x1 x2 p3 q3.
 
       assert (r2 ||~ {{ro_to_rw_pre ((θ1 /\\\ θ2) true)}} e2 {{_ | I1}}) as x1.
@@ -405,7 +405,7 @@ Proof.
         destruct h2; auto.
       }
 
-      pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _  x1 x2) as trip_c.
+      pose proof (r_admissible_rw_disj_prt _ _ _ _ _ _ _ _  x1 x2) as trip_c.
       clear x1 x2 p4 q4.
       pose proof (r_rw_while_prt _ _ _ _ _ _ h _ _ trip_e trip_c) as H.
 
@@ -447,7 +447,7 @@ Proof.
       pose proof (has_type_rw_Newvar_inverse h) as [σ [we wc]].
       pose proof (r_ro_new_var_prt_inv we wc t1) as [θ1 [p1 p2]].
       pose proof (r_ro_new_var_prt_inv we wc t2) as [θ2 [q1 q2]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _  p1 q1) as trip_e.
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _  p1 q1) as trip_e.
       simpl in p2, q2.
       assert (wc ||~ {{(fun x : sem_datatype σ * unit * sem_ro_ctx Γ => (θ1 /\\\ θ2) (fst (fst x)) (snd x))}} e2 {{y
        | (fun x : sem_datatype σ * unit * sem_ro_ctx Γ => ψ1 y (snd x))}}).
@@ -459,7 +459,7 @@ Proof.
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a q2);
           try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
       destruct h2; auto.
-      pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _  X X0) as trip_c.
+      pose proof (r_admissible_rw_disj_prt _ _ _ _ _ _ _ _  X X0) as trip_c.
       pose proof (r_rw_new_var_prt Γ nil e1 e2 τ σ we wc (fun x => ϕ (snd x)) (fun y x => (ψ1 /\\\ ψ2) y (snd x)) (θ1 /\\\ θ2) h trip_e trip_c).
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X1);
           try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -480,7 +480,7 @@ Proof.
       pose proof (has_type_ro_Lim_inverse _ _ w).
       pose proof (r_ro_lim_prt_inv H t1) as [θ1 [p1 p2]].
       pose proof (r_ro_lim_prt_inv H t2) as [θ2 [q1 q2]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _  p1 q1) as trip_e.
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _  p1 q1) as trip_e.
       apply (r_ro_lim_prt _ _ H _ _ w _ trip_e).
       intros.
       simpl.
@@ -570,8 +570,8 @@ Proof.
     pose proof (has_type_ro_OpZplus_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_int_op_plus_tot_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_int_op_plus_tot_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_int_op_plus_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -583,8 +583,8 @@ Proof.
     pose proof (has_type_ro_OpZminus_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_int_op_minus_tot_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_int_op_minus_tot_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_int_op_minus_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -596,8 +596,8 @@ Proof.
     pose proof (has_type_ro_OpZmult_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_int_op_mult_tot_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_int_op_mult_tot_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_int_op_mult_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -609,8 +609,8 @@ Proof.
     pose proof (has_type_ro_OpZlt_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_int_comp_lt_tot_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_int_comp_lt_tot_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_int_comp_lt_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -622,8 +622,8 @@ Proof.
     pose proof (has_type_ro_OpZeq_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_int_comp_eq_tot_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_int_comp_eq_tot_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_int_comp_eq_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -635,8 +635,8 @@ Proof.
     pose proof (has_type_ro_OpRplus_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_real_op_plus_tot_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_real_op_plus_tot_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_real_op_plus_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -648,8 +648,8 @@ Proof.
     pose proof (has_type_ro_OpRminus_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_real_op_minus_tot_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_real_op_minus_tot_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_real_op_minus_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -661,8 +661,8 @@ Proof.
     pose proof (has_type_ro_OpRlt_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_real_lt_tot_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_real_lt_tot_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_real_lt_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -676,8 +676,8 @@ Proof.
     pose proof (has_type_ro_OpRmult_inverse _ _ _ w) as [w1 w2]. 
     pose proof (r_ro_real_op_mult_tot_inv w1 w2 t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
     pose proof (r_ro_real_op_mult_tot_inv w1 w2 t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
     apply (r_ro_real_op_mult_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
     intros.
     destruct H, H0.
@@ -690,7 +690,7 @@ Proof.
     pose proof (has_type_ro_OpRrecip_inverse _ _ w) as w'. 
     pose proof (r_ro_recip_tot_inv w' t1) as [θ1 [p1 p2]]. 
     pose proof (r_ro_recip_tot_inv w' t2) as [θ2 [q1 q2]]. 
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ p1 q1).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ p1 q1).
     apply (r_ro_recip_tot _ _  w' _ _ _ _  X).
     intros y γ h.
     destruct h.
@@ -706,14 +706,14 @@ Proof.
     pose proof (has_type_ro_OpZRcoerce_inverse _ _ w) as w'. 
     pose proof (r_ro_coerce_tot_inv w' t1) as p. 
     pose proof (r_ro_coerce_tot_inv w' t2) as q. 
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ p q).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ p q).
     apply (r_ro_coerce_tot _ _ _ _ _ _  X).
     
     induction (eq_sym (has_type_ro_OpZRexp_infer _ _ _ w)).
     pose proof (has_type_ro_OpZRexp_inverse _ _ w) as w'. 
     pose proof (r_ro_exp_tot_inv w' t1) as p. 
     pose proof (r_ro_exp_tot_inv w' t2) as q. 
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ p q).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ p q).
     apply (r_ro_exp_tot _ _ _ _ _ _  X).
     
     induction (has_type_ro_unambiguous _ _ _ _ (has_type_ro_Skip Γ) w).
@@ -731,7 +731,7 @@ Proof.
     
     apply (r_ro_sequence_tot_inv r1 r2) in t1 as [θ1 [p1 p2]].
     apply (r_ro_sequence_tot_inv r1 r2) in t2 as [θ2 [q1 q2]].
-    pose proof (r_admissible_rw_conj_tot _ _ _ _ _ _ _ _ p1 q1).
+    pose proof (r_admissible_rw_disj_tot _ _ _ _ _ _ _ _ p1 q1).
     assert (r2 ||~ [{(θ1 /\\\ θ2) tt}] e2 [{y | (fun x : sem_ro_ctx nil * sem_ro_ctx Γ => ψ1 y (fst x; snd x))}]).
     apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a p2);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -740,7 +740,7 @@ Proof.
     apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a q2);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     destruct h2; auto.
-    pose proof (r_admissible_rw_conj_tot _ _ _ _ _ _ _ _ X0 X1).
+    pose proof (r_admissible_rw_disj_tot _ _ _ _ _ _ _ _ X0 X1).
     
     pose proof (r_rw_sequence_tot _ _ _ _ _ _ _ _ _ _ h X X2).
     pose proof (r_rw_ro_tot _ _ _ _ _ _ (has_type_ro_rw Γ (e1;; e2) τ h) X3).
@@ -751,7 +751,7 @@ Proof.
 
     apply (r_ro_cond_tot_inv r1 r2 r3) in t1 as [θ1 [[p1 p2] p3]].
     apply (r_ro_cond_tot_inv r1 r2 r3) in t2 as [θ2 [[q1 q2] q3]].
-    pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ p1 q1).
+    pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ p1 q1).
     assert (r2 ||~ [{ro_to_rw_pre ((θ1 /\\\ θ2) true)}] e2 [{y | (fun x : sem_ro_ctx nil * sem_ro_ctx Γ => ψ1 y (fst x; snd x))}]).
     apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a p2);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -760,7 +760,7 @@ Proof.
     apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a q2);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     destruct h2; auto.
-    pose proof (r_admissible_rw_conj_tot _ _ _ _ _ _ _ _ X0 X1).
+    pose proof (r_admissible_rw_disj_tot _ _ _ _ _ _ _ _ X0 X1).
     assert (r3 ||~ [{ro_to_rw_pre ((θ1 /\\\ θ2) false)}] e3 [{y | (fun x : sem_ro_ctx nil * sem_ro_ctx Γ => ψ1 y (fst x; snd x))}]).
     apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a p3);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -769,7 +769,7 @@ Proof.
     apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a q3);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     destruct h2; auto.
-    pose proof (r_admissible_rw_conj_tot _ _ _ _ _ _ _ _ X3 X4).
+    pose proof (r_admissible_rw_disj_tot _ _ _ _ _ _ _ _ X3 X4).
     assert (r1 |~ [{rw_to_ro_pre (fun x => ϕ (snd x))}] e1 [{y | (θ1 /\\\ θ2) y}]).
     apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -785,8 +785,8 @@ Proof.
         [θ11 [θ12 [ϕ11 [ϕ12 [[[[[[p1 p2] p3] p4] p5] p6] p7]]]]].
       pose proof (@r_ro_case_tot_inv _ _ _ _ _ _ _ _ w1 w2 w3 w4 _ _ t2) as
         [θ21 [θ22 [ϕ21 [ϕ22 [[[[[[q1 q2] q3] q4] q5] q6] q7]]]]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p1 q1).
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p2 q2).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ p1 q1).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ p2 q2).
       assert (w3 ||~ [{ro_to_rw_pre ((θ11 /\\\ θ21)  true)}] e2 [{y | @ro_to_rw_pre Γ nil (ψ1 y)}]).
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a p3);
         try (intros h1 [ch2 h3]; auto); try (intros h1 h2 h3; auto).
@@ -800,8 +800,8 @@ Proof.
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a q4);
         try (intros h1 [h2 h3]; auto); try (intros h1 h2 h3; auto).
       
-      pose proof (r_admissible_rw_conj_tot _ _ _ _ _ _ _ _ X1 X2).
-      pose proof (r_admissible_rw_conj_tot _ _ _ _ _ _ _ _ X3 X4).
+      pose proof (r_admissible_rw_disj_tot _ _ _ _ _ _ _ _ X1 X2).
+      pose proof (r_admissible_rw_disj_tot _ _ _ _ _ _ _ _ X3 X4).
 
       pose proof (r_rw_case_tot).
       pose proof (r_rw_case_tot _ _ _ _ _ _ _ w1 w2 w3 w4 h (fun x => ϕ (snd x)) _ _ _ ϕ11 ϕ12 X X0 X5 X6 p5 p6 p7).
@@ -858,10 +858,10 @@ Proof.
       destruct X0 as [[m1 m2] m3].
       destruct X2 as [[n1 n2] n3].
       repeat split.
-      apply r_admissible_ro_conj_prt.
+      apply r_admissible_ro_disj_prt.
       exact m1.
       exact n1.
-      apply r_admissible_rw_conj_tot.
+      apply r_admissible_rw_disj_tot.
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a m2);
         try (intros h1 [h2 h3]; auto); try (intros h1 h2 h3; auto).
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a n2);
@@ -903,7 +903,7 @@ Proof.
         destruct h2; auto.
       }
 
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _  x1 x2) as trip_e.
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _  x1 x2) as trip_e.
       clear x1 x2 p3 q3.
       pose proof (r_rw_while_tot _ _ _ _ r1 r2 h (I1 /\\ I2) (θ1 /\\\ θ2) V1 trip_e).
       assert (r2
@@ -933,7 +933,7 @@ Proof.
         exact H.
       }
 
-      pose proof (r_admissible_rw_conj_tot _ _ _ _ _ _ _ _  x1 x2) as trip_c.
+      pose proof (r_admissible_rw_disj_tot _ _ _ _ _ _ _ _  x1 x2) as trip_c.
       clear x1 x2 p4 q4.
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a trip_c);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -987,7 +987,7 @@ Proof.
       pose proof (has_type_rw_Newvar_inverse h) as [σ [we wc]].
       pose proof (r_ro_new_var_tot_inv we wc t1) as [θ1 [p1 p2]].
       pose proof (r_ro_new_var_tot_inv we wc t2) as [θ2 [q1 q2]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _  p1 q1) as trip_e.
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _  p1 q1) as trip_e.
       simpl in p2, q2.
       assert (wc ||~ [{(fun x : sem_datatype σ * unit * sem_ro_ctx Γ => (θ1 /\\\ θ2) (fst (fst x)) (snd x))}] e2 [{y
        | (fun x : sem_datatype σ * unit * sem_ro_ctx Γ => ψ1 y (snd x))}]).
@@ -999,7 +999,7 @@ Proof.
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a q2);
           try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
       destruct h2; auto.
-      pose proof (r_admissible_rw_conj_tot _ _ _ _ _ _ _ _  X X0) as trip_c.
+      pose proof (r_admissible_rw_disj_tot _ _ _ _ _ _ _ _  X X0) as trip_c.
       pose proof (r_rw_new_var_tot Γ nil e1 e2 τ σ we wc (fun x => ϕ (snd x)) (fun y x => (ψ1 /\\\ ψ2) y (snd x)) (θ1 /\\\ θ2) h trip_e trip_c).
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X1);
           try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -1020,7 +1020,7 @@ Proof.
       pose proof (has_type_ro_Lim_inverse _ _ w).
       pose proof (r_ro_lim_tot_inv H t1) as [θ1 [p1 p2]].
       pose proof (r_ro_lim_tot_inv H t2) as [θ2 [q1 q2]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _  p1 q1) as trip_e.
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _  p1 q1) as trip_e.
       apply (r_ro_lim_tot _ _ H _ _ w _ trip_e).
       intros.
       simpl.
@@ -1140,8 +1140,8 @@ Proof.
       pose proof (has_type_ro_OpZplus_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_int_op_plus_prt_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_int_op_plus_prt_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_int_op_plus_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1164,8 +1164,8 @@ Proof.
       pose proof (has_type_ro_OpZminus_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_int_op_minus_prt_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_int_op_minus_prt_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_int_op_minus_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1188,8 +1188,8 @@ Proof.
       pose proof (has_type_ro_OpZmult_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_int_op_mult_prt_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_int_op_mult_prt_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_int_op_mult_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1212,8 +1212,8 @@ Proof.
       pose proof (has_type_ro_OpZlt_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_int_comp_lt_prt_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_int_comp_lt_prt_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_int_comp_lt_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1236,8 +1236,8 @@ Proof.
       pose proof (has_type_ro_OpZeq_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_int_comp_eq_prt_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_int_comp_eq_prt_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_int_comp_eq_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1260,8 +1260,8 @@ Proof.
       pose proof (has_type_ro_OpRplus_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_real_op_plus_prt_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_real_op_plus_prt_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_real_op_plus_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1284,8 +1284,8 @@ Proof.
       pose proof (has_type_ro_OpRminus_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_real_op_minus_prt_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_real_op_minus_prt_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_real_op_minus_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1308,8 +1308,8 @@ Proof.
       pose proof (has_type_ro_OpRlt_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_real_lt_prt_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_real_lt_prt_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_real_lt_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1332,8 +1332,8 @@ Proof.
       pose proof (has_type_ro_OpRmult_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_real_op_mult_prt_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_real_op_mult_prt_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_real_op_mult_prt _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1355,7 +1355,7 @@ Proof.
       pose proof (has_type_ro_OpRrecip_inverse _ _ h) as w'. 
       pose proof (@r_rw_recip_prt_inv _ _ _ _ w' _ _ t1) as [θ1 [p1 p2]]. 
       pose proof (@r_rw_recip_prt_inv _ _ _ _ w' _ _ t2) as [θ2 [q1 q2]]. 
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p1 q1).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ p1 q1).
       pose proof (r_ro_recip_prt _ _  w' _ _ h
                   (fun y x => (ψ1 /\\\ ψ2) y (tedious_sem_app Δ Γ x))
                   X).
@@ -1379,7 +1379,7 @@ Proof.
       pose proof (has_type_ro_OpZRcoerce_inverse _ _ h) as w'. 
       pose proof (@r_rw_coerce_prt_inv _ _ _ _ w' _ _ t1) as p.  
       pose proof (@r_rw_coerce_prt_inv _ _ _ _ w' _ _ t2) as q.  
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p q).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ p q).
       pose proof r_ro_coerce_prt.
       pose proof (r_ro_coerce_prt _ _  w' _
                     (fun y x => (ψ1 /\\\ ψ2) y (tedious_sem_app Δ Γ x))
@@ -1397,7 +1397,7 @@ Proof.
       pose proof (has_type_ro_OpZRexp_inverse _ _ h) as w'. 
       pose proof (@r_rw_exp_prt_inv _ _ _ _ w' _ _ t1) as p.  
       pose proof (@r_rw_exp_prt_inv _ _ _ _ w' _ _ t2) as q.  
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p q).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ p q).
       pose proof r_ro_exp_prt.
       pose proof (r_ro_exp_prt _ _  w' _
                     (fun y x => (ψ1 /\\\ ψ2) y (tedious_sem_app Δ Γ x))
@@ -1431,7 +1431,7 @@ Proof.
       
       apply (r_rw_sequence_prt_inv r1 r2) in t1 as [θ1 [p1 p2]].
       apply (r_rw_sequence_prt_inv r1 r2) in t2 as [θ2 [q1 q2]].
-      pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _ p1 q1).
+      pose proof (r_admissible_rw_disj_prt _ _ _ _ _ _ _ _ p1 q1).
       assert (r2 ||~ {{(θ1 /\\\ θ2) tt}} e2 {{y | (fun x  => ψ1 y x)}}).
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p2);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -1440,7 +1440,7 @@ Proof.
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a q2);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
       destruct h2; auto.
-      pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _ X0 X1).
+      pose proof (r_admissible_rw_disj_prt _ _ _ _ _ _ _ _ X0 X1).
       apply (r_rw_sequence_prt _ _ _ _ _ _ _ _ _ _ w X X2).
     }
 
@@ -1448,7 +1448,7 @@ Proof.
       pose proof (has_type_rw_Cond_inverse _ _ _ _ _ _ w) as [[r1 r2] r3].
       apply (r_rw_cond_prt_inv r1 r2 r3) in t1 as [θ1 [[p1 p2] p3]].
       apply (r_rw_cond_prt_inv r1 r2 r3) in t2 as [θ2 [[q1 q2] q3]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p1 q1).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ p1 q1).
       assert (r2 ||~ {{ro_to_rw_pre ((θ1 /\\\ θ2) true)}} e2 {{y | ψ1 y }}).
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p2);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -1457,7 +1457,7 @@ Proof.
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a q2);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
       destruct h2; auto.
-      pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _ X0 X1).
+      pose proof (r_admissible_rw_disj_prt _ _ _ _ _ _ _ _ X0 X1).
       assert (r3 ||~ {{ro_to_rw_pre ((θ1 /\\\ θ2) false)}} e3 {{y |  ψ1 y }}).
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p3);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -1466,7 +1466,7 @@ Proof.
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a q3);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
       destruct h2; auto.
-      pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _ X3 X4).
+      pose proof (r_admissible_rw_disj_prt _ _ _ _ _ _ _ _ X3 X4).
       assert (r1 |~ {{rw_to_ro_pre (fun x => ϕ x)}} e1 {{y | (θ1 /\\\ θ2) y}}).
       apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -1482,8 +1482,8 @@ Proof.
         [θ11 [θ12 [[[p1 p2] p3] p4]]].
       pose proof (@r_rw_case_prt_inv _ _ _ _ _ _ _ _ w1 w2 w3 w4 _ _ t2) as
         [θ21 [θ22 [[[q1 q2] q3] q4]]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p1 q1).
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p2 q2).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ p1 q1).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ p2 q2).
       assert (w3 ||~ {{ro_to_rw_pre ((θ11 /\\\ θ21)  true)}} e2 {{y | (ψ1 y)}}).
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p3);
         try (intros h1 [ch2 h3]; auto); try (intros h1 h2 h3; auto).
@@ -1497,8 +1497,8 @@ Proof.
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a q4);
         try (intros h1 [h2 h3]; auto); try (intros h1 h2 h3; auto).
       
-      pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _ X1 X2).
-      pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _ X3 X4).
+      pose proof (r_admissible_rw_disj_prt _ _ _ _ _ _ _ _ X1 X2).
+      pose proof (r_admissible_rw_disj_prt _ _ _ _ _ _ _ _ X3 X4).
 
       pose proof (r_rw_case_prt).
       exact (r_rw_case_prt _ _ _ _ _ _ _ w1 w2 w3 w4 w (fun x => ϕ ( x)) _ _ _ X X0 X5 X6).
@@ -1536,10 +1536,10 @@ Proof.
       apply X.
       apply X1.
       destruct X0, X2.
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ r r1).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ r r1).
       split.
       apply X0.
-      apply r_admissible_rw_conj_prt.
+      apply r_admissible_rw_disj_prt.
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a r0);
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
       destruct h2; auto.
@@ -1570,7 +1570,7 @@ Proof.
         destruct h2; auto.
       }
 
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _  x1 x2) as trip_e.
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _  x1 x2) as trip_e.
       clear x1 x2 p3 q3.
 
       assert (r2 ||~ {{ro_to_rw_pre ((θ1 /\\\ θ2) true)}} e2 {{_ | I1}}) as x1.
@@ -1587,7 +1587,7 @@ Proof.
         destruct h2; auto.
       }
 
-      pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _  x1 x2) as trip_c.
+      pose proof (r_admissible_rw_disj_prt _ _ _ _ _ _ _ _  x1 x2) as trip_c.
       clear x1 x2 p4 q4.
       pose proof (r_rw_while_prt _ _ _ _ _ _ w _ _ trip_e trip_c) as H.
 
@@ -1622,7 +1622,7 @@ Proof.
       pose proof (has_type_rw_Newvar_inverse w) as [σ [we wc]].
       pose proof (r_rw_new_var_prt_inv we wc t1) as [θ1 [p1 p2]].
       pose proof (r_rw_new_var_prt_inv we wc t2) as [θ2 [q1 q2]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _  p1 q1) as trip_e.
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _  p1 q1) as trip_e.
       simpl in p2, q2.
       assert (wc ||~ {{(fun x => (θ1 /\\\ θ2) (fst (fst x)) (snd (fst x); snd x))}} e2 {{y
        | (fun x  => ψ1 y (snd (fst x), snd x))}}).
@@ -1634,7 +1634,7 @@ Proof.
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a q2);
           try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
       destruct h2; auto.
-      pose proof (r_admissible_rw_conj_prt _ _ _ _ _ _ _ _  X X0) as trip_c.
+      pose proof (r_admissible_rw_disj_prt _ _ _ _ _ _ _ _  X X0) as trip_c.
       pose proof (r_rw_new_var_prt Γ _ e1 e2 τ σ we wc _ (fun y x => (ψ1 /\\\ ψ2) y x) (θ1 /\\\ θ2) w trip_e trip_c).
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X1);
           try (intros h1 h2; auto); try (intros h1 h2 h3; auto).      
@@ -1645,7 +1645,7 @@ Proof.
       pose proof (has_type_rw_Assign_inverse w) as [σ [we wc]].
       pose proof (r_rw_assign_prt_inv wc t1) as [θ1 [p1 p2]].
       pose proof (r_rw_assign_prt_inv wc t2) as [θ2 [q1 q2]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _  p1 q1) as trip_e.
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _  p1 q1) as trip_e.
       pose proof (r_rw_assign_prt).
       apply (r_rw_assign_prt _ _ _ _ _ _ _ _
                                   (ψ1 /\\\ ψ2)
@@ -1664,7 +1664,7 @@ Proof.
       pose proof (has_type_ro_Lim_inverse _ _ h).
       pose proof (r_rw_lim_prt_inv H t1) as [θ1 [p1 p2]].
       pose proof (r_rw_lim_prt_inv H t2) as [θ2 [q1 q2]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _  p1 q1) as trip_e.
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _  p1 q1) as trip_e.
       pose proof (r_ro_lim_prt _ _ H (fun x => ϕ (tedious_sem_app _ _ x)) _ h
                                (fun y x => (ψ1 /\\\ ψ2) y (tedious_sem_app _ _ x))
                     trip_e).
@@ -1799,8 +1799,8 @@ Proof.
       pose proof (has_type_ro_OpZplus_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_int_op_plus_tot_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_int_op_plus_tot_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_int_op_plus_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1823,8 +1823,8 @@ Proof.
       pose proof (has_type_ro_OpZminus_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_int_op_minus_tot_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_int_op_minus_tot_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_int_op_minus_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1847,8 +1847,8 @@ Proof.
       pose proof (has_type_ro_OpZmult_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_int_op_mult_tot_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_int_op_mult_tot_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_int_op_mult_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1871,8 +1871,8 @@ Proof.
       pose proof (has_type_ro_OpZlt_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_int_comp_lt_tot_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_int_comp_lt_tot_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_int_comp_lt_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1895,8 +1895,8 @@ Proof.
       pose proof (has_type_ro_OpZeq_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_int_comp_eq_tot_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_int_comp_eq_tot_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_int_comp_eq_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1919,8 +1919,8 @@ Proof.
       pose proof (has_type_ro_OpRplus_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_real_op_plus_tot_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_real_op_plus_tot_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_real_op_plus_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1943,8 +1943,8 @@ Proof.
       pose proof (has_type_ro_OpRminus_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_real_op_minus_tot_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_real_op_minus_tot_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_real_op_minus_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1967,8 +1967,8 @@ Proof.
       pose proof (has_type_ro_OpRlt_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_real_lt_tot_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_real_lt_tot_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_real_lt_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -1993,8 +1993,8 @@ Proof.
       pose proof (has_type_ro_OpRmult_inverse _ _ _ h) as [w1 w2]. 
       pose proof (@r_rw_real_op_mult_tot_inv _ _ _ _ _ w1 w2 _ _ t1) as [ψ11 [ψ12 [[m11 m12] m13]]].
       pose proof (@r_rw_real_op_mult_tot_inv _ _ _ _ _ w1 w2 _ _ t2) as [ψ21 [ψ22 [[m21 m22] m23]]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m11 m21).
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ m12 m22).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m11 m21).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ m12 m22).
       apply (r_ro_real_op_mult_tot _ _ _ w1 w2 _ _ _ _ _ X X0).
       intros.
       destruct H, H0.
@@ -2016,7 +2016,7 @@ Proof.
       pose proof (has_type_ro_OpRrecip_inverse _ _ h) as w'. 
       pose proof (@r_rw_recip_tot_inv _ _ _ _ w' _ _ t1) as [θ1 [p1 p2]]. 
       pose proof (@r_rw_recip_tot_inv _ _ _ _ w' _ _ t2) as [θ2 [q1 q2]]. 
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ p1 q1).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ p1 q1).
       pose proof (r_ro_recip_tot _ _  w' _ _ h
                   (fun y x => (ψ1 /\\\ ψ2) y (tedious_sem_app Δ Γ x))
                   X).
@@ -2041,7 +2041,7 @@ Proof.
       pose proof (has_type_ro_OpZRcoerce_inverse _ _ h) as w'. 
       pose proof (@r_rw_coerce_tot_inv _ _ _ _ w' _ _ t1) as p.  
       pose proof (@r_rw_coerce_tot_inv _ _ _ _ w' _ _ t2) as q.  
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ p q).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ p q).
       pose proof r_ro_coerce_tot.
       pose proof (r_ro_coerce_tot _ _  w' _
                     (fun y x => (ψ1 /\\\ ψ2) y (tedious_sem_app Δ Γ x))
@@ -2059,7 +2059,7 @@ Proof.
       pose proof (has_type_ro_OpZRexp_inverse _ _ h) as w'. 
       pose proof (@r_rw_exp_tot_inv _ _ _ _ w' _ _ t1) as p.  
       pose proof (@r_rw_exp_tot_inv _ _ _ _ w' _ _ t2) as q.  
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ p q).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ p q).
       pose proof r_ro_exp_tot.
       pose proof (r_ro_exp_tot _ _  w' _
                     (fun y x => (ψ1 /\\\ ψ2) y (tedious_sem_app Δ Γ x))
@@ -2093,7 +2093,7 @@ Proof.
       
       apply (r_rw_sequence_tot_inv r1 r2) in t1 as [θ1 [p1 p2]].
       apply (r_rw_sequence_tot_inv r1 r2) in t2 as [θ2 [q1 q2]].
-      pose proof (r_admissible_rw_conj_tot _ _ _ _ _ _ _ _ p1 q1).
+      pose proof (r_admissible_rw_disj_tot _ _ _ _ _ _ _ _ p1 q1).
       assert (r2 ||~ [{(θ1 /\\\ θ2) tt}] e2 [{y | (fun x  => ψ1 y x)}]).
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a p2);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -2102,7 +2102,7 @@ Proof.
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a q2);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
       destruct h2; auto.
-      pose proof (r_admissible_rw_conj_tot _ _ _ _ _ _ _ _ X0 X1).
+      pose proof (r_admissible_rw_disj_tot _ _ _ _ _ _ _ _ X0 X1).
       apply (r_rw_sequence_tot _ _ _ _ _ _ _ _ _ _ w X X2).
     }
 
@@ -2110,7 +2110,7 @@ Proof.
       pose proof (has_type_rw_Cond_inverse _ _ _ _ _ _ w) as [[r1 r2] r3].
       apply (r_rw_cond_tot_inv r1 r2 r3) in t1 as [θ1 [[p1 p2] p3]].
       apply (r_rw_cond_tot_inv r1 r2 r3) in t2 as [θ2 [[q1 q2] q3]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _ p1 q1).
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _ p1 q1).
       assert (r2 ||~ [{ro_to_rw_pre ((θ1 /\\\ θ2) true)}] e2 [{y | ψ1 y }]).
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a p2);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -2119,7 +2119,7 @@ Proof.
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a q2);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
       destruct h2; auto.
-      pose proof (r_admissible_rw_conj_tot _ _ _ _ _ _ _ _ X0 X1).
+      pose proof (r_admissible_rw_disj_tot _ _ _ _ _ _ _ _ X0 X1).
       assert (r3 ||~ [{ro_to_rw_pre ((θ1 /\\\ θ2) false)}] e3 [{y |  ψ1 y }]).
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a p3);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -2128,7 +2128,7 @@ Proof.
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a q3);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
       destruct h2; auto.
-      pose proof (r_admissible_rw_conj_tot _ _ _ _ _ _ _ _ X3 X4).
+      pose proof (r_admissible_rw_disj_tot _ _ _ _ _ _ _ _ X3 X4).
       assert (r1 |~ [{rw_to_ro_pre (fun x => ϕ x)}] e1 [{y | (θ1 /\\\ θ2) y}]).
       apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -2144,8 +2144,8 @@ Proof.
         [θ11 [θ12 [ϕ11 [ϕ12 [[[[[[p1 p2] p3] p4] p5] p6] p7]]]]].
       pose proof (@r_rw_case_tot_inv _ _ _ _ _ _ _ _ w1 w2 w3 w4 _ _ t2) as
         [θ21 [θ22 [ϕ21 [ϕ22 [[[[[[q1 q2] q3] q4] q5] q6] q7]]]]].
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p1 q1).
-      pose proof (r_admissible_ro_conj_prt _ _ _ _ _ _ _ p2 q2).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ p1 q1).
+      pose proof (r_admissible_ro_disj_prt _ _ _ _ _ _ _ p2 q2).
       assert (w3 ||~ [{ro_to_rw_pre ((θ11 /\\\ θ21)  true)}] e2 [{y |  (ψ1 y)}]).
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a p3);
         try (intros h1 [ch2 h3]; auto); try (intros h1 h2 h3; auto).
@@ -2159,8 +2159,8 @@ Proof.
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a q4);
         try (intros h1 [h2 h3]; auto); try (intros h1 h2 h3; auto).
       
-      pose proof (r_admissible_rw_conj_tot _ _ _ _ _ _ _ _ X1 X2).
-      pose proof (r_admissible_rw_conj_tot _ _ _ _ _ _ _ _ X3 X4).
+      pose proof (r_admissible_rw_disj_tot _ _ _ _ _ _ _ _ X1 X2).
+      pose proof (r_admissible_rw_disj_tot _ _ _ _ _ _ _ _ X3 X4).
 
       pose proof (r_rw_case_tot).
       exact (r_rw_case_tot _ _ _ _ _ _ _ w1 w2 w3 w4 w (fun x => ϕ ( x)) _ _ _ ϕ11 ϕ12 X X0 X5 X6 p5 p6 p7).
@@ -2206,10 +2206,10 @@ Proof.
       destruct X0 as [[m1 m2] m3].
       destruct X2 as [[n1 n2] n3].
       repeat split.
-      apply r_admissible_ro_conj_prt.
+      apply r_admissible_ro_disj_prt.
       exact m1.
       exact n1.
-      apply r_admissible_rw_conj_tot.
+      apply r_admissible_rw_disj_tot.
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a m2);
         try (intros h1 [h2 h3]; auto); try (intros h1 h2 h3; auto).
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a n2);
@@ -2244,7 +2244,7 @@ Proof.
         destruct h2; auto.
       }
 
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _  x1 x2) as trip_e.
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _  x1 x2) as trip_e.
       clear x1 x2 p3 q3.
       pose proof (r_rw_while_tot _ _ _ _ r1 r2 w (I1 /\\ I2) (θ1 /\\\ θ2) V1 trip_e).
       assert (r2
@@ -2274,7 +2274,7 @@ Proof.
         exact H.
       }
 
-      pose proof (r_admissible_rw_conj_tot _ _ _ _ _ _ _ _  x1 x2) as trip_c.
+      pose proof (r_admissible_rw_disj_tot _ _ _ _ _ _ _ _  x1 x2) as trip_c.
       clear x1 x2 p4 q4.
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a trip_c);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -2321,7 +2321,7 @@ Proof.
       pose proof (has_type_rw_Newvar_inverse w) as [σ [we wc]].
       pose proof (r_rw_new_var_tot_inv we wc t1) as [θ1 [p1 p2]].
       pose proof (r_rw_new_var_tot_inv we wc t2) as [θ2 [q1 q2]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _  p1 q1) as trip_e.
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _  p1 q1) as trip_e.
       simpl in p2, q2.
       assert (wc ||~ [{(fun x => (θ1 /\\\ θ2) (fst (fst x)) (snd (fst x); snd x))}] e2 [{y
        | (fun x  => ψ1 y (snd (fst x), snd x))}]).
@@ -2333,7 +2333,7 @@ Proof.
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a q2);
           try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
       destruct h2; auto.
-      pose proof (r_admissible_rw_conj_tot _ _ _ _ _ _ _ _  X X0) as trip_c.
+      pose proof (r_admissible_rw_disj_tot _ _ _ _ _ _ _ _  X X0) as trip_c.
       pose proof (r_rw_new_var_tot Γ _ e1 e2 τ σ we wc _ (fun y x => (ψ1 /\\\ ψ2) y x) (θ1 /\\\ θ2) w trip_e trip_c).
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X1);
           try (intros h1 h2; auto); try (intros h1 h2 h3; auto).      
@@ -2344,7 +2344,7 @@ Proof.
       pose proof (has_type_rw_Assign_inverse w) as [σ [we wc]].
       pose proof (r_rw_assign_tot_inv wc t1) as [θ1 [p1 p2]].
       pose proof (r_rw_assign_tot_inv wc t2) as [θ2 [q1 q2]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _  p1 q1) as trip_e.
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _  p1 q1) as trip_e.
       pose proof (r_rw_assign_tot).
       apply (r_rw_assign_tot _ _ _ _ _ _ _ _
                                   (ψ1 /\\\ ψ2)
@@ -2363,7 +2363,7 @@ Proof.
       pose proof (has_type_ro_Lim_inverse _ _ h).
       pose proof (r_rw_lim_tot_inv H t1) as [θ1 [p1 p2]].
       pose proof (r_rw_lim_tot_inv H t2) as [θ2 [q1 q2]].
-      pose proof (r_admissible_ro_conj_tot _ _ _ _ _ _ _  p1 q1) as trip_e.
+      pose proof (r_admissible_ro_disj_tot _ _ _ _ _ _ _  p1 q1) as trip_e.
       pose proof (r_ro_lim_tot _ _ H (fun x => ϕ (tedious_sem_app _ _ x)) _ h
                                (fun y x => (ψ1 /\\\ ψ2) y (tedious_sem_app _ _ x))
                     trip_e).
