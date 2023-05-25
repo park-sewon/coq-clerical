@@ -2817,53 +2817,109 @@ Proof.
   exact (r_rw_imply_prt _ _ _ _ w' w' _ _ _ _
                 (fun _ p => p) X3 H2
     ).
-  Defined.
-  
+Defined.
+
+
+Structure ctx_perm Γ Δ := {
+    permuting : sem_ro_ctx Γ -> sem_ro_ctx Δ ;
+    unpermuting : sem_ro_ctx Δ -> sem_ro_ctx Γ ;
+    permuting_eq : forall x, unpermuting (permuting x) = x    
+  }.
+Arguments permuting {_} {_}.
+Arguments unpermuting {_} {_}.
+Arguments permuting_eq {_} {_}.
+       
+Definition ctx_perm_app_const_r_permuting {Γ Δ} (π : ctx_perm Γ Δ) Γ' : sem_ro_ctx (Γ ++ Γ') -> sem_ro_ctx (Δ ++ Γ')
+  := (fun x => (permuting  π (fst_app x); snd_app x)).
+Definition ctx_perm_app_const_r_unpermuting {Γ Δ} (π : ctx_perm Γ Δ) Γ' : sem_ro_ctx (Δ ++ Γ') ->  sem_ro_ctx (Γ ++ Γ')
+  := (fun x => (unpermuting  π (fst_app x); snd_app x)).
+Definition ctx_perm_app_const_r_permuting_eq {Γ Δ} (π : ctx_perm Γ Δ) Γ' :
+  forall x, ctx_perm_app_const_r_unpermuting π Γ' (ctx_perm_app_const_r_permuting  π Γ' x) = x.  
+Proof. intros. rewrite (tedious_equiv_2 x).
+       unfold ctx_perm_app_const_r_permuting, ctx_perm_app_const_r_unpermuting.
+       repeat (rewrite tedious_equiv_fst;
+               rewrite tedious_equiv_snd).
+       rewrite (permuting_eq π).
+       reflexivity.
+Defined.
+Definition ctx_perm_app_const_r {Γ Δ} (π : ctx_perm Γ Δ) Γ' : ctx_perm (Γ ++ Γ') (Δ ++ Γ') :=
+  {|
+    permuting := ctx_perm_app_const_r_permuting π Γ' ;
+    unpermuting := ctx_perm_app_const_r_unpermuting π Γ' ;
+    permuting_eq := ctx_perm_app_const_r_permuting_eq π Γ' |}.
+
+Definition ctx_perm_swap_permuting Γ Δ  : sem_ro_ctx (Γ ++ Δ) -> sem_ro_ctx (Δ ++ Γ)
+  := (fun x => (snd_app x; fst_app x)).
+Definition ctx_perm_swap_unpermuting Γ Δ : sem_ro_ctx (Δ ++ Γ) ->  sem_ro_ctx (Γ ++ Δ)
+  := (fun x => (snd_app x; fst_app x)).
+Definition ctx_perm_swap_permuting_eq Γ Δ :
+  forall x, ctx_perm_swap_unpermuting Γ Δ (ctx_perm_swap_permuting Γ Δ x) = x.  
+Proof. intros. rewrite (tedious_equiv_2 x).
+       unfold ctx_perm_swap_permuting, ctx_perm_swap_unpermuting.
+       repeat (rewrite tedious_equiv_fst;
+               rewrite tedious_equiv_snd).
+       reflexivity.
+Defined.
+Definition ctx_perm_swap Γ Δ : ctx_perm (Γ ++ Δ) (Δ ++ Γ) :=
+  {|
+    permuting := ctx_perm_swap_permuting Γ Δ ;
+    unpermuting := ctx_perm_swap_unpermuting Γ Δ ;
+    permuting_eq := ctx_perm_swap_permuting_eq Γ Δ |}.
+
+Definition ctx_perm_translate {Γ Δ} (π : ctx_perm Γ Δ) (ϕ : sem_ro_ctx Γ -> Prop) : sem_ro_ctx Δ -> Prop.
+Proof.
+  intro x.
+  exact (ϕ (unpermuting π x)). 
+Defined.
 
 Fixpoint r_admissible_permutate_auxiliary_ro_prt Γ Γ1 Γ2  e τ ϕ ψ
-  (w  : Γ |- e : τ)
-  (w1  : (Γ ++ (Γ1 ++ Γ2)) |- e : τ)
-  (w2 : (Γ ++ (Γ2 ++ Γ1)) |- e : τ)
-  (p : w1 |~ {{ϕ}} e {{ψ}}) {struct p} :
-  w2 |~ {{fun x => ϕ (fst_app x; (snd_app (snd_app x); fst_app (snd_app x)))}} e {{fun y x => ψ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x)))}}
+         (π : ctx_perm Γ1 Γ2)
+         (w  : Γ |- e : τ)
+         (w1 : (Γ ++ Γ1) |- e : τ)
+         (w2 : (Γ ++ Γ2) |- e : τ)
+         (p : w1 |~ {{ϕ}} e {{ψ}}) {struct p} :
+  w2 |~ {{fun x => ϕ (fst_app x; unpermuting π (snd_app x))}} e {{y | fun x => ψ y (fst_app x; unpermuting π (snd_app x))}}
 with r_admissible_permutate_auxiliary_ro_tot Γ Γ1 Γ2 e τ ϕ ψ
-  (w  : Γ |- e : τ)
-  (w1  : (Γ ++ (Γ1 ++ Γ2)) |- e : τ)
-  (w2 : (Γ ++ (Γ2 ++ Γ1)) |- e : τ)
-  (p : w1 |~ [{ϕ}] e [{ψ}]) {struct p} :
-  w2 |~ [{fun x => ϕ (fst_app x; (snd_app (snd_app x); fst_app (snd_app x)))}] e [{fun y x => ψ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x)))}]
+                                             (π : ctx_perm Γ1 Γ2)
+         (w  : Γ |- e : τ)
+         (w1 : (Γ ++ Γ1) |- e : τ)
+         (w2 : (Γ ++ Γ2) |- e : τ)
+         (p : w1 |~ [{ϕ}] e [{ψ}]) {struct p} :
+  w2 |~ [{fun x => ϕ (fst_app x; unpermuting π (snd_app x))}] e [{y | fun x => ψ y (fst_app x; unpermuting π (snd_app x))}]
 with r_admissible_permutate_auxiliary_rw_prt Γ Δ Γ1 Γ2 e τ ϕ ψ
+  (π : ctx_perm Γ1 Γ2)
   (w   : Γ ;;; Δ ||- e : τ)
-  (w1  : (Γ ++ (Γ1 ++ Γ2)) ;;; Δ ||- e : τ)
-  (w2  : (Γ ++ (Γ2 ++ Γ1)) ;;; Δ  ||- e : τ)
+  (w1  : (Γ ++ Γ1) ;;; Δ ||- e : τ)
+  (w2  : (Γ ++ Γ2) ;;; Δ  ||- e : τ)
   (p   : w1 ||~ {{ϕ}} e {{ψ}}) {struct p} :
   w2 ||~
-    {{fun x => ϕ (fst x, (fst_app (snd x); (snd_app (snd_app (snd x)); fst_app (snd_app (snd x)))))}}
+    {{fun x => ϕ (fst x, (fst_app (snd x); unpermuting π (snd_app (snd x))))}}
     e
-    {{fun y x => ψ y (fst x, (fst_app (snd x); (snd_app (snd_app (snd x)); fst_app (snd_app (snd x)))))}}
+    {{fun y x => ψ y (fst x, (fst_app (snd x); unpermuting π (snd_app (snd x))))}}
 with r_admissible_permutate_auxiliary_rw_tot Γ Δ Γ1 Γ2 e τ ϕ ψ
+  (π : ctx_perm Γ1 Γ2)
   (w   : Γ ;;; Δ ||- e : τ)
-  (w1  : (Γ ++ (Γ1 ++ Γ2)) ;;; Δ ||- e : τ)
-  (w2  : (Γ ++ (Γ2 ++ Γ1)) ;;; Δ  ||- e : τ)
+  (w1  : (Γ ++ Γ1) ;;; Δ ||- e : τ)
+  (w2  : (Γ ++ Γ2) ;;; Δ  ||- e : τ)
   (p   : w1 ||~ [{ϕ}] e [{ψ}]) {struct p} :
   w2 ||~
-    [{fun x => ϕ (fst x, (fst_app (snd x); (snd_app (snd_app (snd x)); fst_app (snd_app (snd x)))))}]
+    [{fun x => ϕ (fst x, (fst_app (snd x); unpermuting π (snd_app (snd x))))}]
     e
-    [{fun y x => ψ y (fst x, (fst_app (snd x); (snd_app (snd_app (snd x)); fst_app (snd_app (snd x)))))}].
+    [{fun y x => ψ y (fst x, (fst_app (snd x); unpermuting π (snd_app (snd x))))}].
 Proof.
   +
     dependent induction p; try clear IHp; try clear IHp1 IHp2.
     {
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w w0 w2) in p.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w w0 w2) in p.
       clear r_admissible_permutate_auxiliary_ro_prt.
       apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a p);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     }
     {
-      pose proof (r_ro_var_prt _ _ _ w2 (fun y x => ψ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x))))).
+      pose proof (r_ro_var_prt _ _ _ w2 (fun y x => ψ y (fst_app x; unpermuting π (snd_app x)))).
       apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
-      assert ((ro_access (Γ ++ Γ2 ++ Γ1) k τ w2 h1) = (ro_access (Γ ++ Γ1 ++ Γ2) k τ w1 (fst_app h1; (snd_app (snd_app h1); fst_app (snd_app h1))))).
+      assert ((ro_access (Γ ++ Γ2) k τ w2 h1) = (ro_access (Γ ++ Γ1) k τ w1 (fst_app h1; unpermuting π (snd_app h1)))).
       rewrite (tedious_equiv_2 h1) at 1.
       rewrite <- (ro_access_app _ _ _ _ w _ _ w2).
       rewrite <- (ro_access_app _ _ _ _ w _ _ w1).
@@ -2872,27 +2928,28 @@ Proof.
       exact h2.
     }
     {
-      pose proof (r_ro_skip_prt _ w2  (fun y x => ψ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x))))).
+      pose proof (r_ro_skip_prt _ w2  (fun y x => ψ y (fst_app x; unpermuting π (snd_app x)))).
       apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     }
     {
-      pose proof (r_ro_true_prt _ w2  (fun y x => ψ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x))))).
+      pose proof (r_ro_true_prt _ w2  (fun y x => ψ y (fst_app x; unpermuting π (snd_app x)))).
       apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     }
     {
-      pose proof (r_ro_false_prt _ w2  (fun y x => ψ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x))))).
+      pose proof (r_ro_false_prt _ w2  (fun y x => ψ y (fst_app x; unpermuting π (snd_app x)))).
       apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     }
     {
-      pose proof (r_ro_int_prt _ _ w2  (fun y x => ψ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x))))).
+      pose proof (r_ro_int_prt _ _ w2  (fun y x => ψ y (fst_app x; unpermuting π (snd_app x)))).
       apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     }
     {
       apply (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _
+                                                     π                                                     
                (has_type_rw_ro _ nil _ _ w)
                w0
                (has_type_rw_ro _ nil _ _ w2)
@@ -2904,20 +2961,20 @@ Proof.
     {
       pose proof (has_type_ro_OpZRcoerce_inverse _ _ w) as w'.
       pose proof (has_type_ro_OpZRcoerce_inverse _ _ w2) as w2'.
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w' w0 w2') in p.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w' w0 w2') in p.
       apply (r_ro_coerce_prt _ _ _ _ _ _ p).
     }
     {
       pose proof (has_type_ro_OpZRexp_inverse _ _ w) as w'.
       pose proof (has_type_ro_OpZRexp_inverse _ _ w2) as w2'.
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w' w0 w2') in p.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w' w0 w2') in p.
       apply (r_ro_exp_prt _ _ _ _ _ _ p).
     }
     {
       pose proof (has_type_ro_OpZplus_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpZplus_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_int_op_plus_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -2925,8 +2982,8 @@ Proof.
     {
       pose proof (has_type_ro_OpZmult_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpZmult_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_int_op_mult_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -2934,8 +2991,8 @@ Proof.
     {
       pose proof (has_type_ro_OpZminus_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpZminus_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_int_op_minus_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -2943,8 +3000,8 @@ Proof.
     {
       pose proof (has_type_ro_OpRplus_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpRplus_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_real_op_plus_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -2952,8 +3009,8 @@ Proof.
     {
       pose proof (has_type_ro_OpRmult_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpRmult_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_real_op_mult_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -2961,8 +3018,8 @@ Proof.
     {
       pose proof (has_type_ro_OpRminus_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpRminus_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_real_op_minus_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -2970,7 +3027,7 @@ Proof.
     {
       pose proof (has_type_ro_OpRrecip_inverse _ _ w) as w'.
       pose proof (has_type_ro_OpRrecip_inverse _ _ w2) as w2'.
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w' w0 w2') in p.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w' w0 w2') in p.
       apply (r_ro_recip_prt _ _ _ _ _  _ _ p).
       intros h1 h2 h3.
       apply a.
@@ -2979,8 +3036,8 @@ Proof.
     {
       pose proof (has_type_ro_OpZeq_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpZeq_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_int_comp_eq_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -2988,8 +3045,8 @@ Proof.
     {
       pose proof (has_type_ro_OpZlt_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpZlt_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_int_comp_lt_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -2997,8 +3054,8 @@ Proof.
     {
       pose proof (has_type_ro_OpRlt_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpRlt_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_real_lt_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -3006,12 +3063,12 @@ Proof.
     {
       pose proof (has_type_ro_Lim_inverse _ _ w) as w'.
       pose proof (has_type_ro_Lim_inverse _ _ w2) as w2'. 
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w' _ w2') in r.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _ π w' _ w2') in r.
       apply (r_ro_lim_prt _ _ w2' _
-               (fun y (x : sem_ro_ctx ((INTEGER :: Γ) ++ Γ2 ++ Γ1)) => θ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x))))
-               w2
-                    (fun y x => ψ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x))))
-            ).
+               (fun y (x : sem_ro_ctx ((INTEGER :: Γ) ++ Γ2)) => θ y (fst_app x; unpermuting π (snd_app x)))
+               w2).
+            (*         (fun y x => ψ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x)))) *)
+            (* ). *)
       apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a r);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).      
       destruct h1.
@@ -3026,34 +3083,30 @@ Proof.
       rewrite (tedious_equiv_snd).
       exact h2.
       intros.
-      pose proof (e0 (fst_app γ ; (snd_app (snd_app γ); fst_app (snd_app γ))) H) as [y [h1 h2]].
+      pose proof (e0 (fst_app γ ; (unpermuting π (snd_app γ))) H) as [y [h1 h2]].
       exists y.
       split.
       exact h1.
       intros.
       apply h2.
-      rewrite (tedious_equiv_2 γ) in H0.
       rewrite (tedious_equiv_2_fst) in H0.
       rewrite (tedious_equiv_2_snd) in H0.
       simpl in H0.
-      rewrite (tedious_equiv_snd) in H0.
-      rewrite (tedious_equiv_fst) in H0.
       exact H0.
     }
   +
-    
     dependent induction p; try clear IHp; try clear IHp1 IHp2.
     {
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w w0 w2) in p.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w w0 w2) in p.
       clear r_admissible_permutate_auxiliary_ro_tot.
       apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a p);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     }
     {
-      pose proof (r_ro_var_tot _ _ _ w2 (fun y x => ψ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x))))).
+      pose proof (r_ro_var_tot _ _ _ w2 (fun y x => ψ y (fst_app x; unpermuting π (snd_app x)))).
       apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
-      assert ((ro_access (Γ ++ Γ2 ++ Γ1) k τ w2 h1) = (ro_access (Γ ++ Γ1 ++ Γ2) k τ w1 (fst_app h1; (snd_app (snd_app h1); fst_app (snd_app h1))))).
+      assert ((ro_access (Γ ++ Γ2) k τ w2 h1) = (ro_access (Γ ++ Γ1) k τ w1 (fst_app h1; unpermuting π (snd_app h1)))).
       rewrite (tedious_equiv_2 h1) at 1.
       rewrite <- (ro_access_app _ _ _ _ w _ _ w2).
       rewrite <- (ro_access_app _ _ _ _ w _ _ w1).
@@ -3062,27 +3115,28 @@ Proof.
       exact h2.
     }
     {
-      pose proof (r_ro_skip_tot _ w2  (fun y x => ψ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x))))).
+      pose proof (r_ro_skip_tot _ w2  (fun y x => ψ y (fst_app x; unpermuting π (snd_app x)))).
       apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     }
     {
-      pose proof (r_ro_true_tot _ w2  (fun y x => ψ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x))))).
+      pose proof (r_ro_true_tot _ w2  (fun y x => ψ y (fst_app x; unpermuting π (snd_app x)))).
       apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     }
     {
-      pose proof (r_ro_false_tot _ w2  (fun y x => ψ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x))))).
+      pose proof (r_ro_false_tot _ w2  (fun y x => ψ y (fst_app x; unpermuting π (snd_app x)))).
       apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     }
     {
-      pose proof (r_ro_int_tot _ _ w2  (fun y x => ψ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x))))).
+      pose proof (r_ro_int_tot _ _ w2  (fun y x => ψ y (fst_app x; unpermuting π (snd_app x)))).
       apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
     }
     {
       apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _
+                                                     π                                                     
                (has_type_rw_ro _ nil _ _ w)
                w0
                (has_type_rw_ro _ nil _ _ w2)
@@ -3094,20 +3148,20 @@ Proof.
     {
       pose proof (has_type_ro_OpZRcoerce_inverse _ _ w) as w'.
       pose proof (has_type_ro_OpZRcoerce_inverse _ _ w2) as w2'.
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w' w0 w2') in p.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w' w0 w2') in p.
       apply (r_ro_coerce_tot _ _ _ _ _ _ p).
     }
     {
       pose proof (has_type_ro_OpZRexp_inverse _ _ w) as w'.
       pose proof (has_type_ro_OpZRexp_inverse _ _ w2) as w2'.
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w' w0 w2') in p.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w' w0 w2') in p.
       apply (r_ro_exp_tot _ _ _ _ _ _ p).
     }
     {
       pose proof (has_type_ro_OpZplus_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpZplus_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_int_op_plus_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -3115,8 +3169,8 @@ Proof.
     {
       pose proof (has_type_ro_OpZmult_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpZmult_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_int_op_mult_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -3124,8 +3178,8 @@ Proof.
     {
       pose proof (has_type_ro_OpZminus_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpZminus_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_int_op_minus_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -3133,8 +3187,8 @@ Proof.
     {
       pose proof (has_type_ro_OpRplus_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpRplus_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_real_op_plus_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -3142,8 +3196,8 @@ Proof.
     {
       pose proof (has_type_ro_OpRmult_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpRmult_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_real_op_mult_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -3151,8 +3205,8 @@ Proof.
     {
       pose proof (has_type_ro_OpRminus_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpRminus_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_real_op_minus_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -3160,7 +3214,7 @@ Proof.
     {
       pose proof (has_type_ro_OpRrecip_inverse _ _ w) as w'.
       pose proof (has_type_ro_OpRrecip_inverse _ _ w2) as w2'.
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w' w0 w2') in p.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w' w0 w2') in p.
       apply (r_ro_recip_tot _ _ _ _ _  _ _ p).
       intros h1 h2 h3.
       apply a.
@@ -3169,8 +3223,8 @@ Proof.
     {
       pose proof (has_type_ro_OpZeq_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpZeq_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_int_comp_eq_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -3178,8 +3232,8 @@ Proof.
     {
       pose proof (has_type_ro_OpZlt_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpZlt_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_int_comp_lt_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       apply ψ0; auto.      
@@ -3187,23 +3241,23 @@ Proof.
     {
       pose proof (has_type_ro_OpRlt_inverse _ _ _ w) as [w'1 w'2].
       pose proof (has_type_ro_OpRlt_inverse _ _ _ w2) as [w2'1 w2'2].
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'1 _ w2'1) in p1.
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w'2 _ w2'2) in p2.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'1 _ w2'1) in p1.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  π w'2 _ w2'2) in p2.
       apply (r_ro_real_lt_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
       intros.
       split.
-      apply (a _ _ _ H H0); auto.      
-      apply (a _ _ _ H H0); auto.      
+      apply (a _ _ _ H H0).      
+      apply a; auto.      
     }
     {
       pose proof (has_type_ro_Lim_inverse _ _ w) as w'.
       pose proof (has_type_ro_Lim_inverse _ _ w2) as w2'. 
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _  w' _ w2') in p.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _ π w' _ w2') in p.
       apply (r_ro_lim_tot _ _ w2' _
-               (fun y (x : sem_ro_ctx ((INTEGER :: Γ) ++ Γ2 ++ Γ1)) => θ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x))))
-               w2
-                    (fun y x => ψ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x))))
-            ).
+               (fun y (x : sem_ro_ctx ((INTEGER :: Γ) ++ Γ2)) => θ y (fst_app x; unpermuting π (snd_app x)))
+               w2).
+            (*         (fun y x => ψ y (fst_app x; (snd_app (snd_app x); fst_app (snd_app x)))) *)
+            (* ). *)
       apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a p);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).      
       destruct h1.
@@ -3218,25 +3272,22 @@ Proof.
       rewrite (tedious_equiv_snd).
       exact h2.
       intros.
-      pose proof (e0 (fst_app γ ; (snd_app (snd_app γ); fst_app (snd_app γ))) H) as [y [h1 h2]].
+      pose proof (e0 (fst_app γ ; (unpermuting π (snd_app γ))) H) as [y [h1 h2]].
       exists y.
       split.
       exact h1.
       intros.
       apply h2.
-      rewrite (tedious_equiv_2 γ) in H0.
       rewrite (tedious_equiv_2_fst) in H0.
       rewrite (tedious_equiv_2_snd) in H0.
       simpl in H0.
-      rewrite (tedious_equiv_snd) in H0.
-      rewrite (tedious_equiv_fst) in H0.
       exact H0.
     }
 
   +
     dependent induction p; try clear IHp; try clear IHp1 IHp2.
     {
-      apply (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _  w w0 w2) in p.
+      apply (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _ π w w0 w2) in p.
       clear r_admissible_permutate_auxiliary_rw_prt.
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -3244,14 +3295,15 @@ Proof.
     {
       apply (r_proves_ro_prt_ctx_rewrite ( (app_assoc _ _ _))) in r.
       pose proof (has_type_rw_to_ro_res _ _ _ _ _ w w0).
-      pose proof (has_type_ro_add_auxiliary _ _ _ H (Γ2 ++ Γ1)).
+      pose proof (has_type_ro_add_auxiliary _ _ _ H (Γ2)).
       apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _
-               H
+               π H
                _
                H0
             ) in r.
+      simpl in r.
       apply (r_proves_ro_prt_ctx_rewrite (eq_sym (app_assoc _ _ _))) in r.
-
+      simpl in r.
       apply (r_ro_rw_prt _ _ _ _ _ _ _ w2) in r.
       simpl in r.
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a r);
@@ -3259,11 +3311,8 @@ Proof.
       clear r.
       destruct h1.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
-      rewrite tedious_equiv_fst.
-      rewrite tedious_equiv_snd.
       rewrite tedious_equiv_fst.
       rewrite tedious_equiv_snd.
       rewrite eq_sym_app_assoc_tr.
@@ -3272,17 +3321,12 @@ Proof.
       clear r.
       destruct h2.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
       rewrite tedious_equiv_fst.
       rewrite tedious_equiv_snd.
-      rewrite tedious_equiv_fst.
-      rewrite tedious_equiv_snd.
       rewrite eq_sym_app_assoc_tr.
       simpl.
-      rewrite tedious_equiv_fst.
-      rewrite tedious_equiv_snd.
       rewrite tedious_equiv_fst.
       rewrite tedious_equiv_snd.
       intro x; exact x.
@@ -3290,8 +3334,8 @@ Proof.
     {
       pose proof (has_type_rw_Seq_inverse _ _ _ _ _ w2) as [w0' w3'].
       pose proof (has_type_rw_Seq_inverse _ _ _ _ _ w) as [w0'' w3''].
-      pose proof (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _ w0'' _ w0' p1). 
-      pose proof (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _ w3'' _ w3' p2). 
+      pose proof (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _ π w0'' _ w0' p1). 
+      pose proof (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _ π w3'' _ w3' p2). 
       apply (r_rw_sequence_prt _ _ _ _ _ _ _ _ _ _ _ X X0).
     }
     {
@@ -3300,18 +3344,17 @@ Proof.
       apply (r_proves_ro_prt_ctx_rewrite ( (app_assoc _ _ _))) in r.
       rewrite app_assoc in w0''.
       induction (has_type_ro_unambiguous _ _ _ _ w0''
-                   (has_type_ro_add_auxiliary _ _ _ w0' (Γ2 ++ Γ1)) ).
-      induction (has_type_ro_unambiguous _ _ _ _ (tr (fun Γ : ro_ctx => Γ |- e : σ) (app_assoc Δ Γ (Γ1 ++ Γ2)) w0)
-                   (has_type_ro_add_auxiliary _ _ _ w0' (Γ1 ++ Γ2)) ).
-      pose proof (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _ w0' _ w0'' r). 
-      pose proof (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _ w3' _ w3'' p).
+                   (has_type_ro_add_auxiliary _ _ _ w0' (Γ2)) ).
+      induction (has_type_ro_unambiguous _ _ _ _ (tr (fun Γ : ro_ctx => Γ |- e : σ) (app_assoc Δ Γ (Γ1 )) w0)
+                   (has_type_ro_add_auxiliary _ _ _ w0' (Γ1 )) ).
+      pose proof (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _ π w0' _ w0'' r). 
+      pose proof (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _ π w3' _ w3'' p).
       apply (r_proves_ro_prt_ctx_rewrite (eq_sym (app_assoc _ _ _))) in X.
       simpl in X, X0.
       apply (r_rw_new_var_prt_util X X0).
       intro x.
       rewrite (tedious_equiv_2 x).
       rewrite (tedious_equiv_2 (snd_app x)).
-      rewrite (tedious_equiv_2 (snd_app (snd_app x))).
       rewrite tedious_equiv_0.
       simpl.
       rewrite eq_sym_twice.
@@ -3328,7 +3371,6 @@ Proof.
       destruct x.
       destruct s.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       simpl.
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
@@ -3342,25 +3384,24 @@ Proof.
       destruct y.
       destruct s.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       simpl.
       intro z; exact z.
     }
     {
       pose proof (has_type_rw_Assign_inverse w) as [σ [a' w']].
       pose proof (has_type_rw_Assign_inverse w2) as [σ2 [a'2 w'2]].
-      pose proof (has_type_ro_add_auxiliary _ _ _ w' (Γ1 ++ Γ2)).
+      pose proof (has_type_ro_add_auxiliary _ _ _ w' (Γ1)).
       rewrite <- app_assoc in H.
       induction (has_type_ro_unambiguous _ _ _ _  w0 H).
-      pose proof (has_type_ro_add_auxiliary _ _ _ w' (Γ2 ++ Γ1)).
+      pose proof (has_type_ro_add_auxiliary _ _ _ w' (Γ2)).
       rewrite <- app_assoc in H0.
       induction (has_type_ro_unambiguous _ _ _ _  w'2 H0).
       rewrite app_assoc in H0.
       apply (r_proves_ro_prt_ctx_rewrite ((app_assoc _ _ _))) in r.
       rewrite ( ( (app_assoc _ _ _))) in H.
       apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _
-               w'
-               (tr (fun Γ : ro_ctx => Γ |- e : σ2) (app_assoc Δ Γ (Γ1 ++ Γ2)) w0)
+               π w'
+               (tr (fun Γ : ro_ctx => Γ |- e : σ2) (app_assoc Δ Γ (Γ1)) w0)
                H0
             ) in r.
       apply (r_proves_ro_prt_ctx_rewrite (eq_sym (app_assoc _ _ _))) in r.
@@ -3368,7 +3409,6 @@ Proof.
       intro x.
       rewrite (tedious_equiv_2 x).
       rewrite (tedious_equiv_2 (snd_app x)).
-      rewrite (tedious_equiv_2 (snd_app (snd_app x))).
       simpl.
       rewrite tedious_equiv_1.
       simpl.
@@ -3382,7 +3422,6 @@ Proof.
       intro y; exact y.
       intros x γ δ.
       rewrite (tedious_equiv_2 γ).
-      rewrite (tedious_equiv_2 (snd_app γ)).
       simpl.
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
@@ -3394,8 +3433,8 @@ Proof.
       pose proof (ψ0 _ _ _ h) .
       unfold update'.
       unfold update' in H1.
-      assert (update k x δ (assign_wty_assignable (Γ ++ Γ1 ++ Γ2) Δ k e σ2 w0 w1) =
-                update k x δ (assign_wty_assignable (Γ ++ Γ2 ++ Γ1) Δ k e σ2 (tr (fun Γ0 : ro_ctx => Γ0 |- e : σ2) (eq_sym (app_assoc Δ Γ (Γ2 ++ Γ1))) H0) w2)).
+      assert (update k x δ (assign_wty_assignable (Γ ++ Γ1) Δ k e σ2 w0 w1) =
+                update k x δ (assign_wty_assignable (Γ ++ Γ2) Δ k e σ2 (tr (fun Γ0 : ro_ctx => Γ0 |- e : σ2) (eq_sym (app_assoc Δ Γ (Γ2 ))) H0) w2)).
       apply update_assignable_irrl.
       rewrite H2 in H1.
       exact H1.
@@ -3403,21 +3442,20 @@ Proof.
     {
       pose proof (has_type_rw_Cond_inverse _ _ _ _ _ _ w) as [[a0 a1] a2].
       pose proof (has_type_rw_Cond_inverse _ _ _ _ _ _ w2) as [[b0 b1] b2].
-      rewrite  app_assoc in  b0.
+      rewrite app_assoc in  b0.
       apply (r_proves_ro_prt_ctx_rewrite ((app_assoc _ _ _))) in r.
       apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _
-               a0 _ b0
+               π a0 _ b0
             ) in r.
       apply (r_proves_ro_prt_ctx_rewrite (eq_sym (app_assoc _ _ _))) in r.
       simpl in r.
-      apply (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _ a1 _ b1) in p1. 
-      apply (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _ a2 _ b2) in p2.
+      apply (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _ π a1 _ b1) in p1. 
+      apply (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _ π a2 _ b2) in p2.
       apply (r_rw_cond_prt_util r p1 p2);
         try (intros h1 h2; auto; fail); try (intros h1 h2 h3; auto; fail).
       intro x.
       rewrite (tedious_equiv_2 x).
       rewrite (tedious_equiv_2 (snd_app x)).
-      rewrite (tedious_equiv_2 (snd_app (snd_app x))).
       simpl.
       rewrite tedious_equiv_1.
       simpl.
@@ -3434,7 +3472,6 @@ Proof.
       intros x.
       destruct x.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       simpl.
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
@@ -3448,7 +3485,6 @@ Proof.
       intros x.
       destruct x.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       simpl.
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
@@ -3463,9 +3499,10 @@ Proof.
     {
       apply magic.
     }
+    
     {
       pose proof (has_type_rw_CaseList_inverse _ _ _ _ w).
-      assert (ForallT (fun ec : exp * exp => (((Δ ++ Γ ++ Γ2 ++ Γ1) |- fst ec : BOOL) * ((Γ ++ Γ2 ++ Γ1);;; Δ ||- snd ec : τ))%type) l) as wty_l'.
+      assert (ForallT (fun ec : exp * exp => (((Δ ++ Γ ++ Γ2) |- fst ec : BOOL) * ((Γ ++ Γ2);;; Δ ||- snd ec : τ))%type) l) as wty_l'.
       clear w1 θ ϕ ψ f w w2 wty_l.
       dependent induction H.
       apply ForallT_nil.
@@ -3480,9 +3517,9 @@ Proof.
       exact h0.
       exact IHForallT.
       
-      apply (r_rw_case_list_prt  (Γ ++ Γ2 ++ Γ1) Δ l τ wty_l' w2
+      apply (r_rw_case_list_prt  (Γ ++ Γ2) Δ l τ wty_l' w2
                (ForallT_map (fun _ θ =>
-                               fun y x => θ y (fst_app x; (fst_app (snd_app x); (snd_app (snd_app (snd_app x)); fst_app (snd_app (snd_app x)))))) θ)).
+                               fun y x => θ y (fst_app x; (fst_app (snd_app x); unpermuting π (snd_app (snd_app x))))) θ)).
       simpl.
 
       clear w w2 w1.
@@ -3510,7 +3547,7 @@ Proof.
       dependent destruction H.
       destruct p.
       apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _
-               h4 _ h1
+               π h4 _ h1
             ) in r.
       apply (r_proves_ro_prt_ctx_rewrite (eq_sym (app_assoc _ _ _))) in r.
       simpl in r.
@@ -3522,7 +3559,6 @@ Proof.
 
       rewrite (tedious_equiv_2 x).
       rewrite (tedious_equiv_2 (snd_app x)).
-      rewrite (tedious_equiv_2 (snd_app (snd_app x))).
       simpl.
       rewrite tedious_equiv_1.
       simpl.
@@ -3542,7 +3578,6 @@ Proof.
 
       rewrite (tedious_equiv_2 x).
       rewrite (tedious_equiv_2 (snd_app x)).
-      rewrite (tedious_equiv_2 (snd_app (snd_app x))).
       simpl.
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
@@ -3554,7 +3589,7 @@ Proof.
       
       dependent destruction H.
       destruct p.
-      apply (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _ h4 _ h2) in r0. 
+      apply (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _ π h4 _ h2) in r0. 
 
       apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a r0);
         try (intros j1 j2; auto; fail); try (intros j1 j2 j3; auto; fail).      
@@ -3563,7 +3598,6 @@ Proof.
       destruct x.
       simpl.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       simpl.
       repeat try 
         (rewrite tedious_equiv_fst;
@@ -3574,14 +3608,14 @@ Proof.
       pose proof (has_type_rw_While_inverse w) as [ae ac].
       
       apply (r_proves_ro_prt_ctx_rewrite ((app_assoc _ _ _))) in r.
-      pose proof (has_type_ro_add_auxiliary _ _ _ ae (Γ2 ++ Γ1)) as be.
-      pose proof (has_type_rw_add_auxiliary _ _ _ _ ac (Γ2 ++ Γ1)) as bc.
+      pose proof (has_type_ro_add_auxiliary _ _ _ ae (Γ2 )) as be.
+      pose proof (has_type_rw_add_auxiliary _ _ _ _ ac (Γ2 )) as bc.
       apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _
-               ae _ be
+               π ae _ be
             ) in r.
       apply (r_proves_ro_prt_ctx_rewrite (eq_sym (app_assoc _ _ _))) in r.
       simpl in r.
-      apply (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _ ac _ bc) in p. 
+      apply (r_admissible_permutate_auxiliary_rw_prt _ _ _ _ _ _ _ _ π ac _ bc) in p. 
 
       apply (r_rw_while_prt_util r p);
         try (intros j1 j2; auto; fail); try (intros j1 j2 j3; auto; fail).
@@ -3590,7 +3624,6 @@ Proof.
 
       rewrite (tedious_equiv_2 x).
       rewrite (tedious_equiv_2 (snd_app x)).
-      rewrite (tedious_equiv_2 (snd_app (snd_app x))).
       simpl.
       rewrite (tedious_equiv_0).
       simpl.
@@ -3607,7 +3640,6 @@ Proof.
       intro x.
       destruct x.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       simpl.
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
@@ -3621,7 +3653,6 @@ Proof.
       unfold ro_to_rw_pre.
       destruct x.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       simpl.
       rewrite eq_sym_twice.
       repeat try 
@@ -3647,7 +3678,7 @@ Proof.
   +
     dependent induction p; try clear IHp; try clear IHp1 IHp2.
     {
-      apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _  w w0 w2) in p.
+      apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ π w w0 w2) in p.
       clear r_admissible_permutate_auxiliary_rw_tot.
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a p);
         try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
@@ -3655,14 +3686,15 @@ Proof.
     {
       apply (r_proves_ro_tot_ctx_rewrite ( (app_assoc _ _ _))) in r.
       pose proof (has_type_rw_to_ro_res _ _ _ _ _ w w0).
-      pose proof (has_type_ro_add_auxiliary _ _ _ H (Γ2 ++ Γ1)).
+      pose proof (has_type_ro_add_auxiliary _ _ _ H (Γ2)).
       apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _
-               H
+               π H
                _
                H0
             ) in r.
+      simpl in r.
       apply (r_proves_ro_tot_ctx_rewrite (eq_sym (app_assoc _ _ _))) in r.
-
+      simpl in r.
       apply (r_ro_rw_tot _ _ _ _ _ _ _ w2) in r.
       simpl in r.
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a r);
@@ -3670,11 +3702,8 @@ Proof.
       clear r.
       destruct h1.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
-      rewrite tedious_equiv_fst.
-      rewrite tedious_equiv_snd.
       rewrite tedious_equiv_fst.
       rewrite tedious_equiv_snd.
       rewrite eq_sym_app_assoc_tr.
@@ -3683,17 +3712,12 @@ Proof.
       clear r.
       destruct h2.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
       rewrite tedious_equiv_fst.
       rewrite tedious_equiv_snd.
-      rewrite tedious_equiv_fst.
-      rewrite tedious_equiv_snd.
       rewrite eq_sym_app_assoc_tr.
       simpl.
-      rewrite tedious_equiv_fst.
-      rewrite tedious_equiv_snd.
       rewrite tedious_equiv_fst.
       rewrite tedious_equiv_snd.
       intro x; exact x.
@@ -3701,8 +3725,8 @@ Proof.
     {
       pose proof (has_type_rw_Seq_inverse _ _ _ _ _ w2) as [w0' w3'].
       pose proof (has_type_rw_Seq_inverse _ _ _ _ _ w) as [w0'' w3''].
-      pose proof (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ w0'' _ w0' p1). 
-      pose proof (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ w3'' _ w3' p2). 
+      pose proof (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ π w0'' _ w0' p1). 
+      pose proof (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ π w3'' _ w3' p2). 
       apply (r_rw_sequence_tot _ _ _ _ _ _ _ _ _ _ _ X X0).
     }
     {
@@ -3711,18 +3735,17 @@ Proof.
       apply (r_proves_ro_tot_ctx_rewrite ( (app_assoc _ _ _))) in r.
       rewrite app_assoc in w0''.
       induction (has_type_ro_unambiguous _ _ _ _ w0''
-                   (has_type_ro_add_auxiliary _ _ _ w0' (Γ2 ++ Γ1)) ).
-      induction (has_type_ro_unambiguous _ _ _ _ (tr (fun Γ : ro_ctx => Γ |- e : σ) (app_assoc Δ Γ (Γ1 ++ Γ2)) w0)
-                   (has_type_ro_add_auxiliary _ _ _ w0' (Γ1 ++ Γ2)) ).
-      pose proof (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _ w0' _ w0'' r). 
-      pose proof (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ w3' _ w3'' p).
+                   (has_type_ro_add_auxiliary _ _ _ w0' (Γ2)) ).
+      induction (has_type_ro_unambiguous _ _ _ _ (tr (fun Γ : ro_ctx => Γ |- e : σ) (app_assoc Δ Γ (Γ1 )) w0)
+                   (has_type_ro_add_auxiliary _ _ _ w0' (Γ1 )) ).
+      pose proof (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _ π w0' _ w0'' r). 
+      pose proof (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ π w3' _ w3'' p).
       apply (r_proves_ro_tot_ctx_rewrite (eq_sym (app_assoc _ _ _))) in X.
       simpl in X, X0.
       apply (r_rw_new_var_tot_util X X0).
       intro x.
       rewrite (tedious_equiv_2 x).
       rewrite (tedious_equiv_2 (snd_app x)).
-      rewrite (tedious_equiv_2 (snd_app (snd_app x))).
       rewrite tedious_equiv_0.
       simpl.
       rewrite eq_sym_twice.
@@ -3739,7 +3762,6 @@ Proof.
       destruct x.
       destruct s.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       simpl.
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
@@ -3753,25 +3775,24 @@ Proof.
       destruct y.
       destruct s.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       simpl.
       intro z; exact z.
     }
     {
       pose proof (has_type_rw_Assign_inverse w) as [σ [a' w']].
       pose proof (has_type_rw_Assign_inverse w2) as [σ2 [a'2 w'2]].
-      pose proof (has_type_ro_add_auxiliary _ _ _ w' (Γ1 ++ Γ2)).
+      pose proof (has_type_ro_add_auxiliary _ _ _ w' (Γ1)).
       rewrite <- app_assoc in H.
       induction (has_type_ro_unambiguous _ _ _ _  w0 H).
-      pose proof (has_type_ro_add_auxiliary _ _ _ w' (Γ2 ++ Γ1)).
+      pose proof (has_type_ro_add_auxiliary _ _ _ w' (Γ2)).
       rewrite <- app_assoc in H0.
       induction (has_type_ro_unambiguous _ _ _ _  w'2 H0).
       rewrite app_assoc in H0.
       apply (r_proves_ro_tot_ctx_rewrite ((app_assoc _ _ _))) in r.
       rewrite ( ( (app_assoc _ _ _))) in H.
       apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _
-               w'
-               (tr (fun Γ : ro_ctx => Γ |- e : σ2) (app_assoc Δ Γ (Γ1 ++ Γ2)) w0)
+               π w'
+               (tr (fun Γ : ro_ctx => Γ |- e : σ2) (app_assoc Δ Γ (Γ1)) w0)
                H0
             ) in r.
       apply (r_proves_ro_tot_ctx_rewrite (eq_sym (app_assoc _ _ _))) in r.
@@ -3779,7 +3800,6 @@ Proof.
       intro x.
       rewrite (tedious_equiv_2 x).
       rewrite (tedious_equiv_2 (snd_app x)).
-      rewrite (tedious_equiv_2 (snd_app (snd_app x))).
       simpl.
       rewrite tedious_equiv_1.
       simpl.
@@ -3793,7 +3813,6 @@ Proof.
       intro y; exact y.
       intros x γ δ.
       rewrite (tedious_equiv_2 γ).
-      rewrite (tedious_equiv_2 (snd_app γ)).
       simpl.
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
@@ -3805,8 +3824,8 @@ Proof.
       pose proof (ψ0 _ _ _ h) .
       unfold update'.
       unfold update' in H1.
-      assert (update k x δ (assign_wty_assignable (Γ ++ Γ1 ++ Γ2) Δ k e σ2 w0 w1) =
-                update k x δ (assign_wty_assignable (Γ ++ Γ2 ++ Γ1) Δ k e σ2 (tr (fun Γ0 : ro_ctx => Γ0 |- e : σ2) (eq_sym (app_assoc Δ Γ (Γ2 ++ Γ1))) H0) w2)).
+      assert (update k x δ (assign_wty_assignable (Γ ++ Γ1) Δ k e σ2 w0 w1) =
+                update k x δ (assign_wty_assignable (Γ ++ Γ2) Δ k e σ2 (tr (fun Γ0 : ro_ctx => Γ0 |- e : σ2) (eq_sym (app_assoc Δ Γ (Γ2 ))) H0) w2)).
       apply update_assignable_irrl.
       rewrite H2 in H1.
       exact H1.
@@ -3814,21 +3833,20 @@ Proof.
     {
       pose proof (has_type_rw_Cond_inverse _ _ _ _ _ _ w) as [[a0 a1] a2].
       pose proof (has_type_rw_Cond_inverse _ _ _ _ _ _ w2) as [[b0 b1] b2].
-      rewrite  app_assoc in  b0.
+      rewrite app_assoc in  b0.
       apply (r_proves_ro_tot_ctx_rewrite ((app_assoc _ _ _))) in r.
       apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _
-               a0 _ b0
+               π a0 _ b0
             ) in r.
       apply (r_proves_ro_tot_ctx_rewrite (eq_sym (app_assoc _ _ _))) in r.
       simpl in r.
-      apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ a1 _ b1) in p1. 
-      apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ a2 _ b2) in p2.
+      apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ π a1 _ b1) in p1. 
+      apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ π a2 _ b2) in p2.
       apply (r_rw_cond_tot_util r p1 p2);
         try (intros h1 h2; auto; fail); try (intros h1 h2 h3; auto; fail).
       intro x.
       rewrite (tedious_equiv_2 x).
       rewrite (tedious_equiv_2 (snd_app x)).
-      rewrite (tedious_equiv_2 (snd_app (snd_app x))).
       simpl.
       rewrite tedious_equiv_1.
       simpl.
@@ -3845,7 +3863,6 @@ Proof.
       intros x.
       destruct x.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       simpl.
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
@@ -3859,7 +3876,6 @@ Proof.
       intros x.
       destruct x.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       simpl.
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
@@ -3876,7 +3892,7 @@ Proof.
     }
     {
       pose proof (has_type_rw_CaseList_inverse _ _ _ _ w).
-      assert (ForallT (fun ec : exp * exp => (((Δ ++ Γ ++ Γ2 ++ Γ1) |- fst ec : BOOL) * ((Γ ++ Γ2 ++ Γ1);;; Δ ||- snd ec : τ))%type) l) as wty_l'.
+      assert (ForallT (fun ec : exp * exp => (((Δ ++ Γ ++ Γ2) |- fst ec : BOOL) * ((Γ ++ Γ2);;; Δ ||- snd ec : τ))%type) l) as wty_l'.
       clear w1 f0 ϕi θ ϕ ψ f w w2 wty_l.
       dependent induction H.
       apply ForallT_nil.
@@ -3890,11 +3906,11 @@ Proof.
       apply (has_type_rw_add_auxiliary).
       exact h0.
       exact IHForallT.
-      apply (r_rw_case_list_tot  (Γ ++ Γ2 ++ Γ1) Δ l τ wty_l' w2
+      apply (r_rw_case_list_tot  (Γ ++ Γ2) Δ l τ wty_l' w2
                (ForallT_map (fun _ θ =>
-                             fun y x => θ y (fst_app x; (fst_app (snd_app x); (snd_app (snd_app (snd_app x)); fst_app (snd_app (snd_app x)))))) θ) 
+                             fun y x => θ y (fst_app x; (fst_app (snd_app x); unpermuting π (snd_app (snd_app x))))) θ) 
                (ForallT_map (fun _ ϕi =>
-                             fun  x => ϕi  (fst_app x; (fst_app (snd_app x); (snd_app (snd_app (snd_app x)); fst_app (snd_app (snd_app x)))))) ϕi)).
+                             fun  x => ϕi   (fst_app x; (fst_app (snd_app x); unpermuting π (snd_app (snd_app x))))) ϕi)).
 
       clear w w2 w1 f0.
       dependent induction f.
@@ -3924,7 +3940,7 @@ Proof.
       dependent destruction H.
       destruct p.
       apply (r_admissible_permutate_auxiliary_ro_prt _ _ _ _ _ _ _
-               h4 _ h
+               π h4 _ h
             ) in j.
       apply (r_proves_ro_prt_ctx_rewrite (eq_sym (app_assoc _ _ _))) in j.
       simpl in j.
@@ -3936,7 +3952,6 @@ Proof.
 
       rewrite (tedious_equiv_2 x).
       rewrite (tedious_equiv_2 (snd_app x)).
-      rewrite (tedious_equiv_2 (snd_app (snd_app x))).
       simpl.
       rewrite tedious_equiv_1.
       simpl.
@@ -3956,7 +3971,6 @@ Proof.
 
       rewrite (tedious_equiv_2 x).
       rewrite (tedious_equiv_2 (snd_app x)).
-      rewrite (tedious_equiv_2 (snd_app (snd_app x))).
       simpl.
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
@@ -3971,7 +3985,7 @@ Proof.
       destruct p , p0, p1.
 
       
-      apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ h2 _ h4) in j. 
+      apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ π h2 _ h4) in j. 
 
       apply (fun a => r_rw_imply_tot _ _ _ _ _ _ _ _ _ _ a j);
         try (intros j1 j2; auto; fail); try (intros j1 j2 j3; auto; fail).      
@@ -3980,7 +3994,6 @@ Proof.
       destruct x.
       simpl.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       simpl.
       repeat try 
         (rewrite tedious_equiv_fst;
@@ -3998,7 +4011,7 @@ Proof.
       apply (r_proves_ro_tot_ctx_rewrite ((app_assoc _ _ _))) in j.
       dependent destruction H.
       destruct p.
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _ π
                h4 _ h
             ) in j.
       apply (r_proves_ro_tot_ctx_rewrite (eq_sym (app_assoc _ _ _))) in j.
@@ -4011,7 +4024,6 @@ Proof.
 
       rewrite (tedious_equiv_2 x).
       rewrite (tedious_equiv_2 (snd_app x)).
-      rewrite (tedious_equiv_2 (snd_app (snd_app x))).
       simpl.
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
@@ -4025,7 +4037,6 @@ Proof.
       intro x.
       rewrite (tedious_equiv_2 x).
       rewrite (tedious_equiv_2 (snd_app x)).
-      rewrite (tedious_equiv_2 (snd_app (snd_app x))).
       simpl.
       rewrite tedious_equiv_1.
       simpl.
@@ -4034,7 +4045,7 @@ Proof.
          rewrite tedious_equiv_snd).
       intro h.
       unfold rw_to_ro_pre in f0.
-      pose proof (f0 (fst_app x; (fst_app (snd_app x); (snd_app (snd_app (snd_app x)); fst_app (snd_app (snd_app x)))))).
+      pose proof (f0 (fst_app x; (fst_app (snd_app x); unpermuting π (snd_app (snd_app x))))).
       rewrite tedious_equiv_1 in H0.
       apply H0 in h.
       clear H0 wty_l' H w2 w f0 f ψ ϕ θ w1 wty_l τ.
@@ -4056,50 +4067,51 @@ Proof.
       pose proof (has_type_rw_While_inverse w) as [ae ac].
       
       apply (r_proves_ro_tot_ctx_rewrite ((app_assoc _ _ _))) in r.
-      pose proof (has_type_ro_add_auxiliary _ _ _ ae (Γ2 ++ Γ1)) as be.
-      pose proof (has_type_rw_add_auxiliary _ _ _ _ ac (Δ ++ Γ1 ++ Γ2)) as bc.
-      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _
+      pose proof (has_type_ro_add_auxiliary _ _ _ ae (Γ2)) as be.
+      pose proof (has_type_rw_add_auxiliary _ _ _ _ ac (Γ2 ++ Δ )) as bc.
+      apply (r_admissible_permutate_auxiliary_ro_tot _ _ _ _ _ _ _ π 
                ae _ be
             ) in r.
       apply (r_proves_ro_tot_ctx_rewrite (eq_sym (app_assoc _ _ _))) in r.
       simpl in r.
       
       apply (r_proves_rw_tot_ctx_rewrite_ro (eq_sym (app_assoc _ _ _))) in p.
-      Check tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (eq_sym (app_assoc Γ (Γ1 ++ Γ2) Δ)) wty_c.
-     
-      apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ ac _ bc) in p. 
+      Check  tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (eq_sym (app_assoc Γ Γ1 Δ)) wty_c.
+
+      
+      apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _
+                                                     (ctx_perm_app_const_r π Δ)
+                                                     ac _ bc) in p. 
       apply (r_proves_rw_tot_ctx_rewrite_ro ( (app_assoc _ _ _))) in p.
-      Check  tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (app_assoc Γ Δ (Γ1 ++ Γ2)) bc.
-      pose proof (has_type_rw_add_auxiliary _ _ _ _ ac (Δ )) as acc.
-      pose proof (has_type_rw_add_auxiliary _ _ _ _ acc (Γ2 ++ Γ1 )) as bcc.
-      apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ acc _ bcc) in p.
-      apply (r_proves_rw_tot_ctx_rewrite_ro (eq_sym (app_assoc _ _ _))) in p.
-      Check tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (eq_sym (app_assoc Γ Δ (Γ2 ++ Γ1))) bcc.
-      pose proof (has_type_rw_add_auxiliary _ _ _ _ ac ((Γ2 ++ Γ1) ++ Δ)) as bccc.
-      apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ ac _ bccc) in p. 
-      apply (r_proves_rw_tot_ctx_rewrite_ro ( (app_assoc _ _ _))) in p.
-      simpl in p.
+      Check tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (app_assoc Γ Γ2 Δ) bc.
+      (* Check  tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (app_assoc Γ Δ (Γ1 ++ Γ2)) bc. *)
+      (* pose proof (has_type_rw_add_auxiliary _ _ _ _ ac (Δ )) as acc. *)
+      (* pose proof (has_type_rw_add_auxiliary _ _ _ _ acc (Γ2 ++ Γ1 )) as bcc. *)
+      (* apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ acc _ bcc) in p. *)
+      (* apply (r_proves_rw_tot_ctx_rewrite_ro (eq_sym (app_assoc _ _ _))) in p. *)
+      (* Check tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (eq_sym (app_assoc Γ Δ (Γ2 ++ Γ1))) bcc. *)
+      (* pose proof (has_type_rw_add_auxiliary _ _ _ _ ac ((Γ2 ++ Γ1) ++ Δ)) as bccc. *)
+      (* apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ ac _ bccc) in p.  *)
+      (* apply (r_proves_rw_tot_ctx_rewrite_ro ( (app_assoc _ _ _))) in p. *)
+      simpl in r, p.
 
       assert (w2
-       ||~ [{(fun x : sem_ro_ctx Δ * sem_ro_ctx (Γ ++ Γ2 ++ Γ1) => ϕ (fst x, (fst_app (snd x); (snd_app (snd_app (snd x)); fst_app (snd_app (snd x))))))}] 
-       (WHILE e DO c END) [{_
-       | ((fun x : sem_ro_ctx Δ * sem_ro_ctx (Γ ++ Γ2 ++ Γ1) => ϕ (fst x, (fst_app (snd x); (snd_app (snd_app (snd x)); fst_app (snd_app (snd x)))))) /\\
-          ro_to_rw_pre
-            ((fun (b : sem_datatype BOOL) (x : sem_ro_ctx (Δ ++ Γ ++ Γ2 ++ Γ1)) =>
-              θ b (fst_app x; (fst_app (snd_app x); (snd_app (snd_app (snd_app x)); fst_app (snd_app (snd_app x)))))) false))}]).
-      apply (r_rw_while_tot (Γ ++ Γ2 ++ Γ1) Δ e c
-                    (tr (fun Γ : ro_ctx => Γ |- e : BOOL) (eq_sym (app_assoc Δ Γ (Γ2 ++ Γ1))) be)
-                    ( tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (app_assoc Γ (Γ2 ++ Γ1) Δ) bccc)
-                    w2
-                    (fun x => ϕ (fst x, (fst_app (snd x); (snd_app (snd_app (snd x)); fst_app (snd_app (snd x))))))
-                    (fun b x => θ b (fst_app x; (fst_app (snd_app x); (snd_app (snd_app (snd_app x)); fst_app (snd_app (snd_app x))))))
-                    (fun x =>
-                       let d1 := fst x in
-                       let g := fst_app (fst_app (snd x)) in
-                       let g2 := fst_app (snd_app (fst_app (snd x))) in
-                       let g1 := snd_app (snd_app (fst_app (snd x))) in
-                       let d2 :=  (snd_app (snd x)) in
-                       ψ0 (d1, ((g; (g1; g2)); d2)))).
+  ||~ [{(fun x : sem_ro_ctx Δ * sem_ro_ctx (Γ ++ Γ2) =>
+         ϕ (fst x, (fst_app (snd x); unpermuting π (snd_app (snd x)))))}] (WHILE e DO c END) [{_
+  | ((fun x : sem_ro_ctx Δ * sem_ro_ctx (Γ ++ Γ2) => ϕ (fst x, (fst_app (snd x); unpermuting π (snd_app (snd x))))) /\\
+     ro_to_rw_pre
+       (fun x : sem_ro_ctx (Δ ++ Γ ++ Γ2) =>
+          θ false (fst_app x; (fst_app (snd_app x); unpermuting π (snd_app (snd_app x))))))}]).
+      
+      apply (r_rw_while_tot (Γ ++ Γ2) Δ e c
+                            (tr (fun Γ : ro_ctx => Γ |- e : BOOL) (eq_sym (app_assoc Δ Γ Γ2)) be)
+                            (tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (app_assoc Γ Γ2 Δ) bc)
+                            w2
+                            (fun x => ϕ (fst x, (fst_app (snd x); (unpermuting π (snd_app (snd x))))))
+                            (fun b x => θ b (fst_app x; (fst_app (snd_app x); (unpermuting π (snd_app (snd_app x))))))
+                            (fun x => ψ0 (fst x,
+                                           ((fst_app (fst_app (snd x)) ; (unpermuting π (snd_app (fst_app (snd x)))));
+                                            snd_app (snd x))))).
 
       apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a r);
         try (intros j1 j2; auto; fail); try (intros j1 j2 j3; auto; fail).      
@@ -4108,7 +4120,6 @@ Proof.
 
       rewrite (tedious_equiv_2 x).
       rewrite (tedious_equiv_2 (snd_app x)).
-      rewrite (tedious_equiv_2 (snd_app (snd_app x))).
       simpl.
       rewrite tedious_equiv_0.
       simpl.      
@@ -4124,7 +4135,6 @@ Proof.
       intros y x.
       rewrite (tedious_equiv_2 x).
       rewrite (tedious_equiv_2 (snd_app x)).
-      rewrite (tedious_equiv_2 (snd_app (snd_app x))).
       simpl.
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
@@ -4139,39 +4149,29 @@ Proof.
       unfold rw_to_ro_pre, ro_to_rw_pre.
       intro x.
       destruct x.
+      unfold ctx_perm_app_const_r_unpermuting.
       rewrite (tedious_equiv_2 s0).
       rewrite (tedious_equiv_2 (fst_app s0)).
-      rewrite (tedious_equiv_2 (snd_app (fst_app s0))).
-      simpl.
-      rewrite eq_sym_twice.
-      rewrite app_assoc_tr.
-      repeat try 
-        (rewrite tedious_equiv_fst;
-         rewrite tedious_equiv_snd).
-      rewrite eq_sym_app_assoc_tr.
-      simpl.
-      repeat try 
-        (rewrite tedious_equiv_fst;
-         rewrite tedious_equiv_snd).
-      rewrite eq_sym_twice.
-      rewrite app_assoc_tr.
-      simpl.
-      repeat try 
-        (rewrite tedious_equiv_fst;
-         rewrite tedious_equiv_snd).
       
+      simpl.
+      rewrite eq_sym_twice.
+      rewrite app_assoc_tr.
+      repeat try 
+        (rewrite tedious_equiv_fst;
+         rewrite tedious_equiv_snd).
       rewrite eq_sym_app_assoc_tr.
+      simpl.
       repeat try 
         (rewrite tedious_equiv_fst;
          rewrite tedious_equiv_snd).
       intro x; exact x.
 
       intros y x.
+      unfold ctx_perm_app_const_r_unpermuting.
       destruct y.
       destruct x.
             rewrite (tedious_equiv_2 s0).
       rewrite (tedious_equiv_2 (fst_app s0)).
-      rewrite (tedious_equiv_2 (snd_app (fst_app s0))).
       simpl.
       rewrite eq_sym_twice.
       rewrite app_assoc_tr.
@@ -4183,31 +4183,21 @@ Proof.
       repeat try 
         (rewrite tedious_equiv_fst;
          rewrite tedious_equiv_snd).
-      rewrite eq_sym_twice.
-      rewrite app_assoc_tr.
-      simpl.
-      repeat try 
-        (rewrite tedious_equiv_fst;
-         rewrite tedious_equiv_snd).
-      
-      rewrite eq_sym_app_assoc_tr.
-      repeat try 
-        (rewrite tedious_equiv_fst;
-         rewrite tedious_equiv_snd).
+      rewrite <- tedious_equiv_2.
       intro x; exact x.
 
       intros.
       intro.
       clear p r.
-      pose proof (n δ (fst_app γ; (snd_app (snd_app γ); fst_app (snd_app γ)))).
-      simpl in H.
-      apply H1 in H.
-      contradict H.
+      simpl in  H.
+      
+      pose proof (n δ _ H).
+      contradict H1.
       destruct H0.
       exists x.
-      destruct H; split; auto.
+      destruct H0; split; auto.
       intro.
-      pose proof (H0 n0).
+      pose proof (H1 n0).
       simpl in H2.
       rewrite tedious_equiv_fst in H2.
       rewrite tedious_equiv_snd in H2.
@@ -4221,7 +4211,6 @@ Proof.
       destruct y.
       destruct x.
       rewrite (tedious_equiv_2 s0).
-      rewrite (tedious_equiv_2 (snd_app s0)).
       simpl.
       intro.
       destruct H.
@@ -5078,11 +5067,14 @@ Proof.
       Check tr (fun Γ : ro_ctx => Γ;;; Δ ||- c : UNIT) (eq_sym (app_assoc Γ Δ Δ2)) (has_type_rw_add_auxiliary (Γ ++ Δ) Δ c UNIT wty_c Δ2).
       pose proof (has_type_rw_While_inverse wty) as [_ jjj].
       Check has_type_rw_add_auxiliary (Γ ++ Δ) Δ c UNIT wty_c Δ2.
-      apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _ jjj
+      apply (r_admissible_permutate_auxiliary_rw_tot _ _ _ _ _ _ _ _
+                                                     (ctx_perm_swap Δ Δ2)
+                                                     jjj
                _
                (has_type_rw_add_auxiliary _ _ _ _ jjj (Δ2 ++ Δ))
                
             ) in p.
+      unfold  ctx_perm_swap_unpermuting in p.
       apply (r_proves_rw_tot_ctx_rewrite_ro ( (app_assoc _ _ _))) in p.
       simpl in p.
       Check has_type_rw_add_auxiliary Γ Δ c UNIT jjj (Δ2 ++ Δ).
@@ -5151,6 +5143,7 @@ Proof.
       rewrite eq_sym_app_assoc_tr.
       simpl in h2.
       rewrite eq_sym_twice.
+      unfold  ctx_perm_swap_unpermuting.
       rewrite app_assoc_tr.
       rewrite tedious_equiv_fst.
       rewrite tedious_equiv_snd.
@@ -5170,6 +5163,7 @@ Proof.
       rewrite (tedious_equiv_2 s0).
       rewrite (tedious_equiv_2 (fst_app s0)).
       rewrite eq_sym_twice.
+      unfold  ctx_perm_swap_unpermuting.
       rewrite app_assoc_tr.
       simpl.
       rewrite eq_sym_app_assoc_tr.
