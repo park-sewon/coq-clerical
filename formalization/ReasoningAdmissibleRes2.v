@@ -2563,10 +2563,320 @@ Proof.
 Defined.
 
 
-Fixpoint r_admissible_gen_rw_prt Γ Δ1 Δ2 e τ (w : Γ ;;; Δ1 ||- e : τ) ϕ ψ (p : w ||~ {{ϕ}} e {{ψ}}) :
+Fixpoint r_admissible_gen_ro_prt Γ1 Γ2 e τ (w : Γ1 |- e : τ) ϕ ψ (p : w |~ {{ϕ}} e {{ψ}}) :
+  (has_type_ro_add_auxiliary _ _ _ w Γ2) |~ {{fun x => ϕ (fst_app x)}} e {{fun y x => ψ y (fst_app x)}}
+with r_admissible_gen_ro_tot Γ1 Γ2 e τ (w : Γ1 |- e : τ) ϕ ψ (p : w |~ [{ϕ}] e [{ψ}]) :
+  (has_type_ro_add_auxiliary _ _ _ w Γ2) |~ [{fun x => ϕ (fst_app x)}] e [{fun y x => ψ y (fst_app x)}]
+with r_admissible_gen_rw_prt Γ Δ1 Δ2 e τ (w : Γ ;;; Δ1 ||- e : τ) ϕ ψ (p : w ||~ {{ϕ}} e {{ψ}}) :
   (has_type_rw_add_auxiliary _ _ _ _ w Δ2) ||~ {{fun x => ϕ (fst x, fst_app (snd x))}} e {{fun y x => ψ y (fst x, fst_app (snd x))}}
 with r_admissible_gen_rw_tot Γ Δ1 Δ2 e τ (w : Γ ;;; Δ1 ||- e : τ) ϕ ψ (p : w ||~ [{ϕ}] e [{ψ}]) :
   (has_type_rw_add_auxiliary _ _ _ _ w Δ2) ||~ [{fun x => ϕ (fst x, fst_app (snd x))}] e [{fun y x => ψ y (fst x, fst_app (snd x))}].
+Proof.
+  +
+    dependent induction p.
+    {
+      apply (r_admissible_gen_ro_prt _ Γ2) in p.
+      apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a p);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    }
+    {
+      pose proof (r_ro_var_prt _ _ _ (has_type_ro_add_auxiliary Γ (VAR k) τ w Γ2)
+                               (fun y x => ψ y (fst_app x))).
+      apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X);
+        try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+      rewrite (ro_access_app _ (fst_app h1) _ _ w Γ2 (snd_app h1) (has_type_ro_add_auxiliary Γ (VAR k) τ w Γ2)) in h2.
+      rewrite <- tedious_equiv_2 in h2.
+      exact h2.
+    }
+    {
+      pose proof (r_ro_skip_prt _ (has_type_ro_add_auxiliary Γ SKIP UNIT w Γ2)
+                                (fun y x => ψ y (fst_app x))).
+      apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X);
+        try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    }
+    {
+      pose proof (r_ro_true_prt _ (has_type_ro_add_auxiliary Γ TRUE BOOL w Γ2)
+                                (fun y x => ψ y (fst_app x))).
+      apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X);
+        try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    }
+    {
+      pose proof (r_ro_false_prt _ (has_type_ro_add_auxiliary Γ FALSE BOOL w Γ2)
+                                (fun y x => ψ y (fst_app x))).
+      apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X);
+        try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    }
+    {
+      pose proof (r_ro_int_prt _ _ (has_type_ro_add_auxiliary Γ (INT k) INTEGER w Γ2)
+                                (fun y x => ψ y (fst_app x))).
+      apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X);
+        try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    }
+    {
+      apply (r_admissible_gen_rw_prt _ _ Γ2) in r.
+      pose proof (r_rw_ro_prt _ _ _ _ _ _ (has_type_ro_add_auxiliary Γ c τ w' Γ2) r).
+      apply (fun a => r_ro_imply_prt _ _ _ _ _ _ _ _ _ a X);
+        try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    }
+    {
+      apply (r_admissible_gen_ro_prt _ Γ2) in p.
+      apply (r_ro_coerce_prt _ _ _ _ _ _ p).
+    }
+    {
+      apply (r_admissible_gen_ro_prt _ Γ2) in p.
+      apply (r_ro_exp_prt _ _ _ _ _ _ p).
+    }
+    {
+      apply (r_admissible_gen_ro_prt _ Γ2) in p1.
+      apply (r_admissible_gen_ro_prt _ Γ2) in p2.
+      apply (r_ro_int_op_plus_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_prt _ Γ2) in p1.
+      apply (r_admissible_gen_ro_prt _ Γ2) in p2.
+      apply (r_ro_int_op_mult_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_prt _ Γ2) in p1.
+      apply (r_admissible_gen_ro_prt _ Γ2) in p2.
+      apply (r_ro_int_op_minus_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_prt _ Γ2) in p1.
+      apply (r_admissible_gen_ro_prt _ Γ2) in p2.
+      apply (r_ro_real_op_plus_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_prt _ Γ2) in p1.
+      apply (r_admissible_gen_ro_prt _ Γ2) in p2.
+      apply (r_ro_real_op_mult_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_prt _ Γ2) in p1.
+      apply (r_admissible_gen_ro_prt _ Γ2) in p2.
+      apply (r_ro_real_op_minus_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_prt _ Γ2) in p.
+      apply (r_ro_recip_prt _ _ _ _ _ _ _ p).
+      intros h1 h2 [h3 h4].
+      apply a.
+      split; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_prt _ Γ2) in p1.
+      apply (r_admissible_gen_ro_prt _ Γ2) in p2.
+      apply (r_ro_int_comp_eq_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_prt _ Γ2) in p1.
+      apply (r_admissible_gen_ro_prt _ Γ2) in p2.
+      apply (r_ro_int_comp_lt_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_prt _ Γ2) in p1.
+      apply (r_admissible_gen_ro_prt _ Γ2) in p2.
+      apply (r_ro_real_lt_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_tot _ Γ2) in r.
+      apply (r_ro_lim_prt _ _ (has_type_ro_add_auxiliary (INTEGER :: Γ) e REAL w Γ2)
+                          (fun x : sem_ro_ctx (Γ ++ Γ2) => ϕ (fst_app x))
+                          (fun y x => θ y (fst x, fst_app (snd x)))).
+      apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a r);
+        try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+      destruct h1.
+      simpl in h2.
+      rewrite (tedious_equiv_2 s0).
+      rewrite (tedious_equiv_2 s0) in h2.
+      rewrite tedious_equiv_fst in h2.
+      rewrite tedious_equiv_2_fst.
+      simpl.
+      rewrite tedious_equiv_fst.
+      exact h2.
+      destruct h2.
+      rewrite (tedious_equiv_2 s0).
+      rewrite tedious_equiv_2_fst.
+      simpl.
+      intro x; exact x.
+      intros.
+      apply (e0 (fst_app γ) H).
+    }
+
+  +
+    dependent induction p.
+    {
+      apply (r_admissible_gen_ro_tot _ Γ2) in p.
+      apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a p);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    }
+    {
+      pose proof (r_ro_var_tot _ _ _ (has_type_ro_add_auxiliary Γ (VAR k) τ w Γ2)
+                               (fun y x => ψ y (fst_app x))).
+      apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X);
+        try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+      rewrite (ro_access_app _ (fst_app h1) _ _ w Γ2 (snd_app h1) (has_type_ro_add_auxiliary Γ (VAR k) τ w Γ2)) in h2.
+      rewrite <- tedious_equiv_2 in h2.
+      exact h2.
+    }
+    {
+      pose proof (r_ro_skip_tot _ (has_type_ro_add_auxiliary Γ SKIP UNIT w Γ2)
+                                (fun y x => ψ y (fst_app x))).
+      apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X);
+        try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    }
+    {
+      pose proof (r_ro_true_tot _ (has_type_ro_add_auxiliary Γ TRUE BOOL w Γ2)
+                                (fun y x => ψ y (fst_app x))).
+      apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X);
+        try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    }
+    {
+      pose proof (r_ro_false_tot _ (has_type_ro_add_auxiliary Γ FALSE BOOL w Γ2)
+                                (fun y x => ψ y (fst_app x))).
+      apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X);
+        try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    }
+    {
+      pose proof (r_ro_int_tot _ _ (has_type_ro_add_auxiliary Γ (INT k) INTEGER w Γ2)
+                                (fun y x => ψ y (fst_app x))).
+      apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X);
+        try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    }
+    {
+      apply (r_admissible_gen_rw_tot _ _ Γ2) in r.
+      pose proof (r_rw_ro_tot _ _ _ _ _ _ (has_type_ro_add_auxiliary Γ c τ w' Γ2) r).
+      apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a X);
+        try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    }
+    {
+      apply (r_admissible_gen_ro_tot _ Γ2) in p.
+      apply (r_ro_coerce_tot _ _ _ _ _ _ p).
+    }
+    {
+      apply (r_admissible_gen_ro_tot _ Γ2) in p.
+      apply (r_ro_exp_tot _ _ _ _ _ _ p).
+    }
+    {
+      apply (r_admissible_gen_ro_tot _ Γ2) in p1.
+      apply (r_admissible_gen_ro_tot _ Γ2) in p2.
+      apply (r_ro_int_op_plus_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_tot _ Γ2) in p1.
+      apply (r_admissible_gen_ro_tot _ Γ2) in p2.
+      apply (r_ro_int_op_mult_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_tot _ Γ2) in p1.
+      apply (r_admissible_gen_ro_tot _ Γ2) in p2.
+      apply (r_ro_int_op_minus_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_tot _ Γ2) in p1.
+      apply (r_admissible_gen_ro_tot _ Γ2) in p2.
+      apply (r_ro_real_op_plus_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_tot _ Γ2) in p1.
+      apply (r_admissible_gen_ro_tot _ Γ2) in p2.
+      apply (r_ro_real_op_mult_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_tot _ Γ2) in p1.
+      apply (r_admissible_gen_ro_tot _ Γ2) in p2.
+      apply (r_ro_real_op_minus_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_tot _ Γ2) in p.
+      apply (r_ro_recip_tot _ _ _ _ _ _ _ p).
+      intros h1 h2 h3.
+      apply a.
+      exact h3.
+    }
+    {
+      apply (r_admissible_gen_ro_tot _ Γ2) in p1.
+      apply (r_admissible_gen_ro_tot _ Γ2) in p2.
+      apply (r_ro_int_comp_eq_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_tot _ Γ2) in p1.
+      apply (r_admissible_gen_ro_tot _ Γ2) in p2.
+      apply (r_ro_int_comp_lt_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_tot _ Γ2) in p1.
+      apply (r_admissible_gen_ro_tot _ Γ2) in p2.
+      apply (r_ro_real_lt_tot _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply a; auto.
+    }
+    {
+      apply (r_admissible_gen_ro_tot _ Γ2) in p.
+      apply (r_ro_lim_tot _ _ (has_type_ro_add_auxiliary (INTEGER :: Γ) e REAL w Γ2)
+                          (fun x : sem_ro_ctx (Γ ++ Γ2) => ϕ (fst_app x))
+                          (fun y x => θ y (fst x, fst_app (snd x)))).
+      apply (fun a => r_ro_imply_tot _ _ _ _ _ _ _ _ _ a p);
+        try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+      destruct h1.
+      simpl in h2.
+      rewrite (tedious_equiv_2 s0).
+      rewrite (tedious_equiv_2 s0) in h2.
+      rewrite tedious_equiv_fst in h2.
+      rewrite tedious_equiv_2_fst.
+      simpl.
+      rewrite tedious_equiv_fst.
+      exact h2.
+      destruct h2.
+      rewrite (tedious_equiv_2 s0).
+      rewrite tedious_equiv_2_fst.
+      simpl.
+      intro x; exact x.
+      intros.
+      apply (e0 (fst_app γ) H).
+    }
+  +
+    dependent induction p.
+
+    {
+      apply (r_admissible_gen_rw_prt _ _ Δ2) in p. 
+      apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p);
+        try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    }
+    {
+     apply (r_admissible_gen_ro_prt _ Δ2) in rx. 
+      apply (fun a => r_rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p);
+        try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    }
+    
+    
+
+    }
+
+    {
+      apply (r_admissible_gen_ro_tot _ Γ2) in p1.
+      apply (r_admissible_gen_ro_prt _ Γ2) in p2.
+      apply (r_ro_int_op_plus_prt _ _ _ _ _ _ _ _ _ _ p1 p2).
+      intros; apply ψ0; auto.
+    }
+
+  
 Admitted.
 
 Fixpoint r_admissible_move_rw_prt Γ Δ1 Δ2 e τ (w : (Δ2 ++ Γ) ;;; Δ1 ||- e : τ) ϕ ψ (p : w ||~ {{ϕ}} e {{ψ}}) {struct p}:

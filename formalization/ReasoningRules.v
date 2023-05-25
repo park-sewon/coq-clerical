@@ -68,21 +68,21 @@ Infix "/\\\" := asrt_and2 (at level 80).
 Infix "/\\" := asrt_and (at level 80).
 Infix "\//" := asrt_or (at level 80).
 
-Fixpoint ro_access  Γ k τ (w: Γ |- Var k : τ) : sem_ro_ctx Γ -> sem_datatype τ.
-Proof.
-  inversion w.
-  inversion H.
-  simpl in H7.
-  exact (ro_access _ _ _ H7).
-  intro.
-  simpl in X.
-  destruct X.
-  exact s.
-  intro.
-  apply (ro_access _ _ _ H1).
-  destruct X.
-  exact s0.
-Defined.
+(* Fixpoint ro_access  Γ k τ (w: Γ |- Var k : τ) : sem_ro_ctx Γ -> sem_datatype τ. *)
+(* Proof. *)
+(*   inversion w. *)
+(*   inversion H. *)
+(*   simpl in H7. *)
+(*   exact (ro_access _ _ _ H7). *)
+(*   intro. *)
+(*   simpl in X. *)
+(*   destruct X. *)
+(*   exact s. *)
+(*   intro. *)
+(*   apply (ro_access _ _ _ H1). *)
+(*   destruct X. *)
+(*   exact s0. *)
+(* Defined. *)
 
 Definition rw_to_ro_pre {Γ Δ} (ϕ : sem_ro_ctx Δ * sem_ro_ctx Γ -> Prop) :=
                         fun δγ => ϕ (tedious_sem_app _ _ δγ).
