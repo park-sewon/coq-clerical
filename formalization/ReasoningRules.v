@@ -10,16 +10,6 @@ Require Import Clerical.Semantics.
 Require Import Clerical.SemanticsProperties.
 Require Import Clerical.Specification.
 
-Reserved Notation " w |- {{ P }} e {{ Q }} " (at level 50, P, e, Q at next level).
-Reserved Notation " w |- {{ P }} e {{ y | Q }} " (at level 50, P, e,y, Q at next level).
-Reserved Notation " w |- [{ P }] e [{ Q }] " (at level 50, P, e, Q at next level).
-Reserved Notation " w ||- {{ P }} e {{ Q }} " (at level 50, P, e, Q at next level).
-Reserved Notation " w ||- [{ P }] e [{ Q }] " (at level 50, P, e, Q at next level).
-Reserved Notation " w |- [{ P }] e [{ y | Q }] " (at level 50, P, e, y, Q at next level).
-Reserved Notation " w ||- {{ P }} e {{ y | Q }} " (at level 50, P, e, y, Q at next level).
-Reserved Notation " w ||- [{ P }] e [{ y | Q }] " (at level 50, P, e, y, Q at next level).
-
-(* This file defines the proof rules for specifications. *)
 
 
 (* CaseList has list of computations l and we want to annotate each of them.
@@ -67,6 +57,21 @@ Infix "->>>" := asrt_imp2 (at level 80).
 Infix "/\\\" := asrt_and2 (at level 80).
 Infix "/\\" := asrt_and (at level 80).
 Infix "\//" := asrt_or (at level 80).
+
+
+Section Rules.
+Reserved Notation " w |- {{ P }} e {{ Q }} " (at level 50, P, e, Q at next level).
+Reserved Notation " w |- {{ P }} e {{ y | Q }} " (at level 50, P, e,y, Q at next level).
+Reserved Notation " w |- [{ P }] e [{ Q }] " (at level 50, P, e, Q at next level).
+Reserved Notation " w ||- {{ P }} e {{ Q }} " (at level 50, P, e, Q at next level).
+Reserved Notation " w ||- [{ P }] e [{ Q }] " (at level 50, P, e, Q at next level).
+Reserved Notation " w |- [{ P }] e [{ y | Q }] " (at level 50, P, e, y, Q at next level).
+Reserved Notation " w ||- {{ P }} e {{ y | Q }} " (at level 50, P, e, y, Q at next level).
+Reserved Notation " w ||- [{ P }] e [{ y | Q }] " (at level 50, P, e, y, Q at next level).
+
+(* This file defines the proof rules for specifications. *)
+
+
 
 (* Fixpoint ro_access  Γ k τ (w: Γ |- Var k : τ) : sem_ro_ctx Γ -> sem_datatype τ. *)
 (* Proof. *)
@@ -149,7 +154,7 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
     w |- {{Q k}} INT k {{Q}}
 
 (** passage between read-only and read-write correctness *)
-| rw_ro_prt : forall Γ c τ (w : Γ ;;; nil ||- c : τ) P Q (w' : Γ |- c : τ),
+| ro_rw_prt : forall Γ c τ (w : Γ ;;; nil ||- c : τ) P Q (w' : Γ |- c : τ),
     
     w ||- {{P}} c {{Q}} -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
@@ -262,8 +267,8 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
 (* Limit *)
 | ro_lim_prt : forall Γ e (w : (INTEGER :: Γ) |- e : REAL) ϕ θ (w' : Γ |- Lim e : REAL) ψ,
 
-    w |- [{fun γ' => ϕ (snd γ')}] e [{θ}] ->
-    (forall γ, ϕ γ -> exists y, ψ y γ /\ forall x z, θ z (x, γ) -> (Rabs (z - y)%R < powerRZ 2 (- x))%R) ->
+    w |- [{fun γ' : sem_ro_ctx _ => ϕ (snd γ')}] e [{θ}] ->
+    (forall γ : sem_ro_ctx Γ, ϕ γ -> exists y, ψ y γ /\ forall x z, θ z (x, γ) -> (Rabs (z - y)%R < powerRZ 2 (- x))%R) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     w' |- {{ϕ}} Lim e {{ψ}}
                                                         
@@ -324,7 +329,7 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
     w |- [{Q k}] INT k [{Q}]
 
 (** passage between read-only and read-write correctness *)
-| rw_ro_tot : forall Γ c τ (w : Γ ;;; nil ||- c : τ) P Q (w' : Γ |- c : τ),
+| ro_rw_tot : forall Γ c τ (w : Γ ;;; nil ||- c : τ) P Q (w' : Γ |- c : τ),
     
     w ||- [{P}] c [{Q}] -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
@@ -439,8 +444,8 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
 (* Limit *)
 | ro_lim_tot : forall Γ e (w : (INTEGER :: Γ) |- e : REAL) ϕ θ (w' : Γ |- Lim e : REAL) ψ,
 
-    w |- [{fun γ' => ϕ (snd γ')}] e [{θ}] ->
-    (forall γ, ϕ γ -> exists y, ψ y γ /\ forall x z, θ z (x, γ) -> (Rabs (z - y)%R < powerRZ 2 (- x))%R) ->
+    w |- [{fun γ' : sem_ro_ctx _ => ϕ (snd γ')}] e [{θ}] ->
+    (forall γ :sem_ro_ctx Γ, ϕ γ -> exists y, ψ y γ /\ forall x z, θ z (x, γ) -> (Rabs (z - y)%R < powerRZ 2 (- x))%R) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     w' |- [{ϕ}] Lim e [{ψ}]
                                                         
@@ -477,7 +482,7 @@ with proves_rw_prt : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_prt w -> T
     w ||- {{ϕ \// ϕ'}} e {{ψ}}
 
 (** passage between read-only and read-write correctness *)
-| ro_rw_prt : forall Γ Δ e τ (w : (Δ ++ Γ) |- e : τ) ϕ ψ (w' : Γ ;;; Δ ||- e : τ),
+| rw_ro_prt : forall Γ Δ e τ (w : (Δ ++ Γ) |- e : τ) ϕ ψ (w' : Γ ;;; Δ ||- e : τ),
     
     w |- {{ϕ}} e {{ψ}} -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
@@ -582,7 +587,7 @@ with proves_rw_tot : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_tot w -> T
     w ||- [{ϕ \// ϕ'}] e [{ψ}]
 
 (** passage between read-only and read-write correctness *)
-| ro_rw_tot : forall Γ Δ e τ (w : (Δ ++ Γ) |- e : τ) ϕ ψ (w' : Γ ;;; Δ ||- e : τ),
+| rw_ro_tot : forall Γ Δ e τ (w : (Δ ++ Γ) |- e : τ) ϕ ψ (w' : Γ ;;; Δ ||- e : τ),
     
     w |- [{ϕ}] e [{ψ}] -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
@@ -670,3 +675,21 @@ where
 " w |- {{ P }} e {{ Q }} " := (proves_ro_prt _ e _ w (mk_ro_prt w P Q)) and  " w |- {{ P }} e {{ y | Q }} " := (proves_ro_prt _ e _ w (mk_ro_prt w P (fun y => Q))) and " w |- [{ P }] e [{ y | Q }] " := (proves_ro_tot _ e _ w (mk_ro_tot w P (fun y => Q))) and " w ||- {{ P }} e {{ y | Q }} " := (proves_rw_prt _ _ e _ w (mk_rw_prt w P (fun y => Q))) and " w ||- [{ P }] e [{ y | Q }] " := (proves_rw_tot _ _ e _ w (mk_rw_tot w P (fun y => Q))) and " w |- [{ P }] e [{ Q }] " := (proves_ro_tot _ e _ w (mk_ro_tot w P Q)) and " w ||- {{ P }} e {{ Q }} " := (proves_rw_prt _ _ e _ w (mk_rw_prt w P Q)) and " w ||- [{ P }] e [{ Q }] " := (proves_rw_tot _ _ e _ w (mk_rw_tot w P Q)).
 
 
+End Rules.
+Declare Scope detail_scope.
+
+Notation " w |- {{ P }} e {{ Q }} " := (proves_ro_prt _ e _ w (mk_ro_prt w P Q))  (at level 50, P, e, Q at next level) : detail_scope.
+
+Notation " w |- [{ P }] e [{ Q }] " := (proves_ro_tot _ e _ w (mk_ro_tot w P Q)) (at level 50, P, e, Q at next level) : detail_scope.
+
+Notation " w ||- {{ P }} e {{ Q }} " := (proves_rw_prt _ _ e _ w (mk_rw_prt w P Q)) (at level 50, P, e, Q at next level) : detail_scope.
+
+Notation " w ||- [{ P }] e [{ Q }] " := (proves_rw_tot _ _ e _ w (mk_rw_tot w P Q)) (at level 50, P, e, Q at next level) : detail_scope.
+
+Notation  " w |- {{ P }} e {{ y | Q }} " := (proves_ro_prt _ e _ w (mk_ro_prt w P (fun y => Q))) (at level 50, P, e, Q, y at next level) : detail_scope.
+
+Notation " w |- [{ P }] e [{ y | Q }] " := (proves_ro_tot _ e _ w (mk_ro_tot w P (fun y => Q))) (at level 50, P, e, Q, y  at next level) : detail_scope.
+
+Notation " w ||- {{ P }} e {{ y | Q }} " := (proves_rw_prt _ _ e _ w (mk_rw_prt w P (fun y => Q))) (at level 50, P, e, Q, y  at next level) : detail_scope.
+
+Notation " w ||- [{ P }] e [{ y | Q }] " := (proves_rw_tot _ _ e _ w (mk_rw_tot w P (fun y => Q))) (at level 50, P, e, Q, y at next level) : detail_scope.

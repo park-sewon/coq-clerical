@@ -12,7 +12,7 @@ Require Import Clerical.Specification.
 Require Import Clerical.ReasoningRules.
 Require Import Clerical.ReasoningAdmissibleRes0.
 
-
+Open Scope detail_scope.
 Fixpoint r_proves_ro_prt_proves_ro_prt {Γ} {e} {τ} {w : Γ |- e : τ} {ϕ} {ψ} (p : w |~ {{ϕ}} e {{ψ}}) {struct p} : w |- {{ϕ}} e {{ψ}}
 with r_proves_ro_tot_proves_ro_tot {Γ} {e} {τ} {w : Γ |- e : τ} {ϕ} {ψ} (p : w |~ [{ϕ}] e [{ψ}]) {struct p} : w |- [{ϕ}] e [{ψ}]
 with r_proves_rw_prt_proves_rw_prt {Γ Δ} {e} {τ} {w : Γ ;;; Δ ||- e : τ} {ϕ} {ψ} (p : w ||~ {{ϕ}} e {{ψ}}) {struct p} : w ||- {{ϕ}} e {{ψ}}
@@ -25,7 +25,7 @@ Proof.
     apply (fun k => ro_imply_prt _ _ _ _ _ _ _ _ _ k p); auto.
 
     apply r_proves_rw_prt_proves_rw_prt in r.
-    apply (rw_ro_prt _ _ _ w _ _ _ r).
+    apply (ro_rw_prt _ _ _ w _ _ _ r).
 
     apply (ro_coerce_prt _ _ w).
     exact p.
@@ -74,7 +74,7 @@ Proof.
     apply (fun k => ro_imply_tot _ _ _ _ _ _ _ _ _ k p); auto.
 
     apply r_proves_rw_tot_proves_rw_tot in r.
-    apply (rw_ro_tot _ _ _ w _ _ _ r).
+    apply (ro_rw_tot _ _ _ w _ _ _ r).
 
     apply (ro_coerce_tot _ _ w).
     exact p.
@@ -121,7 +121,7 @@ Proof.
     apply (fun k => rw_imply_prt _ _ _ _ _ _ _ _ _ _ k p); auto.
 
     apply r_proves_ro_prt_proves_ro_prt in r.
-    apply (ro_rw_prt _ _ _ _ w _ _ _ r).
+    apply (rw_ro_prt _ _ _ _ w _ _ _ r).
     
     apply (rw_sequence_prt _ _ _ _ _ w1 w2 _ _ _ _ p1 p2).
 
@@ -161,7 +161,7 @@ Proof.
     apply (fun k => rw_imply_tot _ _ _ _ _ _ _ _ _ _ k p); auto.
 
     apply r_proves_ro_tot_proves_ro_tot in r.
-    apply (ro_rw_tot _ _ _ _ w _ _ _ r).
+    apply (rw_ro_tot _ _ _ _ w _ _ _ r).
     
     apply (rw_sequence_tot _ _ _ _ _ w1 w2 _ _ _ _ p1 p2).
 
