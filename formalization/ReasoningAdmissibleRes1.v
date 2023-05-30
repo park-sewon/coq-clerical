@@ -12,7 +12,6 @@ Require Import Clerical.Specification.
 Require Import Clerical.ReasoningRules.
 Require Import Clerical.ReasoningAdmissibleRes0.
 
-Open Scope detail_scope.
 Fixpoint r_proves_ro_prt_proves_ro_prt {Γ} {e} {τ} {w : Γ |- e : τ} {ϕ} {ψ} (p : w |~ {{ϕ}} e {{ψ}}) {struct p} : w |- {{ϕ}} e {{ψ}}
 with r_proves_ro_tot_proves_ro_tot {Γ} {e} {τ} {w : Γ |- e : τ} {ϕ} {ψ} (p : w |~ [{ϕ}] e [{ψ}]) {struct p} : w |- [{ϕ}] e [{ψ}]
 with r_proves_rw_prt_proves_rw_prt {Γ Δ} {e} {τ} {w : Γ ;;; Δ ||- e : τ} {ϕ} {ψ} (p : w ||~ {{ϕ}} e {{ψ}}) {struct p} : w ||- {{ϕ}} e {{ψ}}

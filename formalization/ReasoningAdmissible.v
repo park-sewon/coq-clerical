@@ -11,7 +11,6 @@ Require Import Clerical.SemanticsProperties.
 Require Import Clerical.Specification.
 Require Import Clerical.ReasoningRules.
 
-Open Scope detail_scope.
 Lemma proves_admissible_ro_prt_post_weaken {Γ} {e} {τ} {w : Γ |- e : τ} {ϕ} {ψ} {θ} (X : w |- {{ϕ}} e {{ψ}}) :
   ψ ->>> θ -> w |- {{ϕ}} e {{θ}}.
 Proof.

@@ -12,7 +12,6 @@ Require Import Clerical.SemanticsProperties.
 Require Import Clerical.Specification.
 Require Import Clerical.ReasoningRules.
 
-Open Scope detail_scope.
 Arguments existT {_} {_}.
 (* Ths file proves the soundnsess of our Reasoning rules.
    The main thoerems are

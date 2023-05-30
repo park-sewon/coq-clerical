@@ -676,20 +676,19 @@ where
 
 
 End Rules.
-Declare Scope detail_scope.
 
-Notation " w |- {{ P }} e {{ Q }} " := (proves_ro_prt _ e _ w (mk_ro_prt w P Q))  (at level 50, P, e, Q at next level) : detail_scope.
+Notation " w |- {{ P }} e {{ Q }} " := (proves_ro_prt _ e _ w (mk_ro_prt w P Q))  (at level 50, P, e, Q at next level) : clerical_scope.
 
-Notation " w |- [{ P }] e [{ Q }] " := (proves_ro_tot _ e _ w (mk_ro_tot w P Q)) (at level 50, P, e, Q at next level) : detail_scope.
+Notation " w |- [{ P }] e [{ Q }] " := (proves_ro_tot _ e _ w (mk_ro_tot w P Q)) (at level 50, P, e, Q at next level) : clerical_scope.
 
-Notation " w ||- {{ P }} e {{ Q }} " := (proves_rw_prt _ _ e _ w (mk_rw_prt w P Q)) (at level 50, P, e, Q at next level) : detail_scope.
+Notation " w ||- {{ P }} e {{ Q }} " := (proves_rw_prt _ _ e _ w (mk_rw_prt w P Q)) (at level 50, P, e, Q at next level) : clerical_scope.
 
-Notation " w ||- [{ P }] e [{ Q }] " := (proves_rw_tot _ _ e _ w (mk_rw_tot w P Q)) (at level 50, P, e, Q at next level) : detail_scope.
+Notation " w ||- [{ P }] e [{ Q }] " := (proves_rw_tot _ _ e _ w (mk_rw_tot w P Q)) (at level 50, P, e, Q at next level) : clerical_scope.
 
-Notation  " w |- {{ P }} e {{ y | Q }} " := (proves_ro_prt _ e _ w (mk_ro_prt w P (fun y => Q))) (at level 50, P, e, Q, y at next level) : detail_scope.
+Notation  " w |- {{ P }} e {{ y | Q }} " := (proves_ro_prt _ e _ w (mk_ro_prt w P (fun y => Q))) (at level 50, P, e, Q, y at next level) : clerical_scope.
 
-Notation " w |- [{ P }] e [{ y | Q }] " := (proves_ro_tot _ e _ w (mk_ro_tot w P (fun y => Q))) (at level 50, P, e, Q, y  at next level) : detail_scope.
+Notation " w |- [{ P }] e [{ y | Q }] " := (proves_ro_tot _ e _ w (mk_ro_tot w P (fun y => Q))) (at level 50, P, e, Q, y  at next level) : clerical_scope.
 
-Notation " w ||- {{ P }} e {{ y | Q }} " := (proves_rw_prt _ _ e _ w (mk_rw_prt w P (fun y => Q))) (at level 50, P, e, Q, y  at next level) : detail_scope.
+Notation " w ||- {{ P }} e {{ y | Q }} " := (proves_rw_prt _ _ e _ w (mk_rw_prt w P (fun y => Q))) (at level 50, P, e, Q, y  at next level) : clerical_scope.
 
-Notation " w ||- [{ P }] e [{ y | Q }] " := (proves_rw_tot _ _ e _ w (mk_rw_tot w P (fun y => Q))) (at level 50, P, e, Q, y at next level) : detail_scope.
+Notation " w ||- [{ P }] e [{ y | Q }] " := (proves_rw_tot _ _ e _ w (mk_rw_tot w P (fun y => Q))) (at level 50, P, e, Q, y at next level) : clerical_scope.
