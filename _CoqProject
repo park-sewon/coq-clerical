@@ -26,6 +26,7 @@ formalization/ReasoningAdmissibleRes3.v
 formalization/ReasoningAdmissibleRes4.v
 
 formalization/ReasoningAdmissible.v
+formalization/ReasoningPrettyprinting.v
 formalization/ReasoningUtils.v
 
 formalization/Clerical.v
