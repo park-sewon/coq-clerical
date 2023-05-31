@@ -17,5 +17,6 @@ Require Export Clerical.Specification.
 Require Export Clerical.ReasoningRules.
 Require Export Clerical.ReasoningSoundness.
 Require Export Clerical.ReasoningAdmissible.
+Require Export Clerical.ReasoningPrettyprinting.
 Require Export Clerical.ReasoningUtils.
 

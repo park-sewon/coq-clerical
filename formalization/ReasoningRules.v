@@ -25,7 +25,11 @@ Proof.
   exact False.
   exact (Q x p \/ ForallT_disj A P Q l t).
 Defined.
- 
+
+Inductive ForallT1 {A} (P : A -> Type) (R : forall a, P a -> Type) : forall l, ForallT P l -> Type :=
+  ForallT1_nil : ForallT1 P R nil (ForallT_nil P)
+| ForallT1_cons : forall l a t1 p,  ForallT1 P R l t1 -> R a p -> ForallT1 P R (a :: l) (ForallT_cons P a l p t1).
+
 Inductive ForallT2 {A} (P Q: A -> Type) (R : forall a, P a -> Q a -> Type) : forall l, ForallT P l -> ForallT Q l -> Type :=
   ForallT2_nil : ForallT2 P Q R nil (ForallT_nil P) (ForallT_nil Q)
 | ForallT2_cons :forall l a t1 t2 p q,  ForallT2 P Q R l t1 t2 -> R a p q -> ForallT2 P Q R (a :: l) (ForallT_cons P a l p t1) (ForallT_cons Q a l q t2).
