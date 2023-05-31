@@ -67,20 +67,45 @@ Defined.
 Require Import Reals.
 Open Scope R.
 
-
-
 Lemma exp_abs_correct :
   forall Γ k (w : Γ |- VAR k : REAL),
-    (exp_abs_wty Γ k w) |-
+    Γ |--
       [{fun _ => True}]
-        exp_abs k 
-        [{y | fun x => y = Rabs (ro_access Γ k REAL w x) }].
+      exp_abs k 
+      [{y : REAL | fun x => y = Rabs (ro_access Γ k REAL w x) }].
 Proof.
   intros.
-  Close Scope detail_scope.
-  apply (ro_lim_tot_util (fun x =>  Rabs (ro_access Γ k REAL w x)));
+  apply (pp_ro_lim_tot_util_known_limit (fun x =>  Rabs (ro_access Γ k REAL w x)));
     try (intros h1 h2 [_ h3]; auto; fail).
-  apply (ro_rw_tot_util).
+  apply (pp_ro_rw_tot_back).
+  apply (pp_rw_case_tot
+           (Γ := (INTEGER :: Γ))
+           (θ1 := ( fun b x => b = true -> (ro_access _ _ _ w (snd (snd_app x))) <
+                                      pow2 (- ((fst (snd_app x))) - 1)%Z))
+           (θ2 := ( fun b x => b = true -> (ro_access _ _ _ w (snd (snd_app x))) <
+                                      pow2 (- ((fst (snd_app x))) - 1)%Z))
+           
+           (ϕ1 := ( fun x =>  (ro_access _ _ _ w (snd (snd_app x))) <
+                         pow2 (- ((fst (snd_app x))) - 1)%Z))
+           (ϕ2 := ( fun x =>  (ro_access _ _ _ w (snd (snd_app x))) <
+                         pow2 (- ((fst (snd_app x))) - 1)%Z))
+        ); simpl.
+  apply (pp_ro_real_comp_lt_prt
+           (Γ := (INTEGER :: Γ))%list
+           ((fun y x =>
+                     y = (ro_access _ _ _ w (snd x)) ))
+           ((fun y x =>
+                     y = pow2 (- (fst x) - 1)%Z )))
+  .
+  apply (pp_ro_var_prt_back (has_type_ro_Var_S _  INTEGER _  k w)).
+  intros [x γ] h.
+  rewrite ro_access_Var_S.
+  apply ro_access_typing_irrl.
   
   
-  Check rw_ro_tot.
+  Search ro_access.
+  simpl.
+  
+  intros a 
+  apply (pp_ro_var_prt (has_type_ro_Var_S _  INTEGER _  k w)) . 
+  
