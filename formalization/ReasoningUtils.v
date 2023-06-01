@@ -545,3 +545,40 @@ Proof.
   exact H.
 Defined.
 
+Lemma pp_rw_ro_prt_back {Γ Δ} {e} {τ} {ϕ} {ψ} : 
+  (Δ ++ Γ) |-- {{fun x => ϕ (fst_app x, snd_app x)}} e {{y : τ | fun x => ψ y (fst_app x, snd_app x)}} -> 
+  Γ ;;; Δ ||-- {{ϕ}} e {{y : τ | ψ y}}.
+Proof.
+  intros [w p].
+  exists (has_type_rw_ro _ _ _ _ w).
+  apply (rw_ro_prt _ _ _ _ w
+                        _ _ (has_type_rw_ro Γ Δ e τ w)
+             ) in p.
+  apply (fun a => rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p);
+    try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+  destruct h1.
+  rewrite tedious_equiv_fst, tedious_equiv_snd.
+  exact h2.
+  destruct h2.
+  rewrite tedious_equiv_fst, tedious_equiv_snd.
+  auto.
+Defined.
+
+Lemma pp_rw_ro_tot_back {Γ Δ} {e} {τ} {ϕ} {ψ} : 
+  (Δ ++ Γ) |-- [{fun x => ϕ (fst_app x, snd_app x)}] e [{y : τ | fun x => ψ y (fst_app x, snd_app x)}] -> 
+  Γ ;;; Δ ||-- [{ϕ}] e [{y : τ | ψ y}].
+Proof.
+  intros [w p].
+  exists (has_type_rw_ro _ _ _ _ w).
+  apply (rw_ro_tot _ _ _ _ w
+                        _ _ (has_type_rw_ro Γ Δ e τ w)
+             ) in p.
+  apply (fun a => rw_imply_tot _ _ _ _ _ _ _ _ _ _ a p);
+    try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+  destruct h1.
+  rewrite tedious_equiv_fst, tedious_equiv_snd.
+  exact h2.
+  destruct h2.
+  rewrite tedious_equiv_fst, tedious_equiv_snd.
+  auto.
+Defined.
