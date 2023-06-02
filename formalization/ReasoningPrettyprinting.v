@@ -575,6 +575,19 @@ Section Commands.
     apply (rw_new_var_prt _ _ _ _ _ _ _ _ _ _ _ _ p1 p2).
   Defined.
 
+  Lemma pp_rw_new_var_tot {Γ Δ} {e} {c} {τ σ} {ϕ} {θ} {ψ}:
+    (Δ ++ Γ) |-- [{fun x => ϕ (tedious_sem_app _ _ x)}] e [{y : σ | θ y}] -> 
+    Γ ;;; (σ :: Δ) ||-- [{fun x => θ (fst (fst x)) (tedious_prod_sem _ _ (snd (fst x), snd x))}]
+      c
+      [{y : τ | fun x => ψ y (snd (fst x), snd x)}] -> 
+    Γ ;;; Δ ||-- [{ϕ}] NEWVAR e IN c [{y : τ | ψ y}].
+  Proof.
+    intros [w1 p1] [w2 p2].
+    exists (has_type_rw_Newvar _ _ _ _ _ _ w1 w2).
+    apply (rw_new_var_tot _ _ _ _ _ _ _ _ _ _ _ _ p1 p2).
+  Defined.
+
+  
   Lemma pp_rw_assign_prt {Γ Δ} {e} {k} {τ} {ϕ} {θ} {ψ : post}
         (a : assignable Δ τ k) :
     (Δ ++ Γ) |-- {{fun x => ϕ (tedious_sem_app _ _ x)}} e {{y : τ | θ y}} -> 

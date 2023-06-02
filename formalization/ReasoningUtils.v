@@ -173,7 +173,7 @@ Proof.
   apply (rw_new_var_prt_util p1 p2 h1 h2 h3).
 Defined.
 
-Lemma pp_rw_new_var_tot {Γ Δ} {e c} {τ σ}
+Lemma pp_rw_new_var_tot_util {Γ Δ} {e c} {τ σ}
       {ϕ} {ϕ'} {ψ : post} {θ} {θ'} {ψ' : post}:
   (Δ ++ Γ) |-- [{ϕ'}] e [{y : σ | θ y}] ->
   Γ ;;; (σ :: Δ) ||-- [{θ'}] c [{y : τ | ψ' y}] ->
@@ -600,3 +600,22 @@ Proof.
   exists w.
   apply (admissible_ro_prt_pose_readonly _ _ _ _ _ _ _ p).
 Defined.
+
+
+ Lemma pp_rw_while_tot_back {Γ Δ} {e c} {ϕ} {θ} {ψ} {ϕ'} {ψ'}:
+    (Δ ++ Γ) |-- [{rw_to_ro_pre ϕ}] e [{y : BOOL | θ y}] ->
+    Γ ;;; Δ ||-- [{ro_to_rw_pre (θ true)}] c [{y : UNIT | ϕ }] -> 
+    (Γ ++ Δ) ;;; Δ ||-- [{(fun x =>  ro_to_rw_pre (θ true) (fst x, fst_app (snd x)) /\ fst x = snd_app (snd x))}] c [{y : UNIT | ψ }] ->
+    (forall δ γ,
+        ϕ (δ, γ) -> ~ (exists f : nat -> sem_ro_ctx Δ, f 0%nat = δ /\ (forall n : nat, ψ (f (S n), (γ; f n))))) ->
+    ϕ' ->> ϕ ->
+    (fun _ => ϕ /\\ ro_to_rw_pre (θ false)) ->>> ψ' ->    
+    Γ ;;; Δ ||-- [{ϕ'}] While e c [{y : UNIT | ψ' y}].
+  Proof.
+    intros p1 p2 p3 h h1 h2.
+    apply (fun a => pp_rw_imply_tot a h1 h2).
+    apply (pp_rw_while_tot
+             (ψ := ψ))
+           ; auto.
+  Defined.
+  

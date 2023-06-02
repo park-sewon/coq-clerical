@@ -1,4 +1,4 @@
-Require Export Clerical.Preliminaries.BaseAxioms.
+Require Export Clerical.Preliminaries.Preliminaries.
 Require Export Clerical.Powerdomain.Powerdomain.
 Require Export Clerical.Syntax.
 Require Export Clerical.Typing.
@@ -11,4 +11,5 @@ Require Export Clerical.ReasoningSoundness.
 Require Export Clerical.ReasoningAdmissible.
 Require Export Clerical.ReasoningPrettyprinting.
 Require Export Clerical.ReasoningUtils.
+From Clerical.Utils Require Export TypingTactic SimpleArithProver SimpleArith.
 

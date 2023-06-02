@@ -1,9 +1,10 @@
 From Clerical Require Import Clerical.
 Require Import Coq.Program.Equality.
-Require Import ZArith Reals.
+Require Import ZArith Reals Lra List.
+Open Scope R.
 
 (* computing the absolute value of variable k *)
-Definition exp_abs k :=  
+Definition clerical_abs k :=  
   Lim
     (CASE
        VAR (S k) ;<; EXP ( :-: (VAR 0) :-: (INT 1))
@@ -14,20 +15,11 @@ Definition exp_abs k :=
        END)
 .
 
-Lemma exp_abs_wty :
-  forall Γ k, Γ |- VAR k : REAL ->
-                         Γ |- exp_abs k : REAL. 
-  intros.
-  auto_typing.
-Defined.
-
-
-
-Lemma exp_abs_correct :
+Lemma clerical_abs_correct :
   forall Γ k (w : Γ |- VAR k : REAL),
     Γ |--
       [{fun _ => True}]
-      exp_abs k 
+      clerical_abs k 
       [{y : REAL | fun x => y = Rabs (ro_access Γ k REAL w x) }].
 Proof.
   intros.
@@ -45,7 +37,7 @@ Proof.
                          pow2 (- ((fst (snd_app x))) - 1)%Z))
            (ϕ2 := ( fun x =>  - pow2 (- ((fst (snd_app x))) - 1)%Z < (ro_access _ _ _ w (snd (snd_app x)))))
         ); simpl.
-  
+
   proves_simple_arithmetical.
   intro e.
   rewrite e in val.
