@@ -2,6 +2,7 @@ Require Import List.
 Require Import Coq.Program.Equality.
 Require Import Reals.
 Require Import ZArith.
+Require Import Clerical.Preliminaries.Preliminaries.
 Require Import Clerical.Powerdomain.Powerdomain.
 Require Import Clerical.Syntax.
 Require Import Clerical.Typing.

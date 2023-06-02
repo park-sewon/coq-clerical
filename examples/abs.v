@@ -1,9 +1,6 @@
-(* From Clerical Require Import Clerical. *)
-
-
-
 From Clerical Require Import Clerical.
-Require Import ZArith.
+Require Import Coq.Program.Equality.
+Require Import ZArith Reals.
 
 (* computing the absolute value of variable k *)
 Definition exp_abs k :=  
@@ -20,48 +17,11 @@ Definition exp_abs k :=
 Lemma exp_abs_wty :
   forall Γ k, Γ |- VAR k : REAL ->
                          Γ |- exp_abs k : REAL. 
-
   intros.
-  apply has_type_ro_Lim.
-  apply has_type_ro_rw.
-  apply has_type_rw_Case.
-  simpl.
-  apply has_type_ro_OpRlt.
-  apply has_type_ro_Var_S.
-  exact H.
-  apply has_type_ro_OpZRexp.
-  apply has_type_ro_OpZminus.
-  apply has_type_ro_OpZminus.
-  apply has_type_ro_Int.
-  apply has_type_ro_Var_0.
-  apply has_type_ro_Int.
-  apply has_type_rw_ro.
-  apply has_type_ro_OpRminus.
-  apply has_type_ro_OpZRcoerce.
-  apply has_type_ro_Int.
-  apply has_type_ro_Var_S.
-  exact H.
-
-  apply has_type_ro_OpRlt.
-  apply has_type_ro_OpRminus.
-  apply has_type_ro_OpZRcoerce.
-  apply has_type_ro_Int.
-  apply has_type_ro_OpZRexp.
-  apply has_type_ro_OpZminus.
-  apply has_type_ro_OpZminus.
-  apply has_type_ro_Int.
-  apply has_type_ro_Var_0.
-  apply has_type_ro_Int.
-  apply has_type_ro_Var_S.
-  exact H.
-
-  apply has_type_rw_ro.
-  apply has_type_ro_Var_S.
-  exact H.
+  auto_typing.
 Defined.
 
-Require Import Reals.
-Open Scope R.
+
 
 Lemma exp_abs_correct :
   forall Γ k (w : Γ |- VAR k : REAL),
@@ -78,30 +38,120 @@ Proof.
            (Γ := (INTEGER :: Γ))
            (θ1 := ( fun b x => b = true -> (ro_access _ _ _ w (snd (snd_app x))) <
                                       pow2 (- ((fst (snd_app x))) - 1)%Z))
-           (θ2 := ( fun b x => b = true -> (ro_access _ _ _ w (snd (snd_app x))) <
+           (θ2 := ( fun b x => b = true -> - (ro_access _ _ _ w (snd (snd_app x))) <
                                       pow2 (- ((fst (snd_app x))) - 1)%Z))
            
            (ϕ1 := ( fun x =>  (ro_access _ _ _ w (snd (snd_app x))) <
                          pow2 (- ((fst (snd_app x))) - 1)%Z))
-           (ϕ2 := ( fun x =>  (ro_access _ _ _ w (snd (snd_app x))) <
-                         pow2 (- ((fst (snd_app x))) - 1)%Z))
+           (ϕ2 := ( fun x =>  - pow2 (- ((fst (snd_app x))) - 1)%Z < (ro_access _ _ _ w (snd (snd_app x)))))
         ); simpl.
-  apply (pp_ro_real_comp_lt_prt
-           (Γ := (INTEGER :: Γ))%list
-           ((fun y x =>
-                     y = (ro_access _ _ _ w (snd x)) ))
-           ((fun y x =>
-                     y = pow2 (- (fst x) - 1)%Z )))
-  .
-  apply (pp_ro_var_prt_back (has_type_ro_Var_S _  INTEGER _  k w)).
-  intros [x γ] h.
-  rewrite ro_access_Var_S.
-  apply ro_access_typing_irrl.
   
-  
-  Search ro_access.
+  proves_simple_arithmetical.
+  intro e.
+  rewrite e in val.
+  apply eq_sym in val.
+  apply (proj1 (Rltb''_prop _ _)) in val.
+  destruct x.
   simpl.
+  rewrite ro_access_Var_S, ro_access_Var_0 in val.
+  rewrite (ro_access_typing_irrl _ _ _ w (has_type_ro_Var_S_inv Γ k INTEGER REAL h)).
+  exact val.
+
+  proves_simple_arithmetical.
+  intro e.
+  rewrite e in val.
+  apply eq_sym in val.
+  apply (proj1 (Rltb''_prop _ _)) in val.
+  destruct x.
+  simpl.
+  rewrite ro_access_Var_S, ro_access_Var_0 in val.
+  rewrite (ro_access_typing_irrl _ _ _ w (has_type_ro_Var_S_inv Γ k INTEGER REAL h0)).
+  lra.
+
+  proves_simple_arithmetical.
+  unfold ro_to_rw_pre in pre.
+  pose proof (pre eq_refl).
+  rewrite val.
+  destruct x.
+  simpl.
+  rewrite ro_access_Var_S.
+  simpl in H.
+  rewrite <- Rabs_Ropp.
+  rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h0) w).
+  replace ((- (0 - ro_access Γ k REAL w s - Rabs (ro_access Γ k REAL w s)))) with
+    (ro_access Γ k REAL w s + Rabs (ro_access Γ k REAL w s)) by ring.
+  pose proof (Rabs_plus_Rabs_Rabs (ro_access _ _ _ w s)) as [p q].
+  destruct (Rle_or_lt (ro_access _ _ _ w s) 0).
+  rewrite (q H0).
+  apply pow2_positive.
+  rewrite (p H0).
+  pose proof (Rplus_lt_compat _ _ _ _ H H).
+  replace (ro_access Γ k REAL w s + ro_access Γ k REAL w s) with
+    (2 * ro_access Γ k REAL w s) in H1 by ring.
+  rewrite <- pow2_add_one in H1.
+  replace (- z - 1 + 1)%Z with (-z)%Z in H1 by ring. 
+  exact H1.
+
+  proves_simple_arithmetical.
+  unfold ro_to_rw_pre in pre.
+  pose proof (pre eq_refl).
+  rewrite val.
+  destruct x.
+  simpl.
+  rewrite ro_access_Var_S.
+  simpl in H.
+  rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL tmp1) w).
+  pose proof (Rabs_minus_Rabs_Rabs (ro_access _ _ _ w s)) as [p q].
+  destruct (Rle_or_lt (ro_access _ _ _ w s) 0).
+  rewrite (q H0).
+  pose proof (Rplus_lt_compat _ _ _ _ H H).
+  rewrite <- pow2_add_one in H1.
+  replace (- z - 1 + 1)%Z with (-z)%Z in H1 by ring. 
+  replace (- ro_access Γ k REAL w s +  - ro_access Γ k REAL w s) with
+    (- 2 * ro_access Γ k REAL w s) in H1 by ring.
+  exact H1.
+  rewrite (p H0).
+  apply pow2_positive.
+
+  proves_simple_arithmetical.
+  repeat split; auto.
+  destruct x.  
+  rewrite ro_access_Var_S, ro_access_Var_0.
+  simpl in pre.
+  rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h) w).
+  auto with real.
+
+  rewrite val.
+  apply (proj2 (Rltb''_prop _ _)).
+  destruct x.
+  rewrite ro_access_Var_S, ro_access_Var_0.
+  simpl in pre.
+  rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h) w).
+  exact pre.
   
-  intros a 
-  apply (pp_ro_var_prt (has_type_ro_Var_S _  INTEGER _  k w)) . 
+  proves_simple_arithmetical.
+  repeat split; auto.
+  destruct x.  
+  rewrite ro_access_Var_S, ro_access_Var_0.
+  simpl in pre.
+  rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h0) w).
+  unfold Rminus.
+  rewrite Rplus_0_l.
+  auto with real.
+
+  rewrite val.
+  apply (proj2 (Rltb''_prop _ _)).
+  destruct x.
+  rewrite ro_access_Var_S, ro_access_Var_0.
+  simpl in pre.
+  rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h0) w).
+  unfold Rminus.
+  rewrite Rplus_0_l.
+  auto with real.
+
+  intros.
+  destruct x.
+  simpl.
+  apply or_comm, overlap_splitting_symmetric, pow2_positive.
+Defined.  
   

@@ -1,5 +1,8 @@
 -R formalization Clerical
 formalization/Preliminaries/BaseAxioms.v
+formalization/Preliminaries/RealsExt.v
+formalization/Preliminaries/ListConstr.v
+formalization/Preliminaries/Preliminaries.v
 
 formalization/Powerdomain/Powerdomain.v
 formalization/Powerdomain/PowerdomainInfinite.v
@@ -10,6 +13,7 @@ formalization/Powerdomain/PowerdomainOrderProperties.v
 formalization/Powerdomain/PowerdomainFixedpoints.v
 formalization/Powerdomain/PowerdomainSemantics.v
 formalization/Powerdomain/PowerdomainSemantics2.v
+
 formalization/Syntax.v
 formalization/Typing.v
 formalization/TypingProperties.v
@@ -18,9 +22,13 @@ formalization/SemanticsProperties.v
 formalization/Specification.v
 formalization/ReasoningRules.v
 formalization/ReasoningSoundness.v
+formalization/ReasoningAdmissible.v
+formalization/ReasoningUtils.v
+formalization/ReasoningPrettyprinting.v
 
 formalization/Utils/TypingTactic.v
 formalization/Utils/SimpleArith.v
+formalization/Utils/SimpleArithProver.v
 
 
 
@@ -30,8 +38,5 @@ formalization/Utils/SimpleArith.v
 # formalization/ReasoningAdmissibleRes3.v
 # formalization/ReasoningAdmissibleRes4.v
 
-formalization/ReasoningAdmissible.v
-formalization/ReasoningPrettyprinting.v
-formalization/ReasoningUtils.v
 
 formalization/Clerical.v

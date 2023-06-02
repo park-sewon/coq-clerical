@@ -3,7 +3,8 @@ Require Import Reals.
 Open Scope R_scope.
 Require Import Lra Lia.
 
-From Clerical Require Import Preliminaries.BaseAxioms.
+
+From Clerical Require Import Preliminaries.
 
 Require Import PowerdomainInfinite.
 Require Import PowerdomainMonad.
@@ -22,17 +23,6 @@ Proof.
   exact (total (/x))%R.
   exact (bot R).
   exact (total (/x))%R.
-Defined.
-
-
-Definition Rltb'' : R -> R -> bool.
-Proof.
-  intros x y.
-  destruct (total_order_T x y).
-  destruct s.
-  exact (true)%R.
-  exact (false).
-  exact (false).
 Defined.
 
 
@@ -59,84 +49,6 @@ Definition Rlim_def (f : Z -> pdom R) : flat R -> Prop :=
                             proj1_sig (f x) z ->
                             exists z' : R, z = total z' /\ Rabs (z' - y') < powerRZ 2 (- x))%R.
 
-
-
-Definition pow2 : Z -> R := fun x => (powerRZ 2) x.
-
-Lemma archimed_pow2' : forall n, (0 < n)%nat -> pow2 (- Z.of_nat n) < 1 / INR n. 
-Proof.
-  intros.
-  induction n.
-  contradict H; lia.
-  destruct n.
-  simpl.
-  lra.
-  destruct n.
-  simpl.
-  lra.
-  replace (- Z.of_nat (S (S (S n))))%Z with (- Z.of_nat (S (S n)) - 1)%Z.
-  replace (1 / INR (S (S (S n)))) with (1 / (INR (S (S n)) + 1)).
-  assert (0 < S (S n))%nat by lia.
-  apply IHn in H0.
-  replace (pow2 (- Z.of_nat (S (S n)) - 1)) with
-    (pow2 (- Z.of_nat (S (S n))) /2 ).
-  assert (pow2 (- Z.of_nat (S (S n)))/2 < 1 / INR (S (S n)) /2).
-  lra.
-  assert (1 / INR (S (S n)) / 2 < 1 / (INR (S (S n)) + 1)).
-  assert (forall x,2 <= x -> x + 1 < 2 * x).
-  intros.
-  lra.
-  pose proof (H2 (INR (S (S n)))).
-  assert (2 <= INR (S (S n))).
-  replace 2 with (INR (S (S O))).
-  apply le_INR.
-  lia.
-  auto.
-  apply H3 in H4.
-  assert (0 < INR (S (S n)) + 1).
-  lra.
-  assert (0<  2 * INR (S (S n))).
-  lra.
-  apply (Rmult_lt_compat_l _ _ _ (Rinv_0_lt_compat _ H5)) in H4.
-  apply (Rmult_lt_compat_l _ _ _ (Rinv_0_lt_compat _ H6)) in H4.
-  rewrite Rinv_l in H4.
-  replace (/ (2 * INR (S (S n))) * (/ (INR (S (S n)) + 1) * (2 * INR (S (S n)))))
-    with (/ (2 * INR (S (S n)))  * (2 * INR (S (S n))) * (/ (INR (S (S n)) + 1))) in H4 by ring.    
-  rewrite Rinv_l in H4.
-  unfold Rdiv.
-  unfold Rdiv in H4.
-  rewrite Rinv_mult in H4.
-  replace (/ 2 * / INR (S (S n)) * 1) with (1 * / INR (S (S n)) * / 2) in H4 by ring.
-  auto.
-  lra.
-  lra.
-  lra.
-  unfold Rdiv.
-  assert (pow2 (- 1)%Z = / 2).
-  simpl.
-  lra.
-  rewrite <- H1.
-  unfold pow2.
-  rewrite <- powerRZ_add.
-  apply lp.
-  lia.
-  lra.
-  simpl.
-  auto.
-  simpl.
-  lia.
-Defined.
-
-Lemma archimed_pow2 :forall x : R, 0 < x -> exists k, pow2 k < x.
-Proof.
-  intros.
-  pose proof (archimed_cor1 _ H).
-  destruct H0.
-  exists (- Z.of_nat x0)%Z.
-  destruct H0.
-  pose proof (archimed_pow2' x0 H1).
-  lra.
-Defined.
 
 Lemma Rlim_def_unique f : forall x y, Rlim_def f x -> Rlim_def f y -> x = y.
 Proof.

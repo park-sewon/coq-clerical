@@ -2,12 +2,11 @@ Require Import ZArith.
 Require Import Reals.
 Require Import List.
 Require Import Coq.Program.Equality.
-
-From Clerical.Preliminaries Require Import BaseAxioms.
-From Clerical.Powerdomain Require Import Powerdomain.
-From Clerical Require Import Syntax.
-From Clerical Require Import Typing.
-From Clerical Require Import TypingProperties.
+From Clerical.Preliminaries Require Import Preliminaries.
+Require Import Powerdomain.Powerdomain.
+Require Import Syntax.
+Require Import Typing.
+Require Import TypingProperties.
 
 (* In this file, define the denotational semantics of Clerical expressions.
    For the purpose, we import the Powerdomain library which provides a moand

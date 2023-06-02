@@ -1,7 +1,6 @@
 Require Import List.
 Require Import Coq.Program.Equality.
-
-From Clerical.Preliminaries Require Import BaseAxioms.
+From Clerical.Preliminaries Require Import Preliminaries.
 Require Import Clerical.Syntax.
 Require Import Clerical.Typing.
 

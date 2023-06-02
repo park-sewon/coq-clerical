@@ -2,7 +2,7 @@ Require Import List.
 Require Import Reals.
 Require Import Coq.Program.Equality.
 
-From Clerical.Preliminaries Require Import BaseAxioms.
+From Clerical.Preliminaries Require Import Preliminaries.
 From Clerical.Powerdomain Require Import Powerdomain.
 From Clerical Require Import Syntax.
 From Clerical Require Import Typing.

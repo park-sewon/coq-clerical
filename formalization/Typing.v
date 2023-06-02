@@ -1,4 +1,5 @@
 (** Clerical typing judgment rules defined here *)
+Require Import Clerical.Preliminaries.Preliminaries.
 Require Import Clerical.Syntax.
 Require Import List.
 Reserved Notation " Γ |- t : T " (at level 50, t, T at next level). 
@@ -16,11 +17,6 @@ Definition mk_rw_ctx Γ Δ := {| ctx_ro := Γ ; ctx_rw := Δ|}.
 Inductive assignable : ro_ctx -> datatype -> nat -> Type :=
   assignable_0 : forall Δ τ, assignable (τ :: Δ) τ 0
 | assignable_S : forall Δ τ σ k, assignable Δ τ k -> assignable (σ :: Δ) τ (S k). 
-
-(* List forall in type level; cf. the Forall in List library is for Prop-level type families *)
-Inductive ForallT {A} (P : A -> Type): list A -> Type :=
-| ForallT_nil : ForallT P nil
-| ForallT_cons : forall x l, P x -> ForallT P l -> ForallT P (x::l).
 
 Inductive has_type_ro : ro_ctx -> exp -> datatype -> Type :=
 (* from readwrite *)
