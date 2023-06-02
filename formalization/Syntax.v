@@ -95,6 +95,10 @@ Notation "'UNIT'" := DUnit : clerical_scope.
 
 Notation "'INTEGER'" := DInteger : clerical_scope.
 
+Notation "':-:' e" := (BinOp OpZminus ((Integer 0)) e) (at level 45, right associativity) : clerical_scope.
+
+Notation "';-;' e" := (BinOp OpRminus (UniOp OpZRcoerce (Integer 0)) e) (at level 45, right associativity) : clerical_scope.
+
 Open Scope clerical_scope.
 
 Delimit Scope clerical_scope with clerical.

@@ -19,11 +19,11 @@ formalization/ReasoningRules.v
 formalization/ReasoningSoundness.v
 
 
-formalization/ReasoningAdmissibleRes0.v
-formalization/ReasoningAdmissibleRes1.v
-formalization/ReasoningAdmissibleRes2.v
-formalization/ReasoningAdmissibleRes3.v
-formalization/ReasoningAdmissibleRes4.v
+# formalization/ReasoningAdmissibleRes0.v
+# formalization/ReasoningAdmissibleRes1.v
+# formalization/ReasoningAdmissibleRes2.v
+# formalization/ReasoningAdmissibleRes3.v
+# formalization/ReasoningAdmissibleRes4.v
 
 formalization/ReasoningAdmissible.v
 formalization/ReasoningPrettyprinting.v

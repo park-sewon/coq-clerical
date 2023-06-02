@@ -19,8 +19,6 @@ Proof.
   apply (admissible_ro_prt_pose_readonly _ _ _ _ _ _ _ p).
 Defined.
 
-
-  
 Inductive simple_arithmetical : forall e, Type :=
   SA_Var : forall k, simple_arithmetical (VAR k)
 | SA_int_op_plus : forall e1 e2, simple_arithmetical e1 -> simple_arithmetical e2 -> simple_arithmetical (e1 :+: e2)
@@ -127,103 +125,6 @@ Proof.
   induction (eq_sym (has_type_ro_False_infer _ _  w)).
   exact (fun x => false).  
 Defined.
-
-(* Fixpoint simple_arithmetical_value_prt_irrl e (p : simple_arithmetical e) Γ τ (w1 w2 : Γ |- e : τ): *)
-(*   forall x, *)
-(*     simple_arithmetical_value_prt e p Γ τ w1 x = simple_arithmetical_value_prt e p Γ τ w2 x. *)
-(* Proof. *)
-(*   intro x. *)
-(*   dependent destruction p; simpl. *)
-
-(*   apply ro_access_typing_irrl. *)
-  
-(*   destruct (eq_sym (has_type_ro_OpZplus_infer Γ e1 e2 τ w2)). *)
-(*   replace (eq_sym (has_type_ro_OpZplus_infer Γ e1 e2 INTEGER w1)) with (eq_refl INTEGER) by apply prop_irrl. *)
-(*   simpl. *)
-(*   destruct (has_type_ro_OpZplus_inverse Γ e1 e2 w1), *)
-(*     (has_type_ro_OpZplus_inverse Γ e1 e2 w2). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p1 _ _ h h1 x). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p2 _ _ h0 h2 x).     *)
-(*   reflexivity. *)
-
-(*   destruct (eq_sym (has_type_ro_OpZminus_infer Γ e1 e2 τ w2)). *)
-(*   replace (eq_sym (has_type_ro_OpZminus_infer Γ e1 e2 INTEGER w1)) with (eq_refl INTEGER) by apply prop_irrl. *)
-(*   simpl. *)
-(*   destruct (has_type_ro_OpZminus_inverse Γ e1 e2 w1), *)
-(*     (has_type_ro_OpZminus_inverse Γ e1 e2 w2). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p1 _ _ h h1 x). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p2 _ _ h0 h2 x).     *)
-(*   reflexivity. *)
-  
-(*   destruct (eq_sym (has_type_ro_OpZmult_infer Γ e1 e2 τ w2)). *)
-(*   replace (eq_sym (has_type_ro_OpZmult_infer Γ e1 e2 INTEGER w1)) with (eq_refl INTEGER) by apply prop_irrl. *)
-(*   simpl. *)
-(*   destruct (has_type_ro_OpZmult_inverse Γ e1 e2 w1), *)
-(*     (has_type_ro_OpZmult_inverse Γ e1 e2 w2). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p1 _ _ h h1 x). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p2 _ _ h0 h2 x).     *)
-(*   reflexivity. *)
-
-(*   destruct (eq_sym (has_type_ro_OpZlt_infer Γ e1 e2 τ w2)). *)
-(*   replace (eq_sym (has_type_ro_OpZlt_infer Γ e1 e2 _ w1)) with (eq_refl BOOL) by apply prop_irrl. *)
-(*   simpl. *)
-(*   destruct (has_type_ro_OpZlt_inverse Γ e1 e2 w1), *)
-(*     (has_type_ro_OpZlt_inverse Γ e1 e2 w2). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p1 _ _ h h1 x). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p2 _ _ h0 h2 x).     *)
-(*   reflexivity. *)
-
-(*   destruct (eq_sym (has_type_ro_OpZeq_infer Γ e1 e2 τ w2)). *)
-(*   replace (eq_sym (has_type_ro_OpZeq_infer Γ e1 e2 _ w1)) with (eq_refl BOOL) by apply prop_irrl. *)
-(*   simpl. *)
-(*   destruct (has_type_ro_OpZeq_inverse Γ e1 e2 w1), *)
-(*     (has_type_ro_OpZeq_inverse Γ e1 e2 w2). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p1 _ _ h h1 x). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p2 _ _ h0 h2 x).     *)
-(*   reflexivity. *)
-
-(*   destruct (eq_sym (has_type_ro_OpRplus_infer Γ e1 e2 τ w2)). *)
-(*   replace (eq_sym (has_type_ro_OpRplus_infer Γ e1 e2 REAL w1)) with (eq_refl REAL) by apply prop_irrl. *)
-(*   simpl. *)
-(*   destruct (has_type_ro_OpRplus_inverse Γ e1 e2 w1), *)
-(*     (has_type_ro_OpRplus_inverse Γ e1 e2 w2). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p1 _ _ h h1 x). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p2 _ _ h0 h2 x).     *)
-(*   reflexivity. *)
-
-(*   destruct (eq_sym (has_type_ro_OpRminus_infer Γ e1 e2 τ w2)). *)
-(*   replace (eq_sym (has_type_ro_OpRminus_infer Γ e1 e2 REAL w1)) with (eq_refl REAL) by apply prop_irrl. *)
-(*   simpl. *)
-(*   destruct (has_type_ro_OpRminus_inverse Γ e1 e2 w1), *)
-(*     (has_type_ro_OpRminus_inverse Γ e1 e2 w2). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p1 _ _ h h1 x). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p2 _ _ h0 h2 x).     *)
-(*   reflexivity. *)
-  
-(*   destruct (eq_sym (has_type_ro_OpRmult_infer Γ e1 e2 τ w2)). *)
-(*   replace (eq_sym (has_type_ro_OpRmult_infer Γ e1 e2 REAL w1)) with (eq_refl REAL) by apply prop_irrl. *)
-(*   simpl. *)
-(*   destruct (has_type_ro_OpRmult_inverse Γ e1 e2 w1), *)
-(*     (has_type_ro_OpRmult_inverse Γ e1 e2 w2). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p1 _ _ h h1 x). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p2 _ _ h0 h2 x).     *)
-(*   reflexivity. *)
-
-(*   destruct (eq_sym (has_type_ro_OpRlt_infer Γ e1 e2 τ w2)). *)
-(*   replace (eq_sym (has_type_ro_OpRlt_infer Γ e1 e2 _ w1)) with (eq_refl BOOL) by apply prop_irrl. *)
-(*   simpl. *)
-(*   destruct (has_type_ro_OpRlt_inverse Γ e1 e2 w1), *)
-(*     (has_type_ro_OpRlt_inverse Γ e1 e2 w2). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p1 _ _ h h1 x). *)
-(*   rewrite (simple_arithmetical_value_prt_irrl _ p2 _ _ h0 h2 x).     *)
-(*   reflexivity. *)
-
-(*   destruct (eq_sym (has_type_ro_OpRrecip_infer Γ e τ w2)). *)
-(*   replace  (eq_sym (has_type_ro_OpRrecip_infer Γ e REAL w1)) with (eq_refl REAL) by apply prop_irrl. *)
-(*   simpl. *)
-(*   apply lp. *)
-(*   apply (simple_arithmetical_value_prt_irrl _ p _ _ (has_type_ro_OpRrecip_inverse Γ e w1) (has_type_ro_OpRrecip_inverse Γ e w2) x). *)
-(* Defined. *)
 
 Fixpoint simple_arithmetical_prt Γ e τ (w : Γ |- e : τ) (p : simple_arithmetical e) :
   Γ |-- {{fun _ => True}} e {{y : τ | fun x => y = simple_arithmetical_value_prt e p Γ τ w x}}.
@@ -1171,8 +1072,6 @@ Proof.
   contradict (Rlt_asym _ _ r H).
 Defined.
 
-Notation "':-:' e" := (BinOp OpZminus ( (INT 0)) e) (at level 45, right associativity) : clerical_scope.
-Notation "';-;' e" := (BinOp OpRminus (RE (INT 0)) e) (at level 45, right associativity) : clerical_scope.
 
 (* computing the absolute value of variable k *)
 Definition exp_abs k :=  
@@ -1195,6 +1094,92 @@ Defined.
 
 Require Import Reals.
 Open Scope R.
+Require Import Lra.
+
+Lemma Rabs_plus_Rabs_Rabs : forall x, (0 < x -> Rabs (x + (Rabs x)) = 2 * x) /\
+                                        (x <= 0 -> Rabs (x + (Rabs x)) = 0).
+Proof.
+  intros.
+  split.
+  intro.
+  rewrite (Rabs_right _ (Rgt_ge _ _ H)).
+  pose proof (Rplus_lt_compat _ _ _ _ H H).
+  rewrite Rplus_0_l in H0.
+  rewrite (Rabs_right _ (Rgt_ge _ _ H0)).
+  ring.
+  intro.
+  rewrite (Rabs_left1 _ H).
+  rewrite Rplus_opp_r.
+  apply Rabs_R0.
+Defined.
+
+Lemma Rabs_minus_Rabs_Rabs : forall x, (0 < x -> Rabs (x - (Rabs x)) = 0) /\
+                                        (x <= 0 -> Rabs (x - (Rabs x)) = - 2 * x).
+Proof.
+  intros.
+  split.
+  intro.
+  rewrite (Rabs_right _ (Rgt_ge _ _ H)).
+  unfold Rminus.
+  rewrite Rplus_opp_r.
+  apply Rabs_R0.
+  
+  intro.
+  rewrite (Rabs_left1 _ H).
+  replace (x - - x) with (2 * x) by ring.
+  Check Rabs_left.
+  assert (2 *x <= 0) by lra.
+  rewrite (Rabs_left1 _  H0).
+  ring.
+Defined.
+
+Lemma pow2_positive : forall x, 0 < pow2 x.
+Proof.
+  intro.
+  assert (0 < 2).
+  auto with real.
+  pose proof (powerRZ_le _ x H).
+  destruct H0.
+  exact H0.
+  assert (2 <> 0).
+  auto with real.
+  pose proof (powerRZ_NOR 2 x H1).
+  contradict H2; auto.
+Defined.
+
+Lemma pow2_add : forall x y, pow2 (x + y) = pow2 x * pow2 y.
+Proof.
+  intros.
+  assert (2 <> 0).
+  auto with real.
+  apply (powerRZ_add 2 x y H).
+Defined.
+
+  
+Lemma pow2_add_one : forall x,  pow2 (x + 1) = pow2 x + pow2 x.
+Proof.
+  intro.
+  rewrite pow2_add.
+  simpl.
+  ring.
+Defined.
+
+Lemma overlap_splitting : forall x y z, x < z -> x < y \/ y < z.
+Proof.
+  intros.
+  destruct (Rlt_or_le x y).
+  left; auto.
+  right.
+  apply (Rle_lt_trans _ _ _ H0 H).
+Defined.
+
+Lemma overlap_splitting_symmetric : forall x z, 0 < x -> - x < z  \/ z < x.
+Proof.
+  intros.
+  apply overlap_splitting.
+  lra.
+Defined.
+
 
 Lemma exp_abs_correct :
   forall Γ k (w : Γ |- VAR k : REAL),
@@ -1239,7 +1224,6 @@ Proof.
   simpl.
   rewrite ro_access_Var_S, ro_access_Var_0 in val.
   rewrite (ro_access_typing_irrl _ _ _ w (has_type_ro_Var_S_inv Γ k INTEGER REAL h0)).
-  Require Import Lra.
   lra.
 
   proves_simple_arithmetical.
@@ -1250,23 +1234,82 @@ Proof.
   simpl.
   rewrite ro_access_Var_S.
   simpl in H.
-  
-  admit.
+  rewrite <- Rabs_Ropp.
+  rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h0) w).
+  replace ((- (0 - ro_access Γ k REAL w s - Rabs (ro_access Γ k REAL w s)))) with
+    (ro_access Γ k REAL w s + Rabs (ro_access Γ k REAL w s)) by ring.
+  pose proof (Rabs_plus_Rabs_Rabs (ro_access _ _ _ w s)) as [p q].
+  destruct (Rle_or_lt (ro_access _ _ _ w s) 0).
+  rewrite (q H0).
+  apply pow2_positive.
+  rewrite (p H0).
+  pose proof (Rplus_lt_compat _ _ _ _ H H).
+  replace (ro_access Γ k REAL w s + ro_access Γ k REAL w s) with
+    (2 * ro_access Γ k REAL w s) in H1 by ring.
+  rewrite <- pow2_add_one in H1.
+  replace (- z - 1 + 1)%Z with (-z)%Z in H1 by ring. 
+  exact H1.
 
   proves_simple_arithmetical.
-  admit.
+  unfold ro_to_rw_pre in pre.
+  pose proof (pre eq_refl).
+  rewrite val.
+  destruct x.
+  simpl.
+  rewrite ro_access_Var_S.
+  simpl in H.
+  rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL tmp1) w).
+  pose proof (Rabs_minus_Rabs_Rabs (ro_access _ _ _ w s)) as [p q].
+  destruct (Rle_or_lt (ro_access _ _ _ w s) 0).
+  rewrite (q H0).
+  pose proof (Rplus_lt_compat _ _ _ _ H H).
+  rewrite <- pow2_add_one in H1.
+  replace (- z - 1 + 1)%Z with (-z)%Z in H1 by ring. 
+  replace (- ro_access Γ k REAL w s +  - ro_access Γ k REAL w s) with
+    (- 2 * ro_access Γ k REAL w s) in H1 by ring.
+  exact H1.
+  rewrite (p H0).
+  apply pow2_positive.
 
   proves_simple_arithmetical.
   repeat split; auto.
-  admit.
-  admit.
+  destruct x.  
+  rewrite ro_access_Var_S, ro_access_Var_0.
+  simpl in pre.
+  rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h) w).
+  auto with real.
 
+  rewrite val.
+  apply (proj2 (Rltb''_prop _ _)).
+  destruct x.
+  rewrite ro_access_Var_S, ro_access_Var_0.
+  simpl in pre.
+  rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h) w).
+  exact pre.
+  
   proves_simple_arithmetical.
   repeat split; auto.
-  admit.
-  admit.
+  destruct x.  
+  rewrite ro_access_Var_S, ro_access_Var_0.
+  simpl in pre.
+  rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h0) w).
+  unfold Rminus.
+  rewrite Rplus_0_l.
+  auto with real.
 
+  rewrite val.
+  apply (proj2 (Rltb''_prop _ _)).
+  destruct x.
+  rewrite ro_access_Var_S, ro_access_Var_0.
+  simpl in pre.
+  rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h0) w).
+  unfold Rminus.
+  rewrite Rplus_0_l.
+  auto with real.
 
-  
-  
+  intros.
+  destruct x.
+  simpl.
+  apply or_comm, overlap_splitting_symmetric, pow2_positive.
+Defined.  
   
