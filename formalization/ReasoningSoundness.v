@@ -2,15 +2,15 @@ Require Import List.
 Require Import Reals.
 Require Import Coq.Program.Equality.
 
-
-Require Import Clerical.Powerdomain.Powerdomain.
-Require Import Clerical.Syntax.
-Require Import Clerical.Typing.
-Require Import Clerical.TypingProperties.
-Require Import Clerical.Semantics.
-Require Import Clerical.SemanticsProperties.
-Require Import Clerical.Specification.
-Require Import Clerical.ReasoningRules.
+From Clerical.Preliminaries Require Import BaseAxioms.
+From Clerical.Powerdomain Require Import Powerdomain.
+From Clerical Require Import Syntax.
+From Clerical Require Import Typing.
+From Clerical Require Import TypingProperties.
+From Clerical Require Import Semantics.
+From Clerical Require Import SemanticsProperties.
+From Clerical Require Import Specification.
+From Clerical Require Import ReasoningRules.
 
 Arguments existT {_} {_}.
 (* Ths file proves the soundnsess of our Reasoning rules.

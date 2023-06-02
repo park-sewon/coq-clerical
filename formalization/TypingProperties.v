@@ -1,9 +1,9 @@
 Require Import List.
 Require Import Coq.Program.Equality.
 
+From Clerical.Preliminaries Require Import BaseAxioms.
 Require Import Clerical.Syntax.
 Require Import Clerical.Typing.
-Require Import Clerical.Powerdomain.Powerdomain.
 
 (* In this file, we prove various properties regarding the type system of Clerical. The main theorem here is that the typing rules are unambiguous in the sense that when Γ |- e : τ and Γ |- e : σ, τ = σ. Similarly, we prove that when Γ ;;; Δ ||- e : τ and Γ ;;; Δ ||- e : σ, τ = σ.
 
@@ -996,7 +996,31 @@ Section InferTyping.
     exact eq_refl.
   Defined.
 
-    
+  
+  Fixpoint has_type_ro_Int_infer Γ k τ (w : Γ |- INT k : τ) : τ = INTEGER.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_Int_infer _ _ _ h).
+    exact eq_refl.
+  Defined.
+
+  Fixpoint has_type_ro_True_infer Γ τ (w : Γ |- TRUE : τ) : τ = BOOL.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_True_infer _ _ h).
+    exact eq_refl.
+  Defined.
+
+  Fixpoint has_type_ro_False_infer Γ τ (w : Γ |- FALSE : τ) : τ = BOOL.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    apply (has_type_ro_False_infer _ _ h).
+    exact eq_refl.
+  Defined.
+
   
 End InferTyping.
 

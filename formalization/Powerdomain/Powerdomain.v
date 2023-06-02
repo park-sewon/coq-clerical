@@ -1,4 +1,3 @@
-Require Export PowerdomainBase.
 Require Export PowerdomainInfinite.
 Require Export PowerdomainMonad.
 Require Export PowerdomainProperties.

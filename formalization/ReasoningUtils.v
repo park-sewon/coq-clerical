@@ -582,3 +582,20 @@ Proof.
   rewrite tedious_equiv_fst, tedious_equiv_snd.
   auto.
 Defined.
+
+
+Lemma pp_ro_tot_pose_readonly {Γ} {e} {τ} {ϕ} {ψ} θ : 
+  Γ |-- [{ϕ}] e [{y : τ | ψ y}] -> Γ |-- [{(ϕ /\\ θ)}] e [{y : τ | (ψ /\\\ (fun _ : sem_datatype τ => θ)) y}].
+Proof.
+  intros [w p].
+  exists w.
+  apply (admissible_ro_tot_pose_readonly _ _ _ _ _ _ _ p).
+Defined.
+
+Lemma pp_ro_prt_pose_readonly {Γ} {e} {τ} {ϕ} {ψ} θ : 
+  Γ |-- {{ϕ}} e {{y : τ | ψ y}} -> Γ |-- {{(ϕ /\\ θ)}} e {{y : τ | (ψ /\\\ (fun _ : sem_datatype τ => θ)) y}}.
+Proof.
+  intros [w p].
+  exists w.
+  apply (admissible_ro_prt_pose_readonly _ _ _ _ _ _ _ p).
+Defined.

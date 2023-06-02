@@ -1,7 +1,8 @@
 Require Import Coq.Arith.Compare_dec.
 Require Import Lia.
 
-Require Import PowerdomainBase.
+From Clerical Require Import Preliminaries.BaseAxioms.
+
 Require Import PowerdomainInfinite.
 Require Import PowerdomainMonad.
 Require Import PowerdomainProperties.

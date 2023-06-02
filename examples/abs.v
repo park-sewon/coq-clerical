@@ -5,10 +5,6 @@
 From Clerical Require Import Clerical.
 Require Import ZArith.
 
-
-Notation "':-:' e" := (BinOp OpZminus ( (INT 0)) e) (at level 45, right associativity) : clerical_scope.
-Notation "';-;' e" := (BinOp OpRminus (RE (INT 0)) e) (at level 45, right associativity) : clerical_scope.
-
 (* computing the absolute value of variable k *)
 Definition exp_abs k :=  
   Lim

@@ -1,6 +1,10 @@
 Require Import ZArith.
 Require Import Reals.
-Require Import PowerdomainBase.
+Open Scope R_scope.
+Require Import Lra Lia.
+
+From Clerical Require Import Preliminaries.BaseAxioms.
+
 Require Import PowerdomainInfinite.
 Require Import PowerdomainMonad.
 Require Import PowerdomainProperties.
@@ -56,8 +60,6 @@ Definition Rlim_def (f : Z -> pdom R) : flat R -> Prop :=
                             exists z' : R, z = total z' /\ Rabs (z' - y') < powerRZ 2 (- x))%R.
 
 
-Open Scope R_scope.
-Require Import Lra Lia.
 
 Definition pow2 : Z -> R := fun x => (powerRZ 2) x.
 

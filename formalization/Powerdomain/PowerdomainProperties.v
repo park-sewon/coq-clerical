@@ -1,4 +1,5 @@
-Require Import PowerdomainBase.
+From Clerical Require Import Preliminaries.BaseAxioms.
+
 Require Import PowerdomainInfinite.
 Require Import PowerdomainMonad.
 

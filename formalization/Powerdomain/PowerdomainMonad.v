@@ -3,7 +3,8 @@
 Require Import Lia.
 Require Import Coq.Arith.Compare_dec.
 
-Require Import PowerdomainBase.
+From Clerical Require Import Preliminaries.BaseAxioms.
+
 Require Import PowerdomainInfinite.
 
 

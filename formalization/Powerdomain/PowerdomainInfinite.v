@@ -1,4 +1,5 @@
-Require Import PowerdomainBase.
+From Clerical Require Import Preliminaries.BaseAxioms.
+
 Require Import Coq.Arith.Compare_dec.
 Require Import Coq.Arith.Wf_nat.
 Require Import Coq.Program.Equality.

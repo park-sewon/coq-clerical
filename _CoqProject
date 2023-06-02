@@ -1,6 +1,7 @@
 -R formalization Clerical
+formalization/Preliminaries/BaseAxioms.v
+
 formalization/Powerdomain/Powerdomain.v
-formalization/Powerdomain/PowerdomainBase.v
 formalization/Powerdomain/PowerdomainInfinite.v
 formalization/Powerdomain/PowerdomainMonad.v
 formalization/Powerdomain/PowerdomainProperties.v
@@ -17,6 +18,10 @@ formalization/SemanticsProperties.v
 formalization/Specification.v
 formalization/ReasoningRules.v
 formalization/ReasoningSoundness.v
+
+formalization/Utils/TypingTactic.v
+formalization/Utils/SimpleArith.v
+
 
 
 # formalization/ReasoningAdmissibleRes0.v
