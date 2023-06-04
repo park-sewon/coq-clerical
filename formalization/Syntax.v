@@ -55,9 +55,9 @@ Notation "e1 ':*:' e2" := (BinOp OpZmult e1 e2) (at level 60, right associativit
 
 Notation "e1 ':-:' e2" := (BinOp OpZminus e1 e2) (at level 60, right associativity) : clerical_scope.
 
-Notation "e1 ':<:' e2" := (BinOp OpZlt e1 e2) (at level 60, right associativity) : clerical_scope.
+Notation "e1 ':<:' e2" := (BinOp OpZlt e1 e2) (at level 70, right associativity) : clerical_scope.
 
-Notation "e1 ':=:' e2" := (BinOp OpZeq e1 e2) (at level 60, right associativity) : clerical_scope.
+Notation "e1 ':=:' e2" := (BinOp OpZeq e1 e2) (at level 70, right associativity) : clerical_scope.
 
 Notation "e1 ';+;' e2" := (BinOp OpRplus e1 e2) (at level 60, right associativity) : clerical_scope.
 
@@ -65,7 +65,7 @@ Notation "e1 ';-;' e2" := (BinOp OpRminus e1 e2) (at level 60, right associativi
 
 Notation "e1 ';*;' e2" := (BinOp OpRmult e1 e2) (at level 60, right associativity) : clerical_scope.
 
-Notation "e1 ';<;' e2" := (BinOp OpRlt e1 e2) (at level 60, right associativity) : clerical_scope.
+Notation "e1 ';<;' e2" := (BinOp OpRlt e1 e2) (at level 70, right associativity) : clerical_scope.
 
 Notation "'RE' e " := (UniOp OpZRcoerce e) (at level 30) : clerical_scope.
 
