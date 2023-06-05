@@ -3,6 +3,7 @@
 -R . Examples
 
 abs.v
-
+bounded.v
+logic.v
 
 -docroot "Clerical/examples"
