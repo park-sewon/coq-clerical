@@ -148,12 +148,10 @@ Defined.
 
 Ltac reduce_ro_access_tactic h :=
   match type of h with
-  | ltac_No_arg => 
-      repeat rewrite reduce_ro_access_S;
-      try rewrite reduce_ro_access_0
+  | ltac_No_arg =>
+      repeat (simpl; try rewrite reduce_ro_access_S; try rewrite reduce_ro_access_0)
   | _ =>
-      repeat rewrite reduce_ro_access_S in h;
-      try rewrite reduce_ro_access_0 in h
+      repeat (simpl in h; try rewrite reduce_ro_access_S in h; try rewrite reduce_ro_access_0 in h)
   end.
 
 Tactic Notation "reduce_ro_access" constr(x1) :=
@@ -222,21 +220,11 @@ Proof.
                 let A := fst (snd (fst δγ)) in
                 Rabs (A - sin (ro_access Γ k REAL w (snd (snd δγ)))) < pow2 (- fst (snd δγ)))).
   simpl.
-  apply (pp_rw_while_tot_back
-           (Γ := (INTEGER :: Γ))
-           (Δ :=  REAL :: REAL :: INTEGER :: REAL :: nil)
-           (θ := fun y δγ =>
-                   let m := fst (snd_app δγ) in
-                   let x := ro_access _ _ _ w (snd (snd_app δγ)) in
-                   let q := fst (fst_app δγ) in
-                   let A := fst (snd (fst_app δγ)) in
-                   let j := fst (snd (snd (fst_app δγ))) in
-                   let δ := fst (snd (snd (snd (fst_app δγ)))) in
-                   
-                   
-           )
-           (ϕ :=
-              fun δγ
+
+
+  pose (ϕ :=
+          fun δγ :
+            sem_ro_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ro_ctx (INTEGER :: Γ)  
               =>
                 let m := fst (snd δγ) in
                 let x := ro_access _ _ _ w (snd (snd δγ)) in
@@ -246,11 +234,123 @@ Proof.
                 let δ := fst (snd (snd (snd (fst δγ)))) in
                 exists n : nat,
                   Z.of_nat n = j /\
-                    δ = pow2 (- m) /\ q = sin_q (S n) x /\ A = sin_A n x)
-           (ψ := fun  _ => True)
-        ).
+                    δ = pow2 (- m) /\ q = sin_q (S n) x /\ A = sin_A n x).
+
+  pose (θ :=
+          fun (y : bool) (δγ : sem_ro_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ))) =>
+            let q := fst (fst_app δγ) in
+            let δ := fst (snd (snd (snd (fst_app δγ)))) in
+            ϕ (fst_app δγ, snd_app δγ) /\
+              (y = true -> δ / 2 < Rabs q) /\ (y = false -> Rabs q < δ)).
+
+  pose (ψ :=
+          fun δγδ :   
+                sem_ro_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ro_ctx ((INTEGER :: Γ) ++  (REAL :: REAL :: INTEGER :: REAL :: nil))
+               =>
+                 let m := fst (fst_app (snd δγδ)) in
+                 let x := ro_access _ _ _ w (snd (fst_app (snd δγδ))) in
+                 let j := fst (snd (snd (fst δγδ))) in
+                 let j' := fst (snd (snd (snd_app (snd δγδ)))) in
+                 exists n : nat,
+                   Z.of_nat n = j' /\ 
+                     (j = j' + 1)%Z /\ pow2 (- m - 1) < Rabs (sin_q n x)).
+  
+  apply (pp_rw_while_tot_back
+           (Γ := (INTEGER :: Γ))
+           (Δ :=  REAL :: REAL :: INTEGER :: REAL :: nil)
+           (θ := θ)
+           (ϕ := ϕ)
+           (ψ := ψ)).
                 
-                
+  {
+    (* proving condition part *)
+    assert (wk : ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ INTEGER :: Γ) |- VAR 0 : REAL) by auto_typing.
+    assert (wδ : ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ INTEGER :: Γ) |- VAR 3 : REAL) by auto_typing.
+    pose proof (clerical_neg_correct_tot _ _ _ _  (clerical_bounded_correct  ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ INTEGER :: Γ) 0 3 wk wδ)).
+    apply (pp_ro_tot_pose_readonly (rw_to_ro_pre ϕ)) in X.
+    apply (pp_ro_imply_tot X).
+    intros h1 h2; split; auto.
+    destruct h2.
+    destruct H.
+    destruct H0.
+    destruct h1 as [q [A [j [δ [m γ]]]]].
+    simpl in H, H0, H1.
+    reduce_ro_access.
+    rewrite H0.
+    apply pow2_positive.
+
+    intros h1 [q [A [j [δ [m γ]]]]] [h3 h4].
+    simpl in h3.
+    reduce_ro_access h3.
+    unfold θ.
+    simpl.
+    unfold fst_app, snd_app; simpl.
+    split; auto.
+    destruct h3.
+    split.
+    intro.
+    rewrite H1 in H0.
+    apply H0; auto.
+    intro.
+    rewrite H1 in H.
+    apply H; auto.
+  }
+  {
+    (* proving invariant *)
+      apply (pp_rw_sequence_tot
+           (Γ := (INTEGER :: Γ))
+           (Δ :=  REAL :: REAL :: INTEGER :: REAL :: nil)
+           (θ :=
+              fun _ (δγ :
+                sem_ro_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ro_ctx (INTEGER :: Γ))  
+              =>
+                let m := fst (snd δγ) in
+                let x := ro_access _ _ _ w (snd (snd δγ)) in
+                let q := fst (fst δγ) in
+                let A := fst (snd (fst δγ)) in
+                let j := fst (snd (snd (fst δγ))) in
+                let δ := fst (snd (snd (snd (fst δγ)))) in
+                exists n : nat,
+                  Z.of_nat n = (j - 1)%Z /\
+                    δ = pow2 (- m) /\ q = sin_q (S n) x /\ A = sin_A n x)).
+
+      Check pp_rw_assign_tot.
+      assert (assignable (REAL :: REAL :: INTEGER :: REAL :: nil) INTEGER 2) as a.
+      repeat constructor.
+      apply ( pp_rw_assign_tot
+               (τ := INTEGER)
+               (θ := (fun y
+                          (δγ : sem_ro_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ)))
+                           => 
+                        let j := fst (snd (snd (fst_app δγ))) in
+                        y = j + 1)%Z)
+               (k := 2)
+               a
+            ).
+      
+      proves_simple_arithmetical.
+      rewrite val.
+      reduce_ro_access.
+      unfold fst_app; simpl; auto.
+      repeat destruct x.
+      repeat destruct p.
+      simpl; auto.
+      intros.
+      
+      
+      unfold ro_to_rw_pre in pre.
+      
+      simpl in pre.
+      
+
+
+    X : Var (5 + k)
+  m : Var 4
+  δ : Var 3
+  j : Var 2
+  A : Var 1
+  q : Var 0
+
                 let j := fst (snd (snd 
              
 
