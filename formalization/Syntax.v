@@ -65,6 +65,8 @@ Notation "e1 ';-;' e2" := (BinOp OpRminus e1 e2) (at level 60, right associativi
 
 Notation "e1 ';*;' e2" := (BinOp OpRmult e1 e2) (at level 60, right associativity) : clerical_scope.
 
+Notation "e1 ';/;' e2" := (BinOp OpRmult e1 (UniOp OpRrecip e2)) (at level 60, right associativity) : clerical_scope.
+
 Notation "e1 ';<;' e2" := (BinOp OpRlt e1 e2) (at level 70, right associativity) : clerical_scope.
 
 Notation "'RE' e " := (UniOp OpZRcoerce e) (at level 30) : clerical_scope.

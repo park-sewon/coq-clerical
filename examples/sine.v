@@ -22,31 +22,145 @@ Search sin_approx.
 Print sin_approx. 
 Print sin.
 Check exist_sin.
+Print exist_sin.
 Print sin_in.
 Print infinite_sum.
 Print sin_n.
 Search sin_n.
 Search exist_sin.
 
+(* partial sum term *)
+Fixpoint sin_q n x : R
+  := match n with
+     | O => x
+     | S m => - x * x * (sin_q m x) / (INR (2 * m + 3)%nat) / (INR (2 * m + 2)%nat)
+     end.
+
+Fixpoint sin_A n x : R
+  := match n with
+     | O => x
+     | S m => sin_q (S m) x * sin_A m x 
+     end.
+
+Lemma Rtheorem : forall n x,
+    Rabs (sin x - sin_A n x) < sin_q (S n) x.
+Proof.
+Admitted.
+
+Lemma Rconverge : forall x,
+    forall n, exists m, Rabs (sin_q m x) < pow2 (- n).
+Admitted.
+
+
+(*
+  x : k 
+
+  Lim m.
+
+  x : Var (1 + k)
+  m : Var 0
+
+  Newvar δ := 2⁻ᵐ in
+
+  x : Var (2 + k)
+  m : Var 1
+  δ : Var 0
+
+  Newvar j := 0 in
+
+  x : Var (3 + k)
+  m : Var 2
+  δ : Var 1
+  j : Var 0
+
+  Newvar A := x in
+
+  x : Var (4 + k)
+  m : Var 3
+  δ : Var 2
+  j : Var 1
+  A : Var 0
+
+  Newvar q := x³ / 6 in
+
+  x : Var (5 + k)
+  m : Var 4
+  δ : Var 3
+  j : Var 2
+  A : Var 1
+  q : Var 0
+
+  * A = A(j, x) /\ q = q (j + 1, x)
+
+  While ¬ bounded q δ
+  do
+    j := j + 1
+    A := A + q
+    q := - q * x * x / (2 j + 2) (2 j  + 3) 
+  End;
+
+  A
+
+
+ *)
+
 (* compute sine(VAR k) *)
 Definition exp_sine k :=
   Lim
     (
-      NEWVAR (EXP (:-: (VAR 0))) IN
-      NEWVAR (INT 0) IN
-      NEWVAR (RE (INT 1)) IN
-      NEWVAR (RE (INT 0)) IN
-      NEWVAR (VAR (5 + k)) IN
-        
+      NEWVAR EXP (:-: (VAR 0)) IN
+      NEWVAR INT 0 IN
+      NEWVAR VAR (3 + k) IN
+      NEWVAR VAR (4 + k) ;*; VAR (4 + k) ;*; VAR (4 + k) ;/; RE (INT 6) IN
       WHILE
-        clerical_neg (clerical_bounded 0 4)
+        clerical_neg (clerical_bounded 0 3)
       DO
-        LET 3 := VAR 3 :+: INT 1 ;;
-        LET 1 := VAR 1 ;+; VAR 0 ;*; VAR 2  ;;
-        LET 2 := VAR 2 ;*; (RE (INT -1)) ;;
-        LET 0 := VAR 0 ;*; VAR (6 + k) ;*; VAR (6 + k) ;*; (;/; (RE (INT 2 :*: VAR 3 :+: INT 1))) ;*; (;/; (RE (INT 2 :*: VAR 3)))
+        LET 2 := VAR 2 :+: INT 1 ;;
+        LET 1 := VAR 1 ;+; VAR 0 ;;
+        LET 0 := VAR 0 ;*; VAR (6 + k) ;*; VAR (6 + k) ;/; (RE (INT 2 :*: VAR 3 :+: INT 1)) ;/; (RE (INT 2 :*: VAR 3))
       END ;; VAR 1
     ).
+
+Fixpoint has_type_ro_Var_S_inverse {Γ} {τ} {σ} {k} (w : (σ :: Γ) |- Var (S k) : τ) : Γ |- Var k : τ.
+Proof.
+  dependent destruction w.
+  dependent destruction h.
+  simpl in h.
+  exact (has_type_ro_Var_S_inverse _ _ _ _ h).
+  exact w.
+Defined.  
+        
+Lemma reduce_ro_access_0 : forall Γ τ (w : (τ :: Γ) |- Var 0 : τ) x,
+    ro_access _ _ _ w x = fst x.
+Proof.
+  intros.
+  rewrite (ro_access_typing_irrl _ _ _ w (has_type_ro_Var_0 _ _)).
+  destruct x; auto.
+Defined.
+
+Lemma reduce_ro_access_S : forall Γ τ σ n (w : (σ :: Γ) |- Var (S n) : τ) x,
+    ro_access _ _ _ w x = ro_access _ _ _ (has_type_ro_Var_S_inverse w) (snd x).
+Proof.
+  intros.
+  rewrite (ro_access_typing_irrl _ _ _ w (has_type_ro_Var_S _ _ _ _ (has_type_ro_Var_S_inverse w))).
+  destruct x; auto.
+Defined.
+
+Ltac reduce_ro_access_tactic h :=
+  match type of h with
+  | ltac_No_arg => 
+      repeat rewrite reduce_ro_access_S;
+      try rewrite reduce_ro_access_0
+  | _ =>
+      repeat rewrite reduce_ro_access_S in h;
+      try rewrite reduce_ro_access_0 in h
+  end.
+
+Tactic Notation "reduce_ro_access" constr(x1) :=
+  reduce_ro_access_tactic x1 .
+                    
+Tactic Notation "reduce_ro_access" :=
+  reduce_ro_access_tactic ltac_no_arg.
 
 Lemma exp_sine_correct :
   forall Γ k (w : Γ |- VAR k : REAL),
@@ -59,47 +173,86 @@ Proof.
     try (intros h1 h2 [_ h3]; auto; fail).
 
   apply (pp_ro_rw_tot_back).
-
+  
   assert ((nil  ++  (INTEGER :: Γ)) |- VAR (0) : INTEGER) as w' by auto_typing.
   apply (pp_rw_new_var_tot
+           (Γ := (INTEGER :: Γ))
+           (Δ := nil)
            (σ := REAL)
            (θ := (fun y x => y = pow2 (- ro_access _ _ _ w' x)))).
   proves_simple_arithmetical.
-  rewrite val.
-  rewrite (ro_access_typing_irrl _ _ _ w' h0).
-  reflexivity.
-  
+
+  reduce_ro_access val; reduce_ro_access; exact val.
+    
   apply (pp_rw_new_var_tot
            (σ := INTEGER)
            (θ := (fun y x => y = 0%Z))).
-
   proves_simple_arithmetical.
 
+  assert (((INTEGER :: REAL :: nil)  ++  (INTEGER :: Γ)) |- VAR (3 + k) : REAL) as w'' by auto_typing.
   apply (pp_rw_new_var_tot
-           (σ := REAL)
-           (θ := (fun y x => y = 1%R))).
-
-  proves_simple_arithmetical.
-
-  apply (pp_rw_new_var_tot
-           (σ := REAL)
-           (θ := (fun y x => y = 0%R))).
-
-  proves_simple_arithmetical.
-
-  
-  assert ( ((REAL :: REAL :: INTEGER :: REAL :: nil)  ++  (INTEGER :: Γ)) |- VAR (5 + k) : REAL) as w'' by auto_typing.
-  apply (pp_rw_new_var_tot  
            (σ := REAL)
            (θ := (fun y x => y = ro_access _ _ _ w'' x))).
   proves_simple_arithmetical.
   rewrite (ro_access_typing_irrl _ _ _ w'' tmp1).
   exact val.
+    
+  assert (((REAL :: INTEGER :: REAL :: nil)  ++  (INTEGER :: Γ)) |- VAR (4 + k) : REAL) as w''' by auto_typing.
+  apply (pp_rw_new_var_tot
+           (σ := REAL)
+           (θ := (fun y x => y = sin_q 1 (ro_access _ _ _ w''' x)))).
 
+  proves_simple_arithmetical.
+  repeat destruct x.
+  repeat destruct p.
+  simpl in y.
+  simpl in pre.
+  simpl in val.
+  rewrite val.
+  admit.
+
+  
+
+  clear w' w''.
+  apply (pp_rw_sequence_tot
+           (Γ := (INTEGER :: Γ))
+           (Δ :=  REAL :: REAL :: INTEGER :: REAL :: nil)
+           (θ :=
+              fun _ δγ  => 
+                let A := fst (snd (fst δγ)) in
+                Rabs (A - sin (ro_access Γ k REAL w (snd (snd δγ)))) < pow2 (- fst (snd δγ)))).
   simpl.
-
   apply (pp_rw_while_tot_back
-           (
+           (Γ := (INTEGER :: Γ))
+           (Δ :=  REAL :: REAL :: INTEGER :: REAL :: nil)
+           (θ := fun y δγ =>
+                   let m := fst (snd_app δγ) in
+                   let x := ro_access _ _ _ w (snd (snd_app δγ)) in
+                   let q := fst (fst_app δγ) in
+                   let A := fst (snd (fst_app δγ)) in
+                   let j := fst (snd (snd (fst_app δγ))) in
+                   let δ := fst (snd (snd (snd (fst_app δγ)))) in
+                   
+                   
+           )
+           (ϕ :=
+              fun δγ
+              =>
+                let m := fst (snd δγ) in
+                let x := ro_access _ _ _ w (snd (snd δγ)) in
+                let q := fst (fst δγ) in
+                let A := fst (snd (fst δγ)) in
+                let j := fst (snd (snd (fst δγ))) in
+                let δ := fst (snd (snd (snd (fst δγ)))) in
+                exists n : nat,
+                  Z.of_nat n = j /\
+                    δ = pow2 (- m) /\ q = sin_q (S n) x /\ A = sin_A n x)
+           (ψ := fun  _ => True)
+        ).
+                
+                
+                let j := fst (snd (snd 
+             
 
         ).
   
