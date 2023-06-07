@@ -43,12 +43,12 @@ Fixpoint sin_A n x : R
      end.
 
 Lemma Rtheorem : forall n x,
-    Rabs (sin x - sin_A n x) < sin_q (S n) x.
+    Rabs (sin x - sin_A n x) < Rabs (sin_q (S n) x).
 Proof.
 Admitted.
 
 Lemma Rconverge : forall x,
-    forall n, exists m, Rabs (sin_q m x) < pow2 (- n).
+    forall n, exists m, forall k, (m <= k)%nat -> Rabs (sin_q (S k) x) < pow2 (- n).
 Admitted.
 
 
@@ -81,7 +81,7 @@ Admitted.
   j : Var 1
   A : Var 0
 
-  Newvar q := x³ / 6 in
+  Newvar q := - x³ / 6 in
 
   x : Var (5 + k)
   m : Var 4
@@ -111,7 +111,7 @@ Definition exp_sine k :=
       NEWVAR EXP (:-: (VAR 0)) IN
       NEWVAR INT 0 IN
       NEWVAR VAR (3 + k) IN
-      NEWVAR VAR (4 + k) ;*; VAR (4 + k) ;*; VAR (4 + k) ;/; RE (INT 6) IN
+      NEWVAR ;-; VAR (4 + k) ;*; VAR (4 + k) ;*; VAR (4 + k) ;/; RE (INT 6) IN
       WHILE
         clerical_neg (clerical_bounded 0 3)
       DO
@@ -248,6 +248,33 @@ Proof.
   exact H1.
 Defined.
 
+
+
+Lemma pp_rw_new_var_tot_util2 {Γ Δ} {e c} {τ} σ {ϕ}
+         (θ : sem_datatype σ -> sem_ro_ctx (Δ ++ Γ) -> Prop)
+         {ψ : post} :
+  (Δ ++ Γ) |-- [{rw_to_ro_pre ϕ}] e [{y : σ | θ y}] ->
+  Γ;;; (σ :: Δ) ||-- [{fun x => θ (fst (fst x)) (snd (fst x); snd x) /\ ϕ (snd (fst x), snd x)}]
+   c
+   [{y : τ | fun x => ψ y (snd (fst x), snd x)}] ->
+  Γ;;; Δ ||-- [{ϕ}] (NEWVAR e IN c) [{y : τ | ψ y}].
+Proof.
+  intros.
+  apply (pp_rw_new_var_tot
+           (σ := σ)
+           (θ := fun y x => θ y x /\ rw_to_ro_pre ϕ x)).
+  apply (pp_ro_tot_pose_readonly (rw_to_ro_pre ϕ)) in X.
+  apply (pp_ro_imply_tot X).
+  intros h1 h2; split; auto.
+  intros h1 h2 [h3 h4]; split; auto.
+  apply (pp_rw_imply_tot X0).
+  intros h1 [h2 h3]; split; auto.
+  unfold rw_to_ro_pre in h3.
+  rewrite tedious_equiv_0 in h3.
+  auto.
+  intros h1 h2 h3; auto.
+Defined.
+
 Lemma exp_sine_correct :
   forall Γ k (w : Γ |- VAR k : REAL),
     Γ |-- [{fun _ => True}]
@@ -270,23 +297,23 @@ Proof.
 
   reduce_ro_access val; reduce_ro_access; exact val.
     
-  apply (pp_rw_new_var_tot
-           (σ := INTEGER)
-           (θ := (fun y x => y = 0%Z))).
+  apply (pp_rw_new_var_tot_util2
+           (INTEGER)
+           ((fun y x => y = 0%Z))).
   proves_simple_arithmetical.
 
   assert (((INTEGER :: REAL :: nil)  ++  (INTEGER :: Γ)) |- VAR (3 + k) : REAL) as w'' by auto_typing.
-  apply (pp_rw_new_var_tot
-           (σ := REAL)
-           (θ := (fun y x => y = ro_access _ _ _ w'' x))).
+  apply (pp_rw_new_var_tot_util2
+           (REAL)
+           ((fun y x => y = ro_access _ _ _ w'' x))).
   proves_simple_arithmetical.
   rewrite (ro_access_typing_irrl _ _ _ w'' tmp1).
   exact val.
     
   assert (((REAL :: INTEGER :: REAL :: nil)  ++  (INTEGER :: Γ)) |- VAR (4 + k) : REAL) as w''' by auto_typing.
-  apply (pp_rw_new_var_tot
-           (σ := REAL)
-           (θ := (fun y x => y = sin_q 1 (ro_access _ _ _ w''' x)))).
+  apply (pp_rw_new_var_tot_util2
+           (REAL)
+           ((fun y x => y = sin_q 1 (ro_access _ _ _ w''' x)))).
 
   proves_simple_arithmetical.
   repeat destruct x.
@@ -295,11 +322,15 @@ Proof.
   simpl in pre.
   simpl in val.
   rewrite val.
-  admit.
-
-  
-
-  clear w' w''.
+  rewrite (ro_access_typing_irrl _ _ _  h6 w''').
+  rewrite (ro_access_typing_irrl _ _ _  h4 w''').
+  rewrite (ro_access_typing_irrl _ _ _  h2 w''').
+  unfold Rdiv.
+  repeat rewrite Rmult_assoc. 
+  rewrite <- Rinv_mult.
+  replace ((1 + 1 + 1) * (1 + 1)) with 6 by ring.
+  ring.
+ 
   apply (pp_rw_sequence_tot
            (Γ := (INTEGER :: Γ))
            (Δ :=  REAL :: REAL :: INTEGER :: REAL :: nil)
@@ -511,9 +542,33 @@ Proof.
       destruct pre.
       simpl in H.
       destruct H.
-      admit.
-      admit.
-
+      assert (0 < j)%Z.
+      pose proof (Zle_0_nat x).
+      rewrite H in H1.
+      Require Import Lia.
+      lia.
+      replace (match j with
+               | 0 => 0
+               | Z.pos y' => Z.pos y'~0
+               | Z.neg y' => Z.neg y'~0
+               end + 2)%Z with (2 * j + 2)%Z by auto.
+      lia.
+      apply not_0_IZR.
+      destruct pre.
+      simpl in H.
+      destruct H.
+      assert (0 < j)%Z.
+      pose proof (Zle_0_nat x).
+      rewrite H in H1.
+      Require Import Lia.
+      lia.
+      replace (match j with
+               | 0 => 0
+               | Z.pos y' => Z.pos y'~0
+               | Z.neg y' => Z.neg y'~0
+               end + 3)%Z with (2 * j + 3)%Z by auto.
+      lia.
+      
       rewrite val.
       reduce_ro_access.
       destruct x as [q [A [j [δ [m γ]]]]].      
@@ -713,31 +768,64 @@ Proof.
       (* q := - q * x * x / (2 j + 2) (2 j  + 3)  *)
       assert (assignable (REAL :: REAL :: INTEGER :: REAL :: nil) REAL 0) as a
           by repeat constructor.
-      apply (pp_rw_assign_tot_util REAL
-               (θ := (fun y
-                          (δγ : sem_ro_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ ((INTEGER :: Γ) ++ _)))
-                      => 
-                        let q := fst (fst_app δγ) in
-                        let x := ro_access Γ k REAL w (snd (fst_app (snd_app δγ))) in
-                        let j := fst (snd (snd (fst_app δγ))) in
-                        y = - q * x * x / (IZR (2 * j + 2))%Z / (IZR (2 * j + 3))%Z))
-               a
-            ).
-      simpl.
+    apply (pp_rw_assign_tot_util REAL
+                                 (θ := (fun y
+                                            (δγ : sem_ro_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ ((INTEGER :: Γ) ++ _)))
+                                        => 
+                                          let q := fst (fst_app δγ) in
+                                          let x := ro_access Γ k REAL w (snd (fst_app (snd_app δγ))) in
+                                          let j := fst (snd (snd (fst_app δγ))) in
+                                          y = - q * x * x / (IZR (2 * j + 2))%Z / (IZR (2 * j + 3))%Z))
+                                 a
+          ).
+    simpl.
 
-      pose proof (has_type_ro_add_auxiliary _ _ _ w''' (REAL :: REAL :: INTEGER :: REAL :: nil)).
-      pose proof (has_type_ro_add_auxiliary _ _ _ w (REAL :: REAL :: INTEGER :: REAL :: nil)).
-      proves_simple_arithmetical.
+    pose proof (has_type_ro_add_auxiliary _ _ _ w''' (REAL :: REAL :: INTEGER :: REAL :: nil)).
+    pose proof (has_type_ro_add_auxiliary _ _ _ w (REAL :: REAL :: INTEGER :: REAL :: nil)).
+    proves_simple_arithmetical.
 
-      reduce_ro_access.      
-      destruct x as [q [A [j [δ [m γ]]]]].      
-      simpl.
-      repeat split; auto.
-      apply not_0_IZR.
-      destruct pre.
-      simpl in H.
-      admit.
-      admit.
+    reduce_ro_access.      
+    destruct x as [q [A [j [δ [m γ]]]]].      
+    simpl.
+    
+    repeat split; auto.
+    apply not_0_IZR.
+    destruct pre.
+
+    simpl in H1.
+    destruct H1.
+    destruct H2.
+    rewrite <- H1 in H2.
+
+    assert (0 < j)%Z.
+    pose proof (Zle_0_nat x).
+    rewrite H2.
+    lia.
+    replace (match j with
+             | 0 => 0
+             | Z.pos y' => Z.pos y'~0
+             | Z.neg y' => Z.neg y'~0
+             end + 2)%Z with (2 * j + 2)%Z by auto.
+    lia.
+
+    apply not_0_IZR.
+    destruct pre.
+
+    simpl in H1.
+    destruct H1.
+    destruct H2.
+    rewrite <- H1 in H2.
+
+    assert (0 < j)%Z.
+    pose proof (Zle_0_nat x).
+    rewrite H2.
+    lia.
+    replace (match j with
+             | 0 => 0
+             | Z.pos y' => Z.pos y'~0
+             | Z.neg y' => Z.neg y'~0
+             end + 3)%Z with (2 * j + 3)%Z by auto.
+    lia.
 
       rewrite val.
       reduce_ro_access.
@@ -776,8 +864,67 @@ Proof.
     intro.
     destruct H0.
     destruct H0.
+    destruct δ as [A0 [q0 [j0 [δ0 t]]]].    
+    assert (forall n,
+               fst (snd (snd (x n))) = Z.of_nat n + j0)%Z.
+    {
+      intro.
+      induction n.
+      rewrite H0.
+      simpl.
+      auto.
+      pose proof (H1 n).
+      destruct H2.
+      simpl in H2.
+      destruct H2.
+      destruct H3.
+      rewrite <- H2 in H3.
+      destruct γ.
+      repeat rewrite tedious_equiv_2_snd in H2.
+      
+      simpl in H2.
+      rewrite tedious_equiv_snd in H2.
+      simpl in H2.
+      rewrite H2 in H3.
+      simpl in IHn.
+      rewrite IHn in H3.
+      rewrite Nat2Z.inj_succ.
+      simpl.
+      rewrite H3.      
+      ring. 
+    }
 
-    admit.
+    
+      
+    destruct γ as [m γ].
+    pose proof (Rconverge (ro_access _ _ _ w γ) (m + 1)) as [l h].
+    destruct H as [j0n [hj _]].
+    simpl in hj.
+    pose proof (H1 (l)%nat).
+    simpl in H.
+    destruct H.
+    simpl in H.
+    destruct H.
+    destruct H3.
+    repeat rewrite tedious_equiv_2_fst in H4.
+    simpl in H4.
+    rewrite tedious_equiv_fst in H4.
+    simpl in h.
+    repeat rewrite tedious_equiv_2_snd in H3.
+    simpl in H3.
+    rewrite tedious_equiv_snd in H3.
+    simpl in H3.
+    repeat rewrite tedious_equiv_2_snd in H.
+    simpl in H.
+    rewrite tedious_equiv_snd in H.
+    rewrite H2 in H.
+    rewrite <- hj in H.
+    rewrite <- Nat2Z.inj_add in H.
+    apply Nat2Z.inj in H.
+    assert (l <= x0)%nat by lia.
+    pose proof (h _ H5).
+    replace (-(m+1))%Z with (-m-1)%Z in H6 by ring.
+    exact (Rlt_asym _ _ H4 H6).
   }
 
   {
@@ -785,7 +932,56 @@ Proof.
     intros x.
     intros.
     exists O.
-    repeat split.
-    rewrite H.
-    repeat split.
+
+    destruct x as [[q [A [n [δ t]]]] [m γ]].
+    simpl.
+    simpl in H.
+    reduce_ro_access.
+    reduce_ro_access H.
+    rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inverse
+                                            (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse w''')))) w) in H.
+rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse w''))) w) in H.
     
+    destruct H as [h1 [h2 [h3 h4]]].
+    repeat split; auto.
+  }
+
+  {
+    (* after exiting the loop *)
+
+    
+    intros h1 [[q [A [n [δ t]]]] [m γ]] [h2 h3].
+    unfold ro_to_rw_pre in h3.
+    simpl.
+    destruct h3 as [h3 [_ h5]].
+    pose proof (h5 eq_refl); clear h5.
+    simpl in H.
+    simpl in h3.
+    repeat rewrite tedious_equiv_2_fst, tedious_equiv_2_snd in h3.
+    simpl in h3.
+    destruct h3 as [l t1].
+    simpl in t1.
+    destruct t1 as [t1 [t2 [t3 t4]]].
+    rewrite t4.
+    pose proof (Rtheorem l (ro_access Γ k REAL w γ)).
+    simpl in H0.
+    rewrite <- t3 in H0.
+    rewrite <- Rabs_Ropp.
+    replace (- (sin_A l (ro_access Γ k REAL w γ) - sin (ro_access Γ k REAL w γ))) with
+      (sin (ro_access Γ k REAL w γ) - sin_A l (ro_access Γ k REAL w γ)) by ring.
+    rewrite <- t2.
+    apply (Rlt_trans _ _ _ H0 H).
+  }
+
+  
+  proves_simple_arithmetical.
+  rewrite val.
+  clear val.
+  destruct x as [q [A [n [δ [m γ]]]]].
+  simpl.
+  simpl in pre.
+  reduce_ro_access.
+  exact pre.
+
+Defined.
+
