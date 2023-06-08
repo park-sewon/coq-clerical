@@ -3,7 +3,8 @@ From Clerical Require Import Clerical.
 Require Import Coq.Program.Equality.
 Require Import ZArith Reals Lra Lia List.
 Open Scope R.
-From Examples Require Import AbsProgram BoundedProgram LogicProgram SineProgram.
+From Examples Require Import ProgAbs ProgLogic ProgBounded ProgSine.
+From Examples Require Import Mathematics.
 
 Definition clerical_pi :=
   Lim (
@@ -18,136 +19,6 @@ Definition clerical_pi :=
           ELSE
             LET 1 := VAR 0
                        END) ;; LET 2 := VAR 2 :+: INT 1 END ;; (VAR 1 ;+; VAR 0) ;*; EXP (INT -1)).
-
-Definition is_rational x : Prop :=
-  exists p q, x = IZR p / IZR q. 
-
-Lemma Z_is_rational : forall z, is_rational (IZR z).
-Proof.
-  intros.
-  exists z.
-  exists 1%Z.
-  unfold Rdiv.
-  replace (/1) with 1 by auto with real.
-  ring.
-Defined.
-
-Lemma pow2_increasing : forall a b, (a < b)%Z -> pow2 a < pow2 b.
-Proof.
-Admitted.
-
-Lemma pow2_monotone : forall a b, (a <= b)%Z -> pow2 a <= pow2 b.
-Proof.
-Admitted.
-
-  
-Lemma ratoinals_midpoint_is_rational :
-  forall x y, is_rational x -> is_rational y -> is_rational ((x + y) / 2).
-Admitted.
-
-Lemma midpoint_in_interval :
-  forall x y, x < y -> x < (x + y)/2 < y.
-Admitted.
-
-Lemma PI_in_34 : 3 < PI < 4.
-Admitted.
-
-
-Lemma PI_unique_in_34 :
-  forall s, 3<s<4 -> sin s = 0 -> s = PI.
-Admitted.
-
-Lemma PI_simple_in_34 :
-  forall s, 3<s<4 -> (sin s < 0 -> PI < s) /\ (0 < sin s ->  s < PI).
-Admitted.
-
-Lemma PI_irrational :
-  is_rational PI -> False.
-Admitted.
-
-Lemma dist_between_points_in_interval : forall a b c d,
-    a < b -> a < c < b -> a < d < b ->
-    Rabs (c - d) < b - a.
-Admitted.
-
-  
-Lemma Rltb''_prop_false : forall x y,
-    Rltb'' x y = false <-> y <= x.
-Proof.
-  intros.
-  unfold Rltb''.
-  destruct (total_order_T x y).
-  destruct s.
-  split.
-  intro.
-  contradict H; discriminate.
-  intro.
-  contradict (Rle_not_lt _ _ H r).
-  split; intro; auto.
-  right; auto.
-  split; intro; auto.
-  left; auto.
-Defined.
-
-Lemma pow2_minus_one : forall x,
-    pow2 x / 2 = pow2 (x - 1).
-Proof.
-  intro.
-  unfold Zminus.
-  rewrite pow2_add.
-  simpl.
-  replace (2 * 1) with 2 by ring.
-  unfold Rdiv; ring.
-Defined.
-  
-Lemma pp_rw_cond_tot_util {Γ Δ} {τ} {e c1 c2} {ϕ} θ {ψ}
-     : (Δ ++ Γ) |-- [{rw_to_ro_pre ϕ}] e [{y : BOOL | θ y}] ->
-       Γ;;; Δ ||-- [{ϕ /\\ ro_to_rw_pre (θ true)}] c1 [{y : τ | ψ y}] ->
-       Γ;;; Δ ||-- [{ϕ /\\ ro_to_rw_pre (θ false)}] c2 [{y : τ | ψ y}] ->
-       Γ;;; Δ ||-- [{ϕ}] (IF e THEN c1 ELSE c2 END) [{y : τ | ψ y}].
-Proof.
-  intros.
-  apply (pp_rw_cond_tot (θ := fun y x => rw_to_ro_pre ϕ x /\ θ y x)) .
-  apply (pp_ro_tot_pose_readonly (rw_to_ro_pre ϕ)) in X.
-  apply (pp_ro_imply_tot X).
-  intros h1 h2; split; auto.
-  intros h1 h2 [h3 h4]; auto.
-  apply (pp_rw_imply_tot X0).
-  intros h1 [h2 h3]; split; auto.
-  unfold rw_to_ro_pre in h2.
-  rewrite tedious_equiv_0 in h2.
-  exact h2.
-  intros h1 h2 h3; auto.
-  apply (pp_rw_imply_tot X1).
-  intros h1 [h2 h3]; split; auto.
-  unfold rw_to_ro_pre in h2.
-  rewrite tedious_equiv_0 in h2.
-  exact h2.
-  intros h1 h2 h3; auto.
-Defined.
-
-Lemma pp_ro_real_comp_lt_tot_util {Γ} {e1 e2} {ϕ} ψ1 ψ2 {ψ} :
-  Γ |-- [{ϕ}] e1 [{y : REAL | ψ1 y}] ->
-  Γ |-- [{ϕ}] e2 [{y : REAL | ψ2 y}] ->
-  (forall y1 y2 x, (ϕ x /\ ψ1 y1 x /\ ψ2 y2 x) -> (y1 <> y2 /\ ψ (Rltb'' y1 y2) x)) ->
-  Γ |-- [{ϕ}] e1 ;<; e2 [{y : BOOL | ψ y}].
-Proof.
-  intros.
-  apply
-    (pp_ro_real_comp_lt_tot
-       ψ1
-       (fun y x => ϕ x /\ ψ2 y x)).
-  exact X.
-  apply (pp_ro_tot_pose_readonly ϕ) in X0.
-  apply (pp_ro_imply_tot X0).
-  intros h1 h2; split; auto.
-  intros h1 h2 [h3 h4]; auto.
-  intros.
-  apply H.
-  repeat split; destruct H1 as [h1 h2]; auto.
-Defined.
-
-    
 
 Lemma clerical_pi_correct :
   nil |--

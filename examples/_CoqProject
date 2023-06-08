@@ -2,11 +2,12 @@
 
 -R . Examples
 
-AbsProgram.v
-BoundedProgram.v
-LogicProgram.v
-SineProgram.v
-SineMath.v
-PiProgram.v
+ProgAbs.v
+ProgBounded.v
+ProgLogic.v
+ProgSine.v
+ProgPi.v
+
+Mathematics.v
 
 -docroot "Clerical/examples"

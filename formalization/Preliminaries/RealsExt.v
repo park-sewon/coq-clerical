@@ -142,7 +142,6 @@ Proof.
   intro.
   rewrite (Rabs_left1 _ H).
   replace (x - - x) with (2 * x) by ring.
-  Check Rabs_left.
   assert (2 *x <= 0) by lra.
   rewrite (Rabs_left1 _  H0).
   ring.
@@ -194,3 +193,86 @@ Proof.
   apply overlap_splitting.
   lra.
 Defined.
+
+
+Lemma pow2_increasing' : forall a n, pow2 a <= pow2 (a + Z.of_nat n).
+Proof.
+  intros.
+  induction n.
+  simpl.
+  replace (a + 0)%Z with a by ring.
+  right; auto.
+  replace (a + Z.of_nat (S n))%Z with
+    ((a + Z.of_nat n) + 1)%Z by lia.
+  rewrite pow2_add_one.
+  pose proof (pow2_positive (a + Z.of_nat n)).
+  lra.
+Defined.
+
+Lemma pow2_increasing'' : forall a n, (0 < n)%nat -> pow2 a < pow2 (a + Z.of_nat n).
+Proof.
+  intros.
+  induction n.
+  contradict H; lia.
+  destruct n.
+  rewrite pow2_add_one.
+  pose proof (pow2_positive a).
+  lra.
+  assert (0 < S n)%nat by lia.
+  apply IHn in H0.
+  clear IHn.
+  replace (a + Z.of_nat (S (S n)))%Z with
+    ((a + Z.of_nat (S n)) + 1)%Z by lia.
+  rewrite pow2_add_one.
+  pose proof (pow2_positive (a + Z.of_nat (S n))).
+  lra.
+Defined.
+
+Lemma pow2_increasing : forall a b, (a < b)%Z -> pow2 a < pow2 b.
+Proof.
+  intros.
+  assert (0 < Z.to_nat (b - a))%nat by lia.
+  assert (b = a + (Z.of_nat (Z.to_nat (b - a))))%Z by lia.
+  rewrite H1.
+  apply pow2_increasing''; auto.
+Defined.
+
+Lemma pow2_monotone : forall a b, (a <= b)%Z -> pow2 a <= pow2 b.
+Proof.
+  intros.
+  assert (b = a + (Z.of_nat (Z.to_nat (b - a))))%Z by lia.
+  rewrite H0.
+  apply pow2_increasing'; auto.
+Defined.
+
+
+  
+Lemma Rltb''_prop_false : forall x y,
+    Rltb'' x y = false <-> y <= x.
+Proof.
+  intros.
+  unfold Rltb''.
+  destruct (total_order_T x y).
+  destruct s.
+  split.
+  intro.
+  contradict H; discriminate.
+  intro.
+  contradict (Rle_not_lt _ _ H r).
+  split; intro; auto.
+  right; auto.
+  split; intro; auto.
+  left; auto.
+Defined.
+
+Lemma pow2_minus_one : forall x,
+    pow2 x / 2 = pow2 (x - 1).
+Proof.
+  intro.
+  unfold Zminus.
+  rewrite pow2_add.
+  simpl.
+  replace (2 * 1) with 2 by ring.
+  unfold Rdiv; ring.
+Defined.
+  

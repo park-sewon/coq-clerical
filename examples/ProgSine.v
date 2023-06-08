@@ -4,8 +4,8 @@ Require Import Coq.Program.Equality.
 Require Import ZArith Reals Lra List.
 Open Scope R.
 
-From Examples Require Import AbsProgram BoundedProgram LogicProgram.
-From Examples Require Import SineMath.
+From Examples Require Import ProgAbs ProgLogic ProgBounded.
+From Examples Require Import Mathematics.
 
 (*
   The specifications of our sine function rely on the theory
