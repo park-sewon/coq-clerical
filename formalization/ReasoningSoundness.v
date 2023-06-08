@@ -81,46 +81,6 @@ Proof.
   exists (ro_access _ _ _ w γ); split; auto.  
 Defined.
 
-Lemma update_assignable_irrl : forall k Δ τ  x δ (a1 a2 : assignable Δ τ k),
-    update k x δ a1 = update k x δ a2.
-Proof.
-  intro k.
-  dependent induction k.
-  intros.
-  dependent destruction a1.
-  dependent destruction a2; auto.
-  intros.
-  dependent destruction a1.
-  dependent destruction a2; auto.
-  destruct δ.
-  assert (
-      (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_list_datatype Δ) s s0) (assignable_S Δ τ σ k a1))
-            = (s, update k x s0 a1)). 
-  simpl.
-  unfold update.
-  unfold assignable_rect.
-  destruct a1; auto.
-  assert (
-      (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_list_datatype Δ) s s0) (assignable_S Δ τ σ k a2))
-            = (s, update k x s0 a2)). 
-  simpl.
-  unfold update.
-  unfold assignable_rect.
-  destruct a2; auto.
-  rewrite H, H0; auto.
-  assert (update k x s0 a1 = update k x s0 a2).
-  apply IHk.
-  rewrite H1; auto.
-Defined.
-
-Lemma update'_typing_irrl_2 Γ Δ k e τ (w1 w2 : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit) δ x :
-  update' w1 w' δ x = update' w2 w' δ x.
-Proof.
-  unfold update'.
-  apply update_assignable_irrl.
-Defined.
-
-
 Lemma proves_rw_prt_Assign_sound
   Γ Δ e k τ ϕ0 (ψ0 :post) θ (w : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit)  :
   w |= {{(fun δγ : sem_ro_ctx (Δ ++ Γ) => ϕ0 (tedious_sem_app Δ Γ δγ))}} e {{θ}}

@@ -628,3 +628,54 @@ Admitted.
 Lemma pp_rw_tot_prt {Γ Δ} {e} {τ} {ϕ} {ψ} : Γ ;;; Δ ||-- [{ϕ}] e [{y : τ | ψ y}] -> Γ ;;; Δ ||-- {{ϕ}} e {{y : τ | ψ y}}.
 Proof.
 Admitted.
+
+
+
+
+
+Lemma pp_rw_assign_tot_util {Γ Δ} {k} {e} τ {ϕ} {θ} {ψ : post} :
+  forall (a : assignable Δ τ k),
+    (Δ ++ Γ) |-- [{rw_to_ro_pre  ϕ}] e [{y : τ | θ y}] ->
+    (forall x γ δ, ϕ (δ, γ) -> θ x (δ; γ) -> ψ tt (update k x δ a, γ)) ->
+    Γ;;; Δ ||-- [{ϕ}] (LET k := e) [{y : UNIT | ψ y}].
+Proof.
+  intros.
+  apply (pp_rw_assign_tot a
+           (θ := θ /\\\ (fun _ => rw_to_ro_pre ϕ))).
+  apply (pp_ro_tot_pose_readonly (rw_to_ro_pre ϕ)) in X.
+  apply (pp_ro_imply_tot X).
+  intros h1 h2; split; auto.
+  intros h1 h2 [h3 h4]; split; auto.
+  intros.
+  apply H; destruct H0; auto.
+  unfold rw_to_ro_pre in H1.
+  rewrite tedious_equiv_0 in H1.
+  exact H1.
+Defined.
+
+
+
+Lemma pp_rw_new_var_tot_util2 {Γ Δ} {e c} {τ} σ {ϕ}
+         (θ : sem_datatype σ -> sem_ro_ctx (Δ ++ Γ) -> Prop)
+         {ψ : post} :
+  (Δ ++ Γ) |-- [{rw_to_ro_pre ϕ}] e [{y : σ | θ y}] ->
+  Γ;;; (σ :: Δ) ||-- [{fun x => θ (fst (fst x)) (snd (fst x); snd x) /\ ϕ (snd (fst x), snd x)}]
+   c
+   [{y : τ | fun x => ψ y (snd (fst x), snd x)}] ->
+  Γ;;; Δ ||-- [{ϕ}] (NEWVAR e IN c) [{y : τ | ψ y}].
+Proof.
+  intros.
+  apply (pp_rw_new_var_tot
+           (σ := σ)
+           (θ := fun y x => θ y x /\ rw_to_ro_pre ϕ x)).
+  apply (pp_ro_tot_pose_readonly (rw_to_ro_pre ϕ)) in X.
+  apply (pp_ro_imply_tot X).
+  intros h1 h2; split; auto.
+  intros h1 h2 [h3 h4]; split; auto.
+  apply (pp_rw_imply_tot X0).
+  intros h1 [h2 h3]; split; auto.
+  unfold rw_to_ro_pre in h3.
+  rewrite tedious_equiv_0 in h3.
+  auto.
+  intros h1 h2 h3; auto.
+Defined.

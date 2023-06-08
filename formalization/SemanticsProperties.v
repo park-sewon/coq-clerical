@@ -1976,3 +1976,99 @@ Proof.
   apply r_sem_rw_exp_auxiliary_ctx.
 Defined.
 
+
+Lemma reduce_ro_access_0 : forall Γ τ (w : (τ :: Γ) |- Var 0 : τ) x,
+    ro_access _ _ _ w x = fst x.
+Proof.
+  intros.
+  rewrite (ro_access_typing_irrl _ _ _ w (has_type_ro_Var_0 _ _)).
+  destruct x; auto.
+Defined.
+
+Lemma reduce_ro_access_S : forall Γ τ σ n (w : (σ :: Γ) |- Var (S n) : τ) x,
+    ro_access _ _ _ w x = ro_access _ _ _ (has_type_ro_Var_S_inverse w) (snd x).
+Proof.
+  intros.
+  rewrite (ro_access_typing_irrl _ _ _ w (has_type_ro_Var_S _ _ _ _ (has_type_ro_Var_S_inverse w))).
+  destruct x; auto.
+Defined.
+
+
+Lemma update_assignable_irrl : forall k Δ τ  x δ (a1 a2 : assignable Δ τ k),
+    update k x δ a1 = update k x δ a2.
+Proof.
+  intro k.
+  dependent induction k.
+  intros.
+  dependent destruction a1.
+  dependent destruction a2; auto.
+  intros.
+  dependent destruction a1.
+  dependent destruction a2; auto.
+  destruct δ.
+  assert (
+      (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_list_datatype Δ) s s0) (assignable_S Δ τ σ k a1))
+            = (s, update k x s0 a1)). 
+  simpl.
+  unfold update.
+  unfold assignable_rect.
+  destruct a1; auto.
+  assert (
+      (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_list_datatype Δ) s s0) (assignable_S Δ τ σ k a2))
+            = (s, update k x s0 a2)). 
+  simpl.
+  unfold update.
+  unfold assignable_rect.
+  destruct a2; auto.
+  rewrite H, H0; auto.
+  assert (update k x s0 a1 = update k x s0 a2).
+  apply IHk.
+  rewrite H1; auto.
+Defined.
+
+Lemma update'_typing_irrl_2 Γ Δ k e τ (w1 w2 : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit) δ x :
+  update' w1 w' δ x = update' w2 w' δ x.
+Proof.
+  unfold update'.
+  apply update_assignable_irrl.
+Defined.
+
+
+Lemma reduce_update_0 : forall Δ τ (a : assignable (τ :: Δ) τ 0)
+                                   (x y : sem_datatype τ) (δ : sem_ro_ctx Δ),
+    @update τ (τ::Δ) 0 x (y, δ) a = (x, δ).
+Proof.
+  intros.
+  rewrite (update_assignable_irrl 0 _ _ _ _ a (assignable_0 _ _)).
+  auto.
+Defined.
+
+Lemma update_assignable_S : forall Δ σ k (a : assignable Δ σ k) τ x δ y,
+    @update σ (τ :: Δ) (S k) x (y, δ) (assignable_S _ σ τ _ a)
+    = (y, @update σ Δ k x δ a).
+Proof.
+  intros.
+  simpl.
+  unfold update.
+  apply lp.
+  auto.
+  simpl.
+  destruct a.
+  simpl.
+  auto.
+  simpl.
+  apply lp.
+  auto.
+Defined.
+
+Lemma reduce_update_S : forall Δ k τ σ (a : assignable (τ :: Δ) σ (S k)) x y
+                               (δ : sem_ro_ctx Δ),
+    @update σ (τ :: Δ) (S k) x (y, δ) a
+    = (y, @update σ Δ k x δ (assignable_S_inverse a)). 
+Proof.
+  intros.
+  rewrite (update_assignable_irrl _ _ _ _ _ a
+             (assignable_S _ _ _ _ ((assignable_S_inverse a)))).
+  rewrite update_assignable_S.
+  auto.
+Defined.

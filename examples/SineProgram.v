@@ -4,8 +4,9 @@ Require Import Coq.Program.Equality.
 Require Import ZArith Reals Lra List.
 Open Scope R.
 
-From Examples Require Import abs bounded logic.
-Print sin_n.
+From Examples Require Import AbsProgram BoundedProgram LogicProgram.
+From Examples Require Import SineMath.
+
 (*
   The specifications of our sine function rely on the theory
   of trigonometric functions in Coq Standard library:
@@ -17,39 +18,27 @@ Print sin_n.
       
  *)
 
-Search sin.
-Search sin_approx.
-Print sin_approx. 
-Print sin.
-Check exist_sin.
-Print exist_sin.
-Print sin_in.
-Print infinite_sum.
-Print sin_n.
-Search sin_n.
-Search exist_sin.
-
 (* partial sum term *)
-Fixpoint sin_q n x : R
-  := match n with
-     | O => x
-     | S m => - x * x * (sin_q m x) / (INR (2 * m + 3)%nat) / (INR (2 * m + 2)%nat)
-     end.
+(* Fixpoint sin_q n x : R *)
+(*   := match n with *)
+(*      | O => x *)
+(*      | S m => - x * x * (sin_q m x) / (INR (2 * m + 3)%nat) / (INR (2 * m + 2)%nat) *)
+(*      end. *)
 
-Fixpoint sin_A n x : R
-  := match n with
-     | O => x
-     | S m => sin_q (S m) x + sin_A m x 
-     end.
+(* Fixpoint sin_A n x : R *)
+(*   := match n with *)
+(*      | O => x *)
+(*      | S m => sin_q (S m) x + sin_A m x  *)
+(*      end. *)
 
-Lemma Rtheorem : forall n x,
-    Rabs (sin x - sin_A n x) < Rabs (sin_q (S n) x).
-Proof.
-Admitted.
+(* Lemma Rtheorem : forall n x, *)
+(*     Rabs (sin x - sin_A n x) < Rabs (sin_q (S n) x). *)
+(* Proof. *)
+(* Admitted. *)
 
-Lemma Rconverge : forall x,
-    forall n, exists m, forall k, (m <= k)%nat -> Rabs (sin_q (S k) x) < pow2 (- n).
-Admitted.
+(* Lemma Rconverge : forall x, *)
+(*     forall n, exists m, forall k, (m <= k)%nat -> Rabs (sin_q (S k) x) < pow2 (- n). *)
+(* Admitted. *)
 
 
 (*
@@ -57,38 +46,23 @@ Admitted.
 
   Lim m.
 
-  x : Var (1 + k)
-  m : Var 0
+  x : Var (1 + k) | m : Var 0
 
   Newvar δ := 2⁻ᵐ in
 
-  x : Var (2 + k)
-  m : Var 1
-  δ : Var 0
+  x : Var (2 + k) | m : Var 1 | δ : Var 0
 
   Newvar j := 0 in
 
-  x : Var (3 + k)
-  m : Var 2
-  δ : Var 1
-  j : Var 0
+  x : Var (3 + k) | m : Var 2 | δ : Var 1 | j : Var 0
 
   Newvar A := x in
 
-  x : Var (4 + k)
-  m : Var 3
-  δ : Var 2
-  j : Var 1
-  A : Var 0
+  x : Var (4 + k) | m : Var 3 | δ : Var 2 | j : Var 1 | A : Var 0
 
   Newvar q := - x³ / 6 in
 
-  x : Var (5 + k)
-  m : Var 4
-  δ : Var 3
-  j : Var 2
-  A : Var 1
-  q : Var 0
+  x : Var (5 + k) | m : Var 4 | δ : Var 3 | j : Var 2 | A : Var 1 | q : Var 0
 
   * A = A(j, x) /\ q = q (j + 1, x)
 
@@ -97,15 +71,11 @@ Admitted.
     j := j + 1
     A := A + q
     q := - q * x * x / (2 j + 2) (2 j  + 3) 
-  End;
-
-  A
-
-
+  End; A
  *)
 
 (* compute sine(VAR k) *)
-Definition exp_sine k :=
+Definition clerical_sine k :=
   Lim
     (
       NEWVAR EXP (:-: (VAR 0)) IN
@@ -121,164 +91,12 @@ Definition exp_sine k :=
       END ;; VAR 1
     ).
 
-Fixpoint has_type_ro_Var_S_inverse {Γ} {τ} {σ} {k} (w : (σ :: Γ) |- Var (S k) : τ) : Γ |- Var k : τ.
-Proof.
-  dependent destruction w.
-  dependent destruction h.
-  simpl in h.
-  exact (has_type_ro_Var_S_inverse _ _ _ _ h).
-  exact w.
-Defined.  
-        
-Lemma reduce_ro_access_0 : forall Γ τ (w : (τ :: Γ) |- Var 0 : τ) x,
-    ro_access _ _ _ w x = fst x.
-Proof.
-  intros.
-  rewrite (ro_access_typing_irrl _ _ _ w (has_type_ro_Var_0 _ _)).
-  destruct x; auto.
-Defined.
-
-Lemma reduce_ro_access_S : forall Γ τ σ n (w : (σ :: Γ) |- Var (S n) : τ) x,
-    ro_access _ _ _ w x = ro_access _ _ _ (has_type_ro_Var_S_inverse w) (snd x).
-Proof.
-  intros.
-  rewrite (ro_access_typing_irrl _ _ _ w (has_type_ro_Var_S _ _ _ _ (has_type_ro_Var_S_inverse w))).
-  destruct x; auto.
-Defined.
-
-Ltac reduce_ro_access_tactic h :=
-  match type of h with
-  | ltac_No_arg =>
-      repeat (simpl; try rewrite reduce_ro_access_S; try rewrite reduce_ro_access_0)
-  | _ =>
-      repeat (simpl in h; try rewrite reduce_ro_access_S in h; try rewrite reduce_ro_access_0 in h)
-  end.
-
-Tactic Notation "reduce_ro_access" constr(x1) :=
-  reduce_ro_access_tactic x1 .
-                    
-Tactic Notation "reduce_ro_access" :=
-  reduce_ro_access_tactic ltac_no_arg.
 
 
-Lemma assignable_S_inverse {Γ} {τ} {σ} {k} (a : assignable (σ :: Γ) τ (S k)) :
-  assignable Γ τ k.
-Proof.
-  dependent destruction a.
-  exact a.
-Defined.
-  
-Lemma reduce_update_0 : forall Δ τ (a : assignable (τ :: Δ) τ 0)
-                                   (x y : sem_datatype τ) (δ : sem_ro_ctx Δ),
-    @update τ (τ::Δ) 0 x (y, δ) a = (x, δ).
-Proof.
-  intros.
-  rewrite (update_assignable_irrl 0 _ _ _ _ a (assignable_0 _ _)).
-  auto.
-Defined.
-
-Lemma update_assignable_S : forall Δ σ k (a : assignable Δ σ k) τ x δ y,
-    @update σ (τ :: Δ) (S k) x (y, δ) (assignable_S _ σ τ _ a)
-    = (y, @update σ Δ k x δ a).
-Proof.
-  intros.
-  simpl.
-  unfold update.
-  apply lp.
-  auto.
-  simpl.
-  destruct a.
-  simpl.
-  auto.
-  simpl.
-  apply lp.
-  auto.
-Defined.
-
-  
-Lemma reduce_update_S : forall Δ k τ σ (a : assignable (τ :: Δ) σ (S k)) x y
-                               (δ : sem_ro_ctx Δ),
-    @update σ (τ :: Δ) (S k) x (y, δ) a
-    = (y, @update σ Δ k x δ (assignable_S_inverse a)). 
-Proof.
-  intros.
-  rewrite (update_assignable_irrl _ _ _ _ _ a
-             (assignable_S _ _ _ _ ((assignable_S_inverse a)))).
-  rewrite update_assignable_S.
-  auto.
-Defined.
-
-
-
-
-Ltac reduce_update_tactic h :=
-  match type of h with
-  | ltac_No_arg =>
-      repeat (simpl; try rewrite reduce_update_S; try rewrite reduce_update_0)
-  | _ =>
-      repeat (simpl in h; try rewrite reduce_update_S in h; try rewrite reduce_update_0 in h)
-  end.
-
-Tactic Notation "reduce_update" constr(x1) :=
-  reduce_update_tactic x1 .
-                    
-Tactic Notation "reduce_update" :=
-  reduce_update_tactic ltac_no_arg.
-
-
-
-
-Lemma pp_rw_assign_tot_util {Γ Δ} {k} {e} τ {ϕ} {θ} {ψ : post} :
-  forall (a : assignable Δ τ k),
-    (Δ ++ Γ) |-- [{rw_to_ro_pre  ϕ}] e [{y : τ | θ y}] ->
-    (forall x γ δ, ϕ (δ, γ) -> θ x (δ; γ) -> ψ tt (update k x δ a, γ)) ->
-    Γ;;; Δ ||-- [{ϕ}] (LET k := e) [{y : UNIT | ψ y}].
-Proof.
-  intros.
-  apply (pp_rw_assign_tot a
-           (θ := θ /\\\ (fun _ => rw_to_ro_pre ϕ))).
-  apply (pp_ro_tot_pose_readonly (rw_to_ro_pre ϕ)) in X.
-  apply (pp_ro_imply_tot X).
-  intros h1 h2; split; auto.
-  intros h1 h2 [h3 h4]; split; auto.
-  intros.
-  apply H; destruct H0; auto.
-  unfold rw_to_ro_pre in H1.
-  rewrite tedious_equiv_0 in H1.
-  exact H1.
-Defined.
-
-
-
-Lemma pp_rw_new_var_tot_util2 {Γ Δ} {e c} {τ} σ {ϕ}
-         (θ : sem_datatype σ -> sem_ro_ctx (Δ ++ Γ) -> Prop)
-         {ψ : post} :
-  (Δ ++ Γ) |-- [{rw_to_ro_pre ϕ}] e [{y : σ | θ y}] ->
-  Γ;;; (σ :: Δ) ||-- [{fun x => θ (fst (fst x)) (snd (fst x); snd x) /\ ϕ (snd (fst x), snd x)}]
-   c
-   [{y : τ | fun x => ψ y (snd (fst x), snd x)}] ->
-  Γ;;; Δ ||-- [{ϕ}] (NEWVAR e IN c) [{y : τ | ψ y}].
-Proof.
-  intros.
-  apply (pp_rw_new_var_tot
-           (σ := σ)
-           (θ := fun y x => θ y x /\ rw_to_ro_pre ϕ x)).
-  apply (pp_ro_tot_pose_readonly (rw_to_ro_pre ϕ)) in X.
-  apply (pp_ro_imply_tot X).
-  intros h1 h2; split; auto.
-  intros h1 h2 [h3 h4]; split; auto.
-  apply (pp_rw_imply_tot X0).
-  intros h1 [h2 h3]; split; auto.
-  unfold rw_to_ro_pre in h3.
-  rewrite tedious_equiv_0 in h3.
-  auto.
-  intros h1 h2 h3; auto.
-Defined.
-
-Lemma exp_sine_correct :
+Lemma clerical_sine_correct :
   forall Γ k (w : Γ |- VAR k : REAL),
     Γ |-- [{fun _ => True}]
-          exp_sine k
+          clerical_sine k
           [{y : REAL | fun x => y = sin (ro_access Γ k REAL w x) }].
 Proof.
   intros.
@@ -831,7 +649,6 @@ Proof.
       reduce_ro_access.
       destruct x as [q [A [j [δ [m γ]]]]].      
       simpl.
-      Search ro_access.
       rewrite (tedious_equiv_2 γ).
       rewrite <- (ro_access_app _ _ _ _ w _ _ (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse h6)))))).
       rewrite <- (ro_access_app _ _ _ _ w _ _ (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse h4)))))).

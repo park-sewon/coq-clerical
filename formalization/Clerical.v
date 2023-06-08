@@ -11,5 +11,5 @@ Require Export Clerical.ReasoningSoundness.
 Require Export Clerical.ReasoningAdmissible.
 Require Export Clerical.ReasoningPrettyprinting.
 Require Export Clerical.ReasoningUtils.
-From Clerical.Utils Require Export TypingTactic SimpleArithProver SimpleArith.
+From Clerical.Utils Require Export TypingTactic SimpleArithProver SimpleArith ReducingTactic.
 

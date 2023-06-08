@@ -2,8 +2,11 @@
 
 -R . Examples
 
-abs.v
-bounded.v
-logic.v
+AbsProgram.v
+BoundedProgram.v
+LogicProgram.v
+SineProgram.v
+SineMath.v
+PiProgram.v
 
 -docroot "Clerical/examples"

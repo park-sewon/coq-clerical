@@ -26,6 +26,7 @@ formalization/ReasoningAdmissible.v
 formalization/ReasoningUtils.v
 formalization/ReasoningPrettyprinting.v
 
+formalization/Utils/ReducingTactic.v
 formalization/Utils/TypingTactic.v
 formalization/Utils/SimpleArith.v
 formalization/Utils/SimpleArithProver.v

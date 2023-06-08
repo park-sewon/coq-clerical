@@ -3,7 +3,7 @@ Require Import Coq.Program.Equality.
 Require Import ZArith Reals Lra List.
 Open Scope R.
 
-From Examples Require Import abs.
+From Examples Require Import AbsProgram.
 
 (* computing the absolute value of variable k *)
 Definition clerical_bounded k δ :=  

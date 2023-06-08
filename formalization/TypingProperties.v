@@ -695,6 +695,26 @@ End Unambiguity.
 
 
 Section InverseTyping.
+
+
+  Fixpoint has_type_ro_Var_S_inverse {Γ} {τ} {σ} {k} (w : (σ :: Γ) |- Var (S k) : τ) : Γ |- Var k : τ.
+  Proof.
+    dependent destruction w.
+    dependent destruction h.
+    simpl in h.
+    exact (has_type_ro_Var_S_inverse _ _ _ _ h).
+    exact w.
+  Defined.  
+
+
+  Lemma assignable_S_inverse {Γ} {τ} {σ} {k} (a : assignable (σ :: Γ) τ (S k)) :
+    assignable Γ τ k.
+  Proof.
+    dependent destruction a.
+    exact a.
+  Defined.
+
+
   Fixpoint has_type_ro_OpRrecip_inverse Γ e (w : Γ |- (;/; e) : REAL) : Γ |- e  : REAL.
   Proof.
     dependent destruction w.
