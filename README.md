@@ -4,6 +4,8 @@ It includes syntax, type system, denotational semantics, specifications, reasoni
 
 ## Installation
 It is checked to compile by coq_makefile under the Coq Proof Assistant version 8.16.1 (compiled with OCaml 4.14.1).
+To compile the formalization part of this project, do `make` at `clerical` directory. 
+To compile the examples part of this project, do `make` at `clerical/examples` directory.
 
 ## Overview of the project
 ### Formalization
