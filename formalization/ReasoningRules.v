@@ -639,11 +639,14 @@ with proves_rw_tot : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_tot w -> T
     (*——————————-——————————-——————————-——————————-——————————-*)
     wty ||- [{ϕ}] CaseList l [{ψ}]
 
-        
-| rw_while_tot : forall Γ Δ e c (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : (Γ ++ Δ) ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT) ϕ θ ψ,
+ | rw_while_tot : forall Γ Δ e c (wty_e : (Δ ++ Γ) |- e : BOOL)
+                                               (wty_c : (Γ ++ Δ) ;;; Δ ||- c : UNIT) (wty_c' : Γ ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT) ϕ θ ψ,
     
-    wty_e |- [{rw_to_ro_pre ϕ}] e [{θ}] ->
-    wty_c ||- [{fun δγδ' => ro_to_rw_pre (θ true) (fst δγδ', fst_app (snd δγδ')) /\ fst δγδ' = snd_app (snd δγδ')}] c [{fun _ δγδ' => ϕ (fst δγδ', fst_app (snd δγδ')) /\ ψ δγδ' }] ->
+     wty_e  |- [{rw_to_ro_pre ϕ}] e [{θ}] ->
+     wty_c'||- [{ro_to_rw_pre (θ true)}] c [{fun _ => ϕ }] ->
+     wty_c ||- [{fun x => ro_to_rw_pre (θ true) (fst x, fst_app (snd x)) /\ fst x = snd_app (snd x)}]
+               c
+               [{fun _ x => ψ x }] ->
              (forall δ γ, ϕ (δ, γ) ->  
                            ~exists f : nat -> sem_ro_ctx Δ,
                                f O = δ /\ forall n, ψ (f (S n), (γ ; f n))) ->

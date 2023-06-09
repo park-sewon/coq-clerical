@@ -34,11 +34,9 @@ From Examples Require Import Mathematics.
 (* Lemma Rtheorem : forall n x, *)
 (*     Rabs (sin x - sin_A n x) < Rabs (sin_q (S n) x). *)
 (* Proof. *)
-(* Admitted. *)
 
 (* Lemma Rconverge : forall x, *)
 (*     forall n, exists m, forall k, (m <= k)%nat -> Rabs (sin_q (S k) x) < pow2 (- n). *)
-(* Admitted. *)
 
 
 (*

@@ -637,48 +637,26 @@ Proof.
 Defined. 
 
 Lemma proves_rw_while_tot_sound :
-  forall Γ Δ e c (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : (Γ ++ Δ) ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT) ϕ θ ψ, 
+  forall Γ Δ e c (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : (Γ ++ Δ) ;;; Δ ||- c : UNIT) (wty_c' : Γ ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT) ϕ θ ψ, 
     wty_e |= [{rw_to_ro_pre ϕ}] e [{θ}] ->
-    wty_c ||= [{fun δγδ' => ro_to_rw_pre (θ true) (fst δγδ', fst_app (snd δγδ')) /\ fst δγδ' = snd_app (snd δγδ')}] c [{fun _ δγδ' => ϕ (fst δγδ', fst_app (snd δγδ')) /\ ψ δγδ' }] ->
+    wty_c' ||= [{ro_to_rw_pre (θ true)}] c [{fun _  => ϕ}] ->
+    wty_c ||= [{fun δγδ' => ro_to_rw_pre (θ true) (fst δγδ', fst_app (snd δγδ')) /\ fst δγδ' = snd_app (snd δγδ')}] c [{fun _ => ψ }] ->
     (forall δ γ, ϕ (δ, γ) ->
             ~exists f : nat -> sem_ro_ctx Δ,
                 f 0 = δ /\ forall n, ψ (f (S n), (γ ; f n))) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     wty ||= [{ϕ}] While e c [{fun _ => (ϕ /\\ ro_to_rw_pre (θ false))}].
 Proof.
-  intros Γ Δ e c wty_e wty_c wty ϕ θ ψ BB CC chainp.
+  intros Γ Δ e c wty_e wty_c wty_c' wty ϕ θ ψ BB CC' CC chainp.
   apply sem_rw_prt_excludes_bot_is_tot.
   
-  apply (proves_rw_while_prt_sound _ _ _ _ wty_e (has_type_while_inv_body _ _ _ _ wty)).
+  apply (proves_rw_while_prt_sound _ _ _ _ wty_e wty_c').
   apply sem_ro_tot_is_prt_excludes_bot in BB as [BB _]; auto.
-
-  intros γ δ m; simpl; simpl in m.
-  rewrite
-    (sem_rw_exp_auxiliary_ctx _ _ _ _ _ _ wty_c γ δ δ).
-  pose proof (CC (γ; δ) δ).
-  simpl in H.
-  assert (ro_to_rw_pre (θ true) (δ, fst_app (γ; δ)) /\ δ = snd_app (γ; δ)).
-  unfold fst_app, snd_app.
-  rewrite tedious_equiv_1.
-  split; auto.
-  apply H in H0.
-  destruct H0; split; auto.
-  intro.
-  pose proof (H1 v).
-  unfold fst_app in H2; rewrite tedious_equiv_1 in H2.
-  intro.
-  pose proof (H2 H3).
-  destruct H4.
-  intros.
-  destruct H4.
-  rewrite H5 in H4.
-  apply total_is_injective in H4.
-  destruct H6.
-  rewrite H4; auto.
-  intros.
+  apply sem_rw_tot_is_prt_excludes_bot in CC' as [CC' _]; auto.
 
 
   (* non empty *)
+  intros.
   pose (fun d => sem_ro_exp _ _ _ wty_e (d ; γ)) as B.
   pose (fun d => pdom_lift fst (sem_rw_exp _ _ _ _ (has_type_while_inv_body _ _ _ _ wty) γ d)) as C.
   replace (sem_rw_exp Γ Δ (WHILE e DO c END) UNIT wty γ δ) with
@@ -740,12 +718,22 @@ Proof.
   rewrite
     (sem_rw_exp_auxiliary_ctx _ _ _ _ _ _ wty_c γ x x) in H3.
   pose proof (H2 _ H3).
-  destruct H4 as [t1 [t2 [t3 t4]]].
+  destruct H4 as [t1 [t2 t3]].
   apply total_is_injective in t2.
   exists s; split; auto.
-  rewrite <- t2 in t3, t4; simpl in t3, t4.
+  rewrite <- t2 in t3; simpl in t3.
   split; auto.
-  exact H.
+
+  pose proof (CC' _ _ m).
+  simpl in H4.
+  destruct H4.
+  rewrite (sem_rw_exp_auxiliary_ctx Γ Δ Δ _ _ wty_c' wty_c γ x x) in H5.
+  pose proof (H5 (total (s, tt)) H3) as [h1 [h2 h3]].
+  apply total_is_injective in h2.
+  rewrite <- h2 in h3; simpl in h3; exact h3. 
+  apply H.
+
+  
   apply pdom_lift_bot_2 in p.
   auto.
 
@@ -3827,7 +3815,8 @@ Proof.
       (*     wty ||- [{ϕ}] While e c [{fun _ => (ϕ /\\ ro_to_rw_pre (θ false))}] *)
 
       apply proves_ro_tot_sound in p.
-      apply proves_rw_tot_sound in trip.
-      apply (proves_rw_while_tot_sound _ _ _ _ _ _ _ _ _ _ p trip n).
+      apply proves_rw_tot_sound in trip1.
+      apply proves_rw_tot_sound in trip2.
+      apply (proves_rw_while_tot_sound _ _ _ _ _ _ _ _ _ _ _ p trip1 trip2 n).
 
 Defined.

@@ -32,3 +32,37 @@ Inductive ForallT3 {A} (P Q R: A -> Type) (J : forall a, P a -> Q a -> R a -> Ty
   ForallT3_nil : ForallT3 P Q R J nil (ForallT_nil P) (ForallT_nil Q) (ForallT_nil R)
 | ForallT3_cons :forall l a t1 t2 t3 p q r,  ForallT3 P Q R J l t1 t2 t3 -> J a p q r -> ForallT3 P Q R J (a :: l) (ForallT_cons P a l p t1) (ForallT_cons Q a l q t2) (ForallT_cons R a l r t3).  
 
+Fixpoint ForallT_by_restriction {X} (P : X -> Type) (l : list X) : (forall x, P x) -> ForallT P l.
+Proof.
+  intro f.
+  destruct l.
+  apply ForallT_nil.
+  apply ForallT_cons.
+  exact (f x).
+  exact (ForallT_by_restriction X P l f).
+Defined.
+
+
+Fixpoint ForallT_map {A} {l : list A} {P Q : A -> Type} (f : forall a, P a -> Q a) (g : ForallT P l) : ForallT Q l.
+Proof.
+  dependent destruction g.
+  apply ForallT_nil.
+  exact (ForallT_cons Q x l (f x p) (ForallT_map A l P Q f g)).
+Defined.
+
+
+Fixpoint ForallT_map2 {A} {l : list A} {P Q R : A -> Type} (F : forall a, P a -> Q a -> R a) (f : ForallT P l) (g : ForallT Q l) : ForallT R l.
+Proof.
+  dependent destruction f.
+  apply ForallT_nil.
+  dependent destruction g.
+  exact (ForallT_cons R x l (F x p q) (ForallT_map2 A l P Q R F f g)).
+Defined.
+
+Lemma ForallT_map_ForalT_nil {A} {l : list A} {P Q : A -> Type} {f : forall a, P a -> Q a}
+  : ForallT_map f (ForallT_nil P) = ForallT_nil Q.
+Proof.
+  simpl.
+  reflexivity.
+Defined.
+    

@@ -816,8 +816,8 @@ Section Commands.
   Proof.
     intros [w1 p1] [w2 p2] [w3 p3] h.
     exists (has_type_rw_While _ _ _ _ w1 w2).
-  Admitted.
-  
+    apply (rw_while_tot _ _ _ _ _ _ _  _ _ _ _ p1 p2 p3 h).
+Defined.  
   
 
 End Commands.

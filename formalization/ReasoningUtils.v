@@ -623,11 +623,20 @@ Defined.
 
 Lemma pp_ro_tot_prt {Γ} {e} {τ} {ϕ} {ψ} : Γ |-- [{ϕ}] e [{y : τ | ψ y}] -> Γ |-- {{ϕ}} e {{y : τ | ψ y}}.
 Proof.
-Admitted.
+  intros [w h].
+  exists w.
+  apply admissible_ro_tot_prt.
+  exact h.
+Defined.
 
 Lemma pp_rw_tot_prt {Γ Δ} {e} {τ} {ϕ} {ψ} : Γ ;;; Δ ||-- [{ϕ}] e [{y : τ | ψ y}] -> Γ ;;; Δ ||-- {{ϕ}} e {{y : τ | ψ y}}.
 Proof.
-Admitted.
+Proof.
+  intros [w h].
+  exists w.
+  apply admissible_rw_tot_prt.
+  exact h.
+Defined.
 
 
 
