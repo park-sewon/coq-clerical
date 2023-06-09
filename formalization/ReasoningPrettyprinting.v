@@ -646,40 +646,6 @@ Section Commands.
     apply (rw_cond_tot _ _ _ _ _ _ _ _ _ _ _ _ _ p1 p2 p3).
   Defined.
   
-  Lemma pp_rw_case_prt {Γ Δ} {e1 e2 c1 c2} {τ}
-        (* (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) *)
-        {ϕ} {θ1} {θ2} {ψ} :
-    (Δ ++ Γ) |-- {{rw_to_ro_pre ϕ}} e1 {{y : BOOL | θ1 y}} -> 
-    (Δ ++ Γ) |-- {{rw_to_ro_pre ϕ}} e2 {{y : BOOL | θ2 y}} -> 
-    Γ ;;; Δ ||-- {{ro_to_rw_pre (θ1 true)}} c1 {{y : τ | ψ y}} -> 
-    Γ ;;; Δ ||-- {{ro_to_rw_pre (θ2 true)}} c2 {{y : τ | ψ y}} ->
-    (*——————————-——————————-——————————-——————————-——————————-*)
-    Γ ;;; Δ ||-- {{ϕ}} Case e1 c1 e2 c2 {{y : τ | ψ y}}.
-  Proof.
-    intros [w1 p1] [w2 p2] [w3 p3] [w4 p4].
-    exists (has_type_rw_Case _ _ _ _ _ _ _ w1 w3 w2 w4).
-    apply (rw_case_prt _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ p1 p2 p3 p4).
-  Defined.
-
-  Lemma pp_rw_case_tot {Γ Δ} {e1 e2 c1 c2} {τ}
-        (* (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) *)
-        {ϕ} {θ1} {θ2} {ψ} {ϕ1 ϕ2}:
-    (Δ ++ Γ) |-- {{rw_to_ro_pre ϕ}} e1 {{y : BOOL | θ1 y}} -> 
-    (Δ ++ Γ) |-- {{rw_to_ro_pre ϕ}} e2 {{y : BOOL | θ2 y}} -> 
-    Γ ;;; Δ ||-- [{ro_to_rw_pre (θ1 true)}] c1 [{y : τ | ψ y}] -> 
-    Γ ;;; Δ ||-- [{ro_to_rw_pre (θ2 true)}] c2 [{y : τ | ψ y}] ->
-    (Δ ++ Γ) |-- [{ϕ1}] e1 [{y : BOOL | fun _ => y = true}] -> 
-    (Δ ++ Γ) |-- [{ϕ2}] e2 [{y : BOOL | fun _ => y = true}] ->
-    (forall x, (rw_to_ro_pre ϕ x) -> (ϕ1 x \/ ϕ2 x)) -> 
-    (*——————————-——————————-——————————-——————————-——————————-*)
-    Γ ;;; Δ ||-- [{ϕ}] Case e1 c1 e2 c2 [{y : τ | ψ y}].
-  Proof.
-    intros [w1 p1] [w2 p2] [w3 p3] [w4 p4] [w5 p5] [w6 p6] h.
-    exists (has_type_rw_Case _ _ _ _ _ _ _ w1 w3 w2 w4).
-    apply (ro_tot_change_wty w1) in p5.
-    apply (ro_tot_change_wty w2) in p6.
-    apply (rw_case_tot _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ p1 p2 p3 p4 p5 p6 h).
-  Defined.
 
   Lemma pp_rw_case_list_prt {Γ Δ} {l} {τ} (h : (1 <= length l)%nat)
         (* (wty_l : ForallT (fun ec => ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))%type l) *)
@@ -789,6 +755,64 @@ Section Commands.
     exact p2.
     exact HH.
   Defined.
+
+    Lemma pp_rw_case_prt {Γ Δ} {e1 e2 c1 c2} {τ}
+        (* (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) *)
+        {ϕ} {θ1} {θ2} {ψ} :
+    (Δ ++ Γ) |-- {{rw_to_ro_pre ϕ}} e1 {{y : BOOL | θ1 y}} -> 
+    (Δ ++ Γ) |-- {{rw_to_ro_pre ϕ}} e2 {{y : BOOL | θ2 y}} -> 
+    Γ ;;; Δ ||-- {{ro_to_rw_pre (θ1 true)}} c1 {{y : τ | ψ y}} -> 
+    Γ ;;; Δ ||-- {{ro_to_rw_pre (θ2 true)}} c2 {{y : τ | ψ y}} ->
+    (*——————————-——————————-——————————-——————————-——————————-*)
+    Γ ;;; Δ ||-- {{ϕ}} CASE e1 ==> c1 | e2 ==> c2 END {{y : τ | ψ y}}.
+  Proof.
+    intros.
+    assert (1 <= length ((e1, c1) :: (e2, c2) :: nil))%nat.
+    simpl; auto.
+    apply (pp_rw_case_list_prt H
+             (ForallT_cons _ (e1, c1) ((e2, c2) :: nil) θ1
+                           (ForallT_cons _ (e2, c2) nil θ2
+                                         (ForallT_nil _)))).
+    apply ForallT1_cons.
+    apply ForallT1_cons.
+    apply ForallT1_nil.
+    split; auto.
+    split; auto.
+  Defined.
+
+  Lemma pp_rw_case_tot {Γ Δ} {e1 e2 c1 c2} {τ}
+        (* (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) *)
+        {ϕ} {θ1} {θ2} {ψ} {ϕ1 ϕ2}:
+    (Δ ++ Γ) |-- {{rw_to_ro_pre ϕ}} e1 {{y : BOOL | θ1 y}} -> 
+    (Δ ++ Γ) |-- {{rw_to_ro_pre ϕ}} e2 {{y : BOOL | θ2 y}} -> 
+    Γ ;;; Δ ||-- [{ro_to_rw_pre (θ1 true)}] c1 [{y : τ | ψ y}] -> 
+    Γ ;;; Δ ||-- [{ro_to_rw_pre (θ2 true)}] c2 [{y : τ | ψ y}] ->
+    (Δ ++ Γ) |-- [{ϕ1}] e1 [{y : BOOL | fun _ => y = true}] -> 
+    (Δ ++ Γ) |-- [{ϕ2}] e2 [{y : BOOL | fun _ => y = true}] ->
+    (forall x, (rw_to_ro_pre ϕ x) -> (ϕ1 x \/ ϕ2 x)) -> 
+    (*——————————-——————————-——————————-——————————-——————————-*)
+    Γ ;;; Δ ||-- [{ϕ}] CASE e1 ==> c1 | e2 ==> c2 END [{y : τ | ψ y}].
+  Proof.
+    intros.
+    assert (1 <= length ((e1, c1) :: (e2, c2) :: nil))%nat.
+    simpl; auto.
+    apply (pp_rw_case_list_tot H0
+             (ForallT_cons _ (e1, c1) ((e2, c2) :: nil) θ1
+                           (ForallT_cons _ (e2, c2) nil θ2
+                                         (ForallT_nil _)))
+             (ForallT_cons _ (e1, c1) ((e2, c2) :: nil) ϕ1
+                           (ForallT_cons _ (e2, c2) nil ϕ2
+                                         (ForallT_nil _)))).
+    apply ForallT2_cons.
+    apply ForallT2_cons.
+    apply ForallT2_nil.
+    repeat split; auto.
+    repeat split; auto.
+    simpl.
+    intros.
+    destruct (H x H1); auto.
+  Defined.
+
   
   Lemma pp_rw_while_prt {Γ Δ} {e c}
         (* (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : Γ ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT) *)

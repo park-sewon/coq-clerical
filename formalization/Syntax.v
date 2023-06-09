@@ -24,7 +24,7 @@ Inductive exp :=
 | Skip : exp
 | Seq : exp -> exp -> exp
 | Cond : exp -> exp -> exp -> exp
-| Case : exp -> exp -> exp -> exp -> exp
+(* | Case : exp -> exp -> exp -> exp -> exp *)
 | CaseList : list (exp * exp) -> exp
 | While : exp -> exp -> exp
 | Newvar : exp -> exp -> exp
@@ -79,7 +79,15 @@ Notation "'SKIP'" := (Skip) : clerical_scope.
 
 Notation "c1 ;; c2" := (Seq c1 c2) (at level 80, right associativity) : clerical_scope.
 
-Notation "'CASE' b1 '==>' c1 'OR' b2 '==>' c2 'END'" := (Case b1 c1 b2 c2) (at level 89)  : clerical_scope.
+(* Notation "'CASE' b1 '==>' c1 'OR' b2 '==>' c2 'END'" := (Case b1 c1 b2 c2) (at level 89)  : clerical_scope. *)
+
+Declare Custom Entry clerical_sub_expr.
+
+Notation "e '==>' c" := (e, c) (in custom clerical_sub_expr at level 0, e constr, c constr) : clerical_scope. 
+
+Notation "'CASE' p1 '|' .. '|' p2 'END'" :=
+  (CaseList  (cons (p1) .. (cons (p2) nil) ..)) (p1 custom clerical_sub_expr, p2 custom clerical_sub_expr) : clerical_scope.
+
 
 Notation "'IF' b 'THEN' c1 'ELSE' c2 'END'" := (Cond b c1 c2) (at level 85) : clerical_scope.
 

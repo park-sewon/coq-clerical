@@ -8,6 +8,53 @@ To compile the formalization part of this project, do `make` at `clerical` direc
 To compile the examples part of this project, do `make` at `clerical/examples` directory.
 
 ## Overview of the project
+### Examples
+
+The `examples` directory contains example programs and their proofs.
+For example, in [Examples.ProgAbs](./examples/ProgAbs.v), a clerical expression is parametrically defined 
+```coq
+Definition clerical_abs k :=
+  Lim
+    (CASE
+       VAR (S k) ;<; EXP ( :-: (VAR 0) :-: (INT 1)) ==> ;-; VAR (S k)
+     | ;-; EXP ( :-: (Var 0) :-: (INT 1)) ;<; Var (S k) ==> VAR (S k)
+     END).
+```
+Here, `VAR k` denotes a variable with its De Bruijn index `k`.
+Mathematical symbols surrounded by `: :` denote integer operations 
+and those surrounded by `; ;` denote real operations.
+The definition `clerical_abs k` for each natural number `k` is a clerical expression 
+that computes the absolute value of the variable `k`.
+
+Using our prove rules, we prove the correctness of the expression:
+```coq
+Lemma clerical_abs_correct :
+  forall Γ k (w : Γ |- VAR k : REAL),
+    Γ |--
+      [{fun _ => True}]
+      clerical_abs k 
+      [{y : REAL | fun x => y = Rabs (ro_access Γ k REAL w x) }].	  
+```
+Here, `ro_access Γ k REAL w x` means the variable `k` in a state `x`.
+
+In [Examples.ProgLogic](./examples/ProgLogic.v), we define and prove Boolean negation,
+in [Examples.ProgBounded](./examples/ProgBounded.v), we define and prove the soft boundedness test,
+in [Examples.ProgSine](./examples/ProgSine.v), we define and prove the sine function, and 
+in [Examples.ProgPi](./examples/ProgPi.v), we define and prove a closed expression computing `π`:
+```coq
+Lemma clerical_pi_correct :
+  nil |--
+    [{fun _ => True}]
+    clerical_pi
+    [{y : REAL | fun _ => y = PI}].
+```
+Here, `PI` is the constant `π` that we import from Coq's standard library.
+However, the theory isn't enough to prove our program. 
+For example, the proof of our program required the irrationality of `π`.
+The _mathematical knowledge_ required in program proofs are partially proved 
+or admitted in [Examples.Mathematics](./examples/Mathematics.v).
+
+
 ### Formalization
 The formalization is in the `formalization` directory that corresponds to the `Clerical` logical path. 
 The `formalization` directory consists of the subdirectories: `Preliminaries`, `Powerdomain`, and `Utils`. 
@@ -82,56 +129,6 @@ Other judgements are defined similarly:
 In the file, the original proof rules and the admissible rules are translated so that the users can use only these better-looking judgements.
 
 * In [Clerical.ReasoningUtils](./formalization/ReasoningUtils.v), various utility functions in applying proof rules are defined.
-
-### Examples
-
-The `examples` directory contains example programs and their proofs.
-For example, in [Examples.ProgAbs](./examples/ProgAbs.v), a clerical expression is parametrically defined 
-```coq
-Definition clerical_abs k :=
-  Lim
-    (CASE
-       VAR (S k) ;<; EXP ( :-: (VAR 0) :-: (INT 1))
-       ==> ;-; VAR (S k)
-       OR
-       ;-; EXP ( :-: (Var 0) :-: (INT 1)) ;<; Var (S k) 
-       ==> VAR (S k)
-       END).
-```
-Here, `VAR k` denotes a variable with its De Bruijn index `k`.
-Mathematical symbols surrounded by `: :` denote integer operations 
-and those surrounded by `; ;` denote real operations.
-The definition `clerical_abs k` for each natural number `k` is a clerical expression 
-that computes the absolute value of the variable `k`.
-
-Using our prove rules, we prove the correctness of the expression:
-```coq
-Lemma clerical_abs_correct :
-  forall Γ k (w : Γ |- VAR k : REAL),
-    Γ |--
-      [{fun _ => True}]
-      clerical_abs k 
-      [{y : REAL | fun x => y = Rabs (ro_access Γ k REAL w x) }].	  
-```
-Here, `ro_access Γ k REAL w x` means the variable `k` in a state `x`.
-
-In [Examples.ProgLogic](./examples/ProgLogic.v), we define and prove Boolean negation,
-in [Examples.ProgBounded](./examples/ProgBounded.v), we define and prove the soft boundedness test,
-in [Examples.ProgSine](./examples/ProgSine.v), we define and prove the sine function, and 
-in [Examples.ProgPi](./examples/ProgPi.v), we define and prove a closed expression computing `π`:
-```coq
-Lemma clerical_pi_correct :
-  nil |--
-    [{fun _ => True}]
-    clerical_pi
-    [{y : REAL | fun _ => y = PI}].
-```
-Here, `PI` is the constant `π` that we import from Coq's standard library.
-However, the theory isn't enough to prove our program. 
-For example, the proof of our program required the irrationality of `π`.
-The _mathematical knowledge_ required in program proofs are partially proved 
-or admitted in [Examples.Mathematics](./examples/Mathematics.v).
-
 
 ## Base setting of the underlying type theory
 

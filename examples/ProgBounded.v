@@ -8,12 +8,8 @@ From Examples Require Import ProgAbs.
 (* computing the absolute value of variable k *)
 Definition clerical_bounded k δ :=  
   CASE
-    clerical_abs k  ;<; (VAR δ)  
-    ==> TRUE
-    OR
-    (VAR δ) ;*; EXP (INT -1) ;<; clerical_abs k
-    (* ;-; EXP ( :-: (Var 0) :-: (INT 1)) ;<; Var (S k)  *)
-    ==> FALSE
+    clerical_abs k  ;<; (VAR δ) ==> TRUE
+  | (VAR δ) ;*; EXP (INT -1) ;<; clerical_abs k ==> FALSE
   END.
 
 Lemma clerical_bounded_correct :

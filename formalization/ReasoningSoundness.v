@@ -2831,55 +2831,55 @@ Proof.
       pose proof (C2 γ δ semb) as [_ h].
       apply (h _ h2 h3 eq_refl).
       
-    ++
-      (* | rw_case_prt : forall Γ Δ e1 e2 c1 c2 τ (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) ϕ θ1 θ2 ψ, *)
+    (* ++ *)
+    (*   (* | rw_case_prt : forall Γ Δ e1 e2 c1 c2 τ (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) ϕ θ1 θ2 ψ, *) *)
 
-      (*     wty_e1 |- {{rw_to_ro_pre ϕ}} e1 {{θ1}} ->  *)
-      (*     wty_e2 |- {{rw_to_ro_pre ϕ}} e2 {{θ2}} ->  *)
-      (*     wty_c1 ||- {{ro_to_rw_pre (θ1 true)}} c1 {{ψ}} ->  *)
-      (*     wty_c2 ||- {{ro_to_rw_pre (θ2 true)}} c2 {{ψ}} -> *)
-      (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
-      (*     wty ||- {{ϕ}} Case e1 c1 e2 c2 {{ψ}} *)
-      intros γ δ m; simpl; simpl in m.
+    (*   (*     wty_e1 |- {{rw_to_ro_pre ϕ}} e1 {{θ1}} ->  *) *)
+    (*   (*     wty_e2 |- {{rw_to_ro_pre ϕ}} e2 {{θ2}} ->  *) *)
+    (*   (*     wty_c1 ||- {{ro_to_rw_pre (θ1 true)}} c1 {{ψ}} ->  *) *)
+    (*   (*     wty_c2 ||- {{ro_to_rw_pre (θ2 true)}} c2 {{ψ}} -> *) *)
+    (*   (*     (*——————————-——————————-——————————-——————————-——————————-*) *) *)
+    (*   (*     wty ||- {{ϕ}} Case e1 c1 e2 c2 {{ψ}} *) *)
+    (*   intros γ δ m; simpl; simpl in m. *)
 
 
-      pose (sem_ro_exp _ _ _ wty_e1 (δ; γ)) as B1.
-      pose (sem_ro_exp _ _ _ wty_e2 (δ; γ)) as B2.
-      pose (sem_rw_exp _ _ _ _ wty_c1 γ δ) as X.
-      pose (sem_rw_exp _ _ _ _ wty_c2 γ δ) as Y.
-      replace (sem_rw_exp Γ Δ (CASE e1 ==> c1 OR e2 ==> c2 END) τ wty γ δ) with
-        (Case2 B1 B2 X Y) 
-        by  (rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_Case _ _ _ _ _ _ _ wty_e1  wty_c1 wty_e2 wty_c2)); simpl; auto).
-      assert ( (rw_to_ro_pre ϕ0) (δ; γ)) as m'
-          by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
-      pose proof (proves_ro_prt_sound _ _ _ _ _ _ p _ m') as [p1 p2].
-      pose proof (proves_ro_prt_sound _ _ _ _ _ _ p0 _ m') as [q1 q2].
-      split.
-      {
-        (* non empty *)
-        unfold Case2.
-        intro h.
-        apply pdom_case2_empty_2 in h.
-        destruct h as [h| [h | [[h1 h2] | [h1 h2]]]].
-        apply (p1 h).
-        apply (q1 h).
-        pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p)) true (δ ; γ) m' h1) as m''.
-        pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip1 _ _ m'') as [r1 r2].
-        auto.
-        pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p0)) true (δ ; γ) m' h1) as m''.
-        pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip2 _ _ m'') as [r1 r2].
-        auto.
-      }
-      intros h1 h2 h3 h4.
-      rewrite h4 in h2; clear h4.
-      apply pdom_case2_total_2 in h2.
-      destruct h2 as [[h2 h4]|[h2 h4]]. 
-      pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p)) true (δ ; γ) m' h2) as m''.
-      pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip1 _ _ m'') as [_ r2].
-      apply (r2 _ h4 _ (eq_refl)).
-      pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p0)) true (δ ; γ) m' h2) as m''.
-      pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip2 _ _ m'') as [_ r2].
-      apply (r2 _ h4 _ (eq_refl)).
+    (*   pose (sem_ro_exp _ _ _ wty_e1 (δ; γ)) as B1. *)
+    (*   pose (sem_ro_exp _ _ _ wty_e2 (δ; γ)) as B2. *)
+    (*   pose (sem_rw_exp _ _ _ _ wty_c1 γ δ) as X. *)
+    (*   pose (sem_rw_exp _ _ _ _ wty_c2 γ δ) as Y. *)
+    (*   replace (sem_rw_exp Γ Δ (CASE e1 ==> c1 OR e2 ==> c2 END) τ wty γ δ) with *)
+    (*     (Case2 B1 B2 X Y)  *)
+    (*     by  (rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_Case _ _ _ _ _ _ _ wty_e1  wty_c1 wty_e2 wty_c2)); simpl; auto). *)
+    (*   assert ( (rw_to_ro_pre ϕ0) (δ; γ)) as m' *)
+    (*       by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto). *)
+    (*   pose proof (proves_ro_prt_sound _ _ _ _ _ _ p _ m') as [p1 p2]. *)
+    (*   pose proof (proves_ro_prt_sound _ _ _ _ _ _ p0 _ m') as [q1 q2]. *)
+    (*   split. *)
+    (*   { *)
+    (*     (* non empty *) *)
+    (*     unfold Case2. *)
+    (*     intro h. *)
+    (*     apply pdom_case2_empty_2 in h. *)
+    (*     destruct h as [h| [h | [[h1 h2] | [h1 h2]]]]. *)
+    (*     apply (p1 h). *)
+    (*     apply (q1 h). *)
+    (*     pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p)) true (δ ; γ) m' h1) as m''. *)
+    (*     pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip1 _ _ m'') as [r1 r2]. *)
+    (*     auto. *)
+    (*     pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p0)) true (δ ; γ) m' h1) as m''. *)
+    (*     pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip2 _ _ m'') as [r1 r2]. *)
+    (*     auto. *)
+    (*   } *)
+    (*   intros h1 h2 h3 h4. *)
+    (*   rewrite h4 in h2; clear h4. *)
+    (*   apply pdom_case2_total_2 in h2. *)
+    (*   destruct h2 as [[h2 h4]|[h2 h4]].  *)
+    (*   pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p)) true (δ ; γ) m' h2) as m''. *)
+    (*   pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip1 _ _ m'') as [_ r2]. *)
+    (*   apply (r2 _ h4 _ (eq_refl)). *)
+    (*   pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p0)) true (δ ; γ) m' h2) as m''. *)
+    (*   pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip2 _ _ m'') as [_ r2]. *)
+    (*   apply (r2 _ h4 _ (eq_refl)). *)
 
 
     ++
@@ -3512,104 +3512,104 @@ Proof.
       pose proof (h _ h2) as [x [p1 p2]].
       exists x; split; auto.
       
-    ++
+    (* ++ *)
 
-      (* | rw_case_tot : forall Γ Δ e1 e2 c1 c2 τ (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) ϕ θ1 θ2 ψ ϕ1 ϕ2, *)
+    (*   (* | rw_case_tot : forall Γ Δ e1 e2 c1 c2 τ (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) ϕ θ1 θ2 ψ ϕ1 ϕ2, *) *)
       
-      (*     wty_e1 |- {{rw_to_ro_pre ϕ}} e1 {{θ1}} ->  *)
-      (*     wty_e2 |- {{rw_to_ro_pre ϕ}} e2 {{θ2}} ->  *)
-      (*     wty_c1 ||- [{ro_to_rw_pre (θ1 true)}] c1 [{ψ}] ->  *)
-      (*     wty_c2 ||- [{ro_to_rw_pre (θ2 true)}] c2 [{ψ}] ->  *)
-      (*     wty_e1 |- [{ϕ1}] e1 [{b |fun _ => b = true}] ->  *)
-      (*     wty_e2 |- [{ϕ2}] e2 [{b | fun _ => b = true}] ->  *)
-      (*     (forall x, (rw_to_ro_pre ϕ x) -> (ϕ1 x \/ ϕ2 x)) ->  *)
-      (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
-      (*     wty ||- [{ϕ}] Case e1 c1 e2 c2 [{ψ}] *)
+    (*   (*     wty_e1 |- {{rw_to_ro_pre ϕ}} e1 {{θ1}} ->  *) *)
+    (*   (*     wty_e2 |- {{rw_to_ro_pre ϕ}} e2 {{θ2}} ->  *) *)
+    (*   (*     wty_c1 ||- [{ro_to_rw_pre (θ1 true)}] c1 [{ψ}] ->  *) *)
+    (*   (*     wty_c2 ||- [{ro_to_rw_pre (θ2 true)}] c2 [{ψ}] ->  *) *)
+    (*   (*     wty_e1 |- [{ϕ1}] e1 [{b |fun _ => b = true}] ->  *) *)
+    (*   (*     wty_e2 |- [{ϕ2}] e2 [{b | fun _ => b = true}] ->  *) *)
+    (*   (*     (forall x, (rw_to_ro_pre ϕ x) -> (ϕ1 x \/ ϕ2 x)) ->  *) *)
+    (*   (*     (*——————————-——————————-——————————-——————————-——————————-*) *) *)
+    (*   (*     wty ||- [{ϕ}] Case e1 c1 e2 c2 [{ψ}] *) *)
 
-      intros γ δ m; simpl; simpl in m.
-      rename p1 into t1.
-      rename p2 into t2.
-      pose (sem_ro_exp _ _ _ wty_e1 (δ; γ)) as B1.
-      pose (sem_ro_exp _ _ _ wty_e2 (δ; γ)) as B2.
-      pose (sem_rw_exp _ _ _ _ wty_c1 γ δ) as X.
-      pose (sem_rw_exp _ _ _ _ wty_c2 γ δ) as Y.
+    (*   intros γ δ m; simpl; simpl in m. *)
+    (*   rename p1 into t1. *)
+    (*   rename p2 into t2. *)
+    (*   pose (sem_ro_exp _ _ _ wty_e1 (δ; γ)) as B1. *)
+    (*   pose (sem_ro_exp _ _ _ wty_e2 (δ; γ)) as B2. *)
+    (*   pose (sem_rw_exp _ _ _ _ wty_c1 γ δ) as X. *)
+    (*   pose (sem_rw_exp _ _ _ _ wty_c2 γ δ) as Y. *)
      
 
-      replace (sem_rw_exp Γ Δ (CASE e1 ==> c1 OR e2 ==> c2 END) τ wty γ δ) with
-        (Case2 B1 B2 X Y) 
-        by  (rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_Case _ _ _ _ _ _ _ wty_e1  wty_c1 wty_e2 wty_c2)); simpl; auto).
-      assert ( (rw_to_ro_pre ϕ0) (δ; γ)) as m'
-          by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto).
-      pose proof (proves_ro_prt_sound _ _ _ _ _ _ p _ m') as [p1 p2].
-      pose proof (proves_ro_prt_sound _ _ _ _ _ _ p0 _ m') as [q1 q2].
-      split.
-      {
-        (* non empty *)
-        unfold Case2.
-        intro h.
-        apply pdom_case2_empty_2 in h.
-        destruct h as [h| [h | [[h1 h2] | [h1 h2]]]].
-        apply (p1 h).
-        apply (q1 h).
-        pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p)) true (δ ; γ) m' h1) as m''.
-        pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip1 _ _ m'') as [r1 r2].
-        auto.
-        pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p0)) true (δ ; γ) m' h1) as m''.
-        pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip2 _ _ m'') as [r1 r2].
-        auto.
-      }
-      intros h1 h2.
-      destruct h1.
-      {
-        (* non bottom *)
-        apply pdom_case2_bot_2 in h2.
+    (*   replace (sem_rw_exp Γ Δ (CASE e1 ==> c1 OR e2 ==> c2 END) τ wty γ δ) with *)
+    (*     (Case2 B1 B2 X Y)  *)
+    (*     by  (rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_Case _ _ _ _ _ _ _ wty_e1  wty_c1 wty_e2 wty_c2)); simpl; auto). *)
+    (*   assert ( (rw_to_ro_pre ϕ0) (δ; γ)) as m' *)
+    (*       by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto). *)
+    (*   pose proof (proves_ro_prt_sound _ _ _ _ _ _ p _ m') as [p1 p2]. *)
+    (*   pose proof (proves_ro_prt_sound _ _ _ _ _ _ p0 _ m') as [q1 q2]. *)
+    (*   split. *)
+    (*   { *)
+    (*     (* non empty *) *)
+    (*     unfold Case2. *)
+    (*     intro h. *)
+    (*     apply pdom_case2_empty_2 in h. *)
+    (*     destruct h as [h| [h | [[h1 h2] | [h1 h2]]]]. *)
+    (*     apply (p1 h). *)
+    (*     apply (q1 h). *)
+    (*     pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p)) true (δ ; γ) m' h1) as m''. *)
+    (*     pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip1 _ _ m'') as [r1 r2]. *)
+    (*     auto. *)
+    (*     pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p0)) true (δ ; γ) m' h1) as m''. *)
+    (*     pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip2 _ _ m'') as [r1 r2]. *)
+    (*     auto. *)
+    (*   } *)
+    (*   intros h1 h2. *)
+    (*   destruct h1. *)
+    (*   { *)
+    (*     (* non bottom *) *)
+    (*     apply pdom_case2_bot_2 in h2. *)
 
-        destruct h2 as [[h2 h3] | [[h2  h3] | [h2 h3]]].
-        contradict h3.
-        pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p)) true (δ ; γ) m' h2) as m''.
-        apply (sem_rw_tot_excludes_bot _ _ _ _ _ _ _ ((proves_rw_tot_sound _ _ _ _ _ _ _ trip1)) _ _ m'').
-        contradict h3.
-        pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p0)) true (δ ; γ) m' h2) as m''.
-        apply (sem_rw_tot_excludes_bot _ _ _ _ _ _ _ ((proves_rw_tot_sound _ _ _ _ _ _ _ trip2)) _ _ m'').
+    (*     destruct h2 as [[h2 h3] | [[h2  h3] | [h2 h3]]]. *)
+    (*     contradict h3. *)
+    (*     pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p)) true (δ ; γ) m' h2) as m''. *)
+    (*     apply (sem_rw_tot_excludes_bot _ _ _ _ _ _ _ ((proves_rw_tot_sound _ _ _ _ _ _ _ trip1)) _ _ m''). *)
+    (*     contradict h3. *)
+    (*     pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p0)) true (δ ; γ) m' h2) as m''. *)
+    (*     apply (sem_rw_tot_excludes_bot _ _ _ _ _ _ _ ((proves_rw_tot_sound _ _ _ _ _ _ _ trip2)) _ _ m''). *)
 
-        destruct (o (δ ; γ) m').
+    (*     destruct (o (δ ; γ) m'). *)
         
-        pose proof (proves_ro_tot_sound _ _ _ _ _ _ t1 (δ; γ) H) as [_ h].
-        destruct h2 as [h2 | h2]; contradict h2.
-        intro.
-        pose proof (h _ H0) as [v [H1 H2]].
-        contradict (flat_bot_neq_total _ H1).
-        intro.
-        pose proof (h _ H0) as [v [H1 H2]].
-        simpl in H2.
-        rewrite H2 in H1.
-        apply total_is_injective in H1.
-        contradict H1; auto.
-        pose proof (proves_ro_tot_sound _ _ _ _ _ _ t2 (δ; γ) H) as [_ h].
-        clear h2; destruct h3 as [h2 | h2]; contradict h2.
-        intro.
-        pose proof (h _ H0) as [v [H1 H2]].
-        contradict (flat_bot_neq_total _ H1).
-        intro.
-        pose proof (h _ H0) as [v [H1 H2]].
-        simpl in H2.
-        rewrite H2 in H1.
-        apply total_is_injective in H1.
-        contradict H1; auto.
-      }
+    (*     pose proof (proves_ro_tot_sound _ _ _ _ _ _ t1 (δ; γ) H) as [_ h]. *)
+    (*     destruct h2 as [h2 | h2]; contradict h2. *)
+    (*     intro. *)
+    (*     pose proof (h _ H0) as [v [H1 H2]]. *)
+    (*     contradict (flat_bot_neq_total _ H1). *)
+    (*     intro. *)
+    (*     pose proof (h _ H0) as [v [H1 H2]]. *)
+    (*     simpl in H2. *)
+    (*     rewrite H2 in H1. *)
+    (*     apply total_is_injective in H1. *)
+    (*     contradict H1; auto. *)
+    (*     pose proof (proves_ro_tot_sound _ _ _ _ _ _ t2 (δ; γ) H) as [_ h]. *)
+    (*     clear h2; destruct h3 as [h2 | h2]; contradict h2. *)
+    (*     intro. *)
+    (*     pose proof (h _ H0) as [v [H1 H2]]. *)
+    (*     contradict (flat_bot_neq_total _ H1). *)
+    (*     intro. *)
+    (*     pose proof (h _ H0) as [v [H1 H2]]. *)
+    (*     simpl in H2. *)
+    (*     rewrite H2 in H1. *)
+    (*     apply total_is_injective in H1. *)
+    (*     contradict H1; auto. *)
+    (*   } *)
       
-      apply pdom_case2_total_2 in h2.
-      destruct h2 as [[h2 h4]|[h2 h4]]. 
-      pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p)) true (δ ; γ) m' h2) as m''.
-      pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip1 _ _ m'') as [_ r2].
-      pose proof (r2 _ h4) as [h2' [eq1 h3]].
-      exists h2'.
-      split; auto.
-      pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p0)) true (δ ; γ) m' h2) as m''.
-      pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip2 _ _ m'') as [_ r2].
-      pose proof (r2 _ h4) as [h2' [eq1 h3]].
-      exists h2'.
-      split; auto.
+    (*   apply pdom_case2_total_2 in h2. *)
+    (*   destruct h2 as [[h2 h4]|[h2 h4]].  *)
+    (*   pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p)) true (δ ; γ) m' h2) as m''. *)
+    (*   pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip1 _ _ m'') as [_ r2]. *)
+    (*   pose proof (r2 _ h4) as [h2' [eq1 h3]]. *)
+    (*   exists h2'. *)
+    (*   split; auto. *)
+    (*   pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p0)) true (δ ; γ) m' h2) as m''. *)
+    (*   pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip2 _ _ m'') as [_ r2]. *)
+    (*   pose proof (r2 _ h4) as [h2' [eq1 h3]]. *)
+    (*   exists h2'. *)
+    (*   split; auto. *)
       
     ++
       (* case_list *)

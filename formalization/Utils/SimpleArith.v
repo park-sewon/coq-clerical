@@ -737,8 +737,8 @@ Proof.
   dependent destruction H.
   right; intro.
   dependent destruction H.
-  right; intro.
-  dependent destruction H.
+  (* right; intro. *)
+  (* dependent destruction H. *)
 Defined.
 
 

@@ -494,12 +494,12 @@ Proof.
     pose proof (sem_rw_exp _ _ _ _ D2 γ δ) as Y.
     exact (pdom_bind (fun b : bool => if b then X else Y) B).
     
-    (* has_type_rw_Case *)
-    pose proof (sem_ro_exp _ _ _ h (δ; γ)) as B1.
-    pose proof (sem_ro_exp _ _ _ h0 (δ; γ)) as B2.
-    pose proof (sem_rw_exp _ _ _ _ D1 γ δ) as X.
-    pose proof (sem_rw_exp _ _ _ _ D2 γ δ) as Y.
-    exact (Case2 B1 B2 X Y).
+    (* (* has_type_rw_Case *) *)
+    (* pose proof (sem_ro_exp _ _ _ h (δ; γ)) as B1. *)
+    (* pose proof (sem_ro_exp _ _ _ h0 (δ; γ)) as B2. *)
+    (* pose proof (sem_rw_exp _ _ _ _ D1 γ δ) as X. *)
+    (* pose proof (sem_rw_exp _ _ _ _ D2 γ δ) as Y. *)
+    (* exact (Case2 B1 B2 X Y). *)
 
     (* has_type_rw_CaseList *)
     assert (list ((pdom bool) * (pdom (sem_ctx Δ * sem_datatype τ)))).

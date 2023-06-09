@@ -33,7 +33,7 @@ Proof.
     exact (pdom_lift snd (r_sem_rw_exp _ _ _ _ r γ tt)).
     exact (pdom_lift snd (r_sem_rw_exp _ _ _ _ r γ tt)).
     exact (pdom_lift snd (r_sem_rw_exp _ _ _ _ r γ tt)).
-    exact (pdom_lift snd (r_sem_rw_exp _ _ _ _ r γ tt)).
+    (* exact (pdom_lift snd (r_sem_rw_exp _ _ _ _ r γ tt)). *)
 
     (* | has_type_ro_Var_0 *)
     simpl in γ.
@@ -151,12 +151,12 @@ Proof.
     pose proof (r_sem_rw_exp _ _ _ _ D2 γ δ) as Y.
     exact (pdom_bind (fun b : bool => if b then X else Y) B).
     
-    (* has_type_rw_Case *)
-    pose proof (r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (δ, γ))) as B1.
-    pose proof (r_sem_ro_exp _ _ _ r0 (tedious_prod_sem _ _ (δ, γ))) as B2.
-    pose proof (r_sem_rw_exp _ _ _ _ D1 γ δ) as X.
-    pose proof (r_sem_rw_exp _ _ _ _ D2 γ δ) as Y.
-    exact (Case2 B1 B2 X Y).
+    (* (* has_type_rw_Case *) *)
+    (* pose proof (r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (δ, γ))) as B1. *)
+    (* pose proof (r_sem_ro_exp _ _ _ r0 (tedious_prod_sem _ _ (δ, γ))) as B2. *)
+    (* pose proof (r_sem_rw_exp _ _ _ _ D1 γ δ) as X. *)
+    (* pose proof (r_sem_rw_exp _ _ _ _ D2 γ δ) as Y. *)
+    (* exact (Case2 B1 B2 X Y). *)
 
     (* has_type_rw_CaseList *)
     assert (list ((pdom bool) * ( pdom (sem_ctx Δ * sem_datatype τ)))).
@@ -220,20 +220,20 @@ Proof.
   auto.  
 Qed.
 
-Lemma r_sem_ro_Case : forall Γ e1 e2 c1 c2 τ (w : Γ |~ (CASE e1 ==> c1 OR e2 ==> c2 END) : τ), exists p1 p2 p3 p4,
-    r_sem_ro_exp Γ (CASE e1 ==> c1 OR e2 ==> c2 END) τ w
-    =  (fun γ : sem_ctx Γ =>
-          pdom_lift snd
-            (Case2 (r_sem_ro_exp Γ e1 BOOL p1 γ) (r_sem_ro_exp Γ e2 BOOL p3 γ) (r_sem_rw_exp Γ nil c1 τ p2 γ tt)
-               (r_sem_rw_exp Γ nil c2 τ p4 γ tt))).
-Proof.
-  intros.
-  dependent destruction w.
-  dependent destruction r.
-  easy_rewrite_uip.
-  exists r1, r2, r3, r4.
-  auto.  
-Qed.
+(* Lemma r_sem_ro_Case : forall Γ e1 e2 c1 c2 τ (w : Γ |~ (CASE e1 ==> c1 OR e2 ==> c2 END) : τ), exists p1 p2 p3 p4, *)
+(*     r_sem_ro_exp Γ (CASE e1 ==> c1 OR e2 ==> c2 END) τ w *)
+(*     =  (fun γ : sem_ctx Γ => *)
+(*           pdom_lift snd *)
+(*             (Case2 (r_sem_ro_exp Γ e1 BOOL p1 γ) (r_sem_ro_exp Γ e2 BOOL p3 γ) (r_sem_rw_exp Γ nil c1 τ p2 γ tt) *)
+(*                (r_sem_rw_exp Γ nil c2 τ p4 γ tt))). *)
+(* Proof. *)
+(*   intros. *)
+(*   dependent destruction w. *)
+(*   dependent destruction r. *)
+(*   easy_rewrite_uip. *)
+(*   exists r1, r2, r3, r4. *)
+(*   auto.   *)
+(* Qed. *)
 
 Lemma r_sem_ro_CaseList : forall Γ l τ (w : Γ |~ CaseList l : τ),
   exists f : ForallT (fun ec : exp * exp => ((Γ |~ fst ec : BOOL) * (Γ;;; nil ||~ snd ec : τ))%type) l,
@@ -1075,15 +1075,15 @@ Proof.
   destruct a; simpl; reflexivity.
 
 
-  (* case *)
-  rewrite (r_sem_ctx_rewrite _ _ _ _ r1 r (app_assoc Δ Δ' Γ)).
-  rewrite (r_sem_ctx_rewrite _ _ _ _ r2 r0 (app_assoc Δ Δ' Γ)).
-  replace  (tr (fun Γ0 : list datatype => sem_ctx Γ0) (app_assoc Δ Δ' Γ) (δ; (δ'; γ)))
-    with  ((δ; δ'); γ) by (apply eq_sym, app_assoc_tr).
-  rewrite (r_sem_move_readonly Γ _ _ _ _ w1_1 w2_1 γ ).
-  rewrite (r_sem_move_readonly Γ _ _ _ _ w1_2 w2_2 γ).
-  rewrite app_assoc_tr.
-  apply Case2_post_processing.
+  (* (* case *) *)
+  (* rewrite (r_sem_ctx_rewrite _ _ _ _ r1 r (app_assoc Δ Δ' Γ)). *)
+  (* rewrite (r_sem_ctx_rewrite _ _ _ _ r2 r0 (app_assoc Δ Δ' Γ)). *)
+  (* replace  (tr (fun Γ0 : list datatype => sem_ctx Γ0) (app_assoc Δ Δ' Γ) (δ; (δ'; γ))) *)
+  (*   with  ((δ; δ'); γ) by (apply eq_sym, app_assoc_tr). *)
+  (* rewrite (r_sem_move_readonly Γ _ _ _ _ w1_1 w2_1 γ ). *)
+  (* rewrite (r_sem_move_readonly Γ _ _ _ _ w1_2 w2_2 γ). *)
+  (* rewrite app_assoc_tr. *)
+  (* apply Case2_post_processing. *)
 
   {
     rewrite <- pdom_case_list_post_processing.
@@ -1295,15 +1295,15 @@ Proof.
     reflexivity.
 
 
-    destruct (r_sem_ro_Case _ _ _ _ _ _ w2) as [p1 [p2 [p3 [p4 eq]]]].
-    rewrite eq.
-    simpl in h1, h3.
-    easy_rewrite_uip.
-    rewrite (sem_ro_r_sem_ro _ _ _ h1 p1).
-    rewrite (sem_ro_r_sem_ro _ _ _ h3 p3).
-    rewrite (sem_rw_r_sem_rw _ _ _ _ h2 p2).
-    rewrite (sem_rw_r_sem_rw _ _ _ _ h4 p4).
-    reflexivity.
+    (* destruct (r_sem_ro_Case _ _ _ _ _ _ w2) as [p1 [p2 [p3 [p4 eq]]]]. *)
+    (* rewrite eq. *)
+    (* simpl in h1, h3. *)
+    (* easy_rewrite_uip. *)
+    (* rewrite (sem_ro_r_sem_ro _ _ _ h1 p1). *)
+    (* rewrite (sem_ro_r_sem_ro _ _ _ h3 p3). *)
+    (* rewrite (sem_rw_r_sem_rw _ _ _ _ h2 p2). *)
+    (* rewrite (sem_rw_r_sem_rw _ _ _ _ h4 p4). *)
+    (* reflexivity. *)
     {
       destruct (r_sem_ro_CaseList _ _ _ w2) as [ff eq].
       rewrite eq.
@@ -1594,13 +1594,13 @@ Proof.
     rewrite (sem_rw_r_sem_rw _ _ _ _ w1_2 w2_2).
     reflexivity.
 
-    dependent destruction w2.
-    easy_rewrite_uip.
-    rewrite (sem_ro_r_sem_ro _ _ _ h r).
-    rewrite (sem_ro_r_sem_ro _ _ _ h0 r0).
-    rewrite (sem_rw_r_sem_rw _ _ _ _ w1_1 w2_1).
-    rewrite (sem_rw_r_sem_rw _ _ _ _ w1_2 w2_2).
-    reflexivity.
+    (* dependent destruction w2. *)
+    (* easy_rewrite_uip. *)
+    (* rewrite (sem_ro_r_sem_ro _ _ _ h r). *)
+    (* rewrite (sem_ro_r_sem_ro _ _ _ h0 r0). *)
+    (* rewrite (sem_rw_r_sem_rw _ _ _ _ w1_1 w2_1). *)
+    (* rewrite (sem_rw_r_sem_rw _ _ _ _ w1_2 w2_2). *)
+    (* reflexivity. *)
 
     
     dependent destruction w2.
@@ -1669,8 +1669,8 @@ Proof.
     exact (r_has_type_rw_add_auxiliaries _ _ _ _ r Γ').
     constructor.
     exact (r_has_type_rw_add_auxiliaries _ _ _ _ r Γ').
-    constructor.
-    exact (r_has_type_rw_add_auxiliaries _ _ _ _ r Γ').
+    (* constructor. *)
+    (* exact (r_has_type_rw_add_auxiliaries _ _ _ _ r Γ'). *)
 
     (* variables *)
     constructor.
@@ -1786,13 +1786,13 @@ Proof.
     exact (r_has_type_rw_add_auxiliaries _ _ _ _ w2 Γ').
 
     
-    constructor.
-    induction (eq_sym (app_assoc Δ Γ Γ')). 
-    exact (r_has_type_ro_add_auxiliaries _ _ _ r Γ').
-    exact (r_has_type_rw_add_auxiliaries _ _ _ _ w1 Γ').
-    induction (eq_sym (app_assoc Δ Γ Γ')). 
-    exact (r_has_type_ro_add_auxiliaries _ _ _ r0 Γ').
-    exact (r_has_type_rw_add_auxiliaries _ _ _ _ w2 Γ').
+    (* constructor. *)
+    (* induction (eq_sym (app_assoc Δ Γ Γ')).  *)
+    (* exact (r_has_type_ro_add_auxiliaries _ _ _ r Γ'). *)
+    (* exact (r_has_type_rw_add_auxiliaries _ _ _ _ w1 Γ'). *)
+    (* induction (eq_sym (app_assoc Δ Γ Γ')).  *)
+    (* exact (r_has_type_ro_add_auxiliaries _ _ _ r0 Γ'). *)
+    (* exact (r_has_type_rw_add_auxiliaries _ _ _ _ w2 Γ'). *)
 
     constructor.
     apply l0.
@@ -1878,14 +1878,14 @@ Proof.
     rewrite (r_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w2 _ γ').
     reflexivity.
 
-    rewrite <- eq_sym_app_assoc_tr.
-    rewrite <- (r_sem_ctx_rewrite _ _ _ _ (r_has_type_ro_add_auxiliaries _ _ _ r Γ')).
-    rewrite <- (r_sem_ro_exp_auxiliary_ctx _ _ _ _ r _ γ').
-    rewrite <- (r_sem_ctx_rewrite _ _ _ _ (r_has_type_ro_add_auxiliaries _ _ _ r0 Γ')).
-    rewrite <- (r_sem_ro_exp_auxiliary_ctx _ _ _ _ r0 _ γ').
-    rewrite (r_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w1 _ γ').
-    rewrite (r_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w2 _ γ').
-    reflexivity.
+    (* rewrite <- eq_sym_app_assoc_tr. *)
+    (* rewrite <- (r_sem_ctx_rewrite _ _ _ _ (r_has_type_ro_add_auxiliaries _ _ _ r Γ')). *)
+    (* rewrite <- (r_sem_ro_exp_auxiliary_ctx _ _ _ _ r _ γ'). *)
+    (* rewrite <- (r_sem_ctx_rewrite _ _ _ _ (r_has_type_ro_add_auxiliaries _ _ _ r0 Γ')). *)
+    (* rewrite <- (r_sem_ro_exp_auxiliary_ctx _ _ _ _ r0 _ γ'). *)
+    (* rewrite (r_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w1 _ γ'). *)
+    (* rewrite (r_sem_rw_exp_auxiliary_ctx _ _ _ _ _ w2 _ γ'). *)
+    (* reflexivity. *)
 
     {
       clear l0.

@@ -7,12 +7,9 @@ Open Scope R.
 Definition clerical_abs k :=  
   Lim
     (CASE
-       VAR (S k) ;<; EXP ( :-: (VAR 0) :-: (INT 1))
-       ==> ;-; VAR (S k)
-       OR
-       ;-; EXP ( :-: (Var 0) :-: (INT 1)) ;<; Var (S k) 
-       ==> VAR (S k)
-       END)
+       VAR (S k) ;<; EXP ( :-: (VAR 0) :-: (INT 1)) ==> ;-; VAR (S k)
+     | ;-; EXP ( :-: (Var 0) :-: (INT 1)) ;<; Var (S k)  ==> VAR (S k)
+     END)
 .
 
 Lemma clerical_abs_correct :

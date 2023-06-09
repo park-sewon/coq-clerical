@@ -503,14 +503,14 @@ with proves_rw_prt : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_prt w -> T
     (*——————————-——————————-——————————-——————————-——————————-*)
     w' ||- {{ϕ}} Cond e c1 c2 {{ψ}}
 
-| rw_case_prt : forall Γ Δ e1 e2 c1 c2 τ (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) ϕ θ1 θ2 ψ,
+(* | rw_case_prt : forall Γ Δ e1 e2 c1 c2 τ (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) ϕ θ1 θ2 ψ, *)
 
-    wty_e1 |- {{rw_to_ro_pre ϕ}} e1 {{θ1}} -> 
-    wty_e2 |- {{rw_to_ro_pre ϕ}} e2 {{θ2}} -> 
-    wty_c1 ||- {{ro_to_rw_pre (θ1 true)}} c1 {{ψ}} -> 
-    wty_c2 ||- {{ro_to_rw_pre (θ2 true)}} c2 {{ψ}} ->
-    (*——————————-——————————-——————————-——————————-——————————-*)
-    wty ||- {{ϕ}} Case e1 c1 e2 c2 {{ψ}}
+(*     wty_e1 |- {{rw_to_ro_pre ϕ}} e1 {{θ1}} ->  *)
+(*     wty_e2 |- {{rw_to_ro_pre ϕ}} e2 {{θ2}} ->  *)
+(*     wty_c1 ||- {{ro_to_rw_pre (θ1 true)}} c1 {{ψ}} ->  *)
+(*     wty_c2 ||- {{ro_to_rw_pre (θ2 true)}} c2 {{ψ}} -> *)
+(*     (*——————————-——————————-——————————-——————————-——————————-*) *)
+(*     wty ||- {{ϕ}} Case e1 c1 e2 c2 {{ψ}} *)
 
 | rw_case_list_prt : forall Γ Δ l τ
                             (wty_l : ForallT (fun ec => ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))%type l)
@@ -609,17 +609,17 @@ with proves_rw_tot : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_tot w -> T
     w' ||- [{ϕ}] Cond e c1 c2 [{ψ}]
 
 
-| rw_case_tot : forall Γ Δ e1 e2 c1 c2 τ (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) ϕ θ1 θ2 ψ ϕ1 ϕ2,
+(* | rw_case_tot : forall Γ Δ e1 e2 c1 c2 τ (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) ϕ θ1 θ2 ψ ϕ1 ϕ2, *)
     
-    wty_e1 |- {{rw_to_ro_pre ϕ}} e1 {{θ1}} -> 
-    wty_e2 |- {{rw_to_ro_pre ϕ}} e2 {{θ2}} -> 
-    wty_c1 ||- [{ro_to_rw_pre (θ1 true)}] c1 [{ψ}] -> 
-    wty_c2 ||- [{ro_to_rw_pre (θ2 true)}] c2 [{ψ}] -> 
-    wty_e1 |- [{ϕ1}] e1 [{b |fun _ => b = true}] -> 
-    wty_e2 |- [{ϕ2}] e2 [{b | fun _ => b = true}] -> 
-    (forall x, (rw_to_ro_pre ϕ x) -> (ϕ1 x \/ ϕ2 x)) -> 
-    (*——————————-——————————-——————————-——————————-——————————-*)
-    wty ||- [{ϕ}] Case e1 c1 e2 c2 [{ψ}]
+(*     wty_e1 |- {{rw_to_ro_pre ϕ}} e1 {{θ1}} ->  *)
+(*     wty_e2 |- {{rw_to_ro_pre ϕ}} e2 {{θ2}} ->  *)
+(*     wty_c1 ||- [{ro_to_rw_pre (θ1 true)}] c1 [{ψ}] ->  *)
+(*     wty_c2 ||- [{ro_to_rw_pre (θ2 true)}] c2 [{ψ}] ->  *)
+(*     wty_e1 |- [{ϕ1}] e1 [{b |fun _ => b = true}] ->  *)
+(*     wty_e2 |- [{ϕ2}] e2 [{b | fun _ => b = true}] ->  *)
+(*     (forall x, (rw_to_ro_pre ϕ x) -> (ϕ1 x \/ ϕ2 x)) ->  *)
+(*     (*——————————-——————————-——————————-——————————-——————————-*) *)
+(*     wty ||- [{ϕ}] Case e1 c1 e2 c2 [{ψ}] *)
 
 
 | rw_case_list_tot : forall Γ Δ l τ

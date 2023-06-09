@@ -85,8 +85,8 @@ Section RestrictedTyping.
 
   | r_has_type_ro_rw_Cond : forall Γ e c1 c2 τ, Γ ;;; nil ||~ (Cond e c1 c2) : τ -> Γ |~ (Cond e c1 c2) : τ
 
-  | r_has_type_ro_rw_Case : forall Γ e1 c1 e2 c2 τ,
-      Γ ;;; nil ||~ (Case e1 c1 e2 c2) : τ -> Γ |~ (Case e1 c1 e2 c2) : τ
+  (* | r_has_type_ro_rw_Case : forall Γ e1 c1 e2 c2 τ, *)
+  (*     Γ ;;; nil ||~ (Case e1 c1 e2 c2) : τ -> Γ |~ (Case e1 c1 e2 c2) : τ *)
 
   | r_has_type_ro_rw_CaseList : forall Γ l τ,
       Γ ;;; nil ||~ CaseList l : τ -> Γ |~ (CaseList l) : τ
@@ -160,7 +160,7 @@ Section RestrictedTyping.
   | r_has_type_rw_Cond : forall Γ Δ e c1 c2 τ, (Δ ++ Γ) |~ e : DBoolean -> Γ ;;; Δ ||~ c1 : τ -> Γ ;;; Δ ||~ c2 : τ -> Γ ;;; Δ ||~ Cond e c1 c2 : τ
 
   (* case *)
-  | r_has_type_rw_Case : forall Γ Δ e1 c1 e2 c2 τ, (Δ ++ Γ) |~ e1 : DBoolean -> Γ ;;; Δ ||~ c1 : τ -> (Δ ++ Γ) |~ e2 : DBoolean -> Γ ;;; Δ ||~ c2 : τ -> Γ ;;; Δ ||~ Case e1 c1 e2 c2 : τ
+  (* | r_has_type_rw_Case : forall Γ Δ e1 c1 e2 c2 τ, (Δ ++ Γ) |~ e1 : DBoolean -> Γ ;;; Δ ||~ c1 : τ -> (Δ ++ Γ) |~ e2 : DBoolean -> Γ ;;; Δ ||~ c2 : τ -> Γ ;;; Δ ||~ Case e1 c1 e2 c2 : τ *)
 
   | r_has_type_rw_CaseList : forall Γ Δ l τ,
       (1 <= length l)%nat -> 
@@ -203,11 +203,11 @@ Section RestrictedTyping.
     apply r_has_type_rw_move; auto.
     apply (r_has_type_rw_Cond _ _ _ _ _); auto.
     replace ((Δ1 ++ Δ2) ++ Γ) with (Δ1 ++ Δ2 ++ Γ) by apply app_assoc; auto.
-    {
-      apply (r_has_type_rw_Case _ _ _ _ _); auto.
-      replace ((Δ1 ++ Δ2) ++ Γ) with (Δ1 ++ Δ2 ++ Γ) by apply app_assoc; auto.
-      replace ((Δ1 ++ Δ2) ++ Γ) with (Δ1 ++ Δ2 ++ Γ) by apply app_assoc; auto.
-    }
+    (* { *)
+    (*   apply (r_has_type_rw_Case _ _ _ _ _); auto. *)
+    (*   replace ((Δ1 ++ Δ2) ++ Γ) with (Δ1 ++ Δ2 ++ Γ) by apply app_assoc; auto. *)
+    (*   replace ((Δ1 ++ Δ2) ++ Γ) with (Δ1 ++ Δ2 ++ Γ) by apply app_assoc; auto. *)
+    (* } *)
     
     apply (r_has_type_rw_CaseList _ _ _ _); auto.
     replace ((Δ1 ++ Δ2) ++ Γ) with (Δ1 ++ Δ2 ++ Γ) by apply app_assoc; auto.
@@ -306,9 +306,9 @@ Section RestrictedTyping.
       dependent destruction r.
       dependent destruction r0.
       apply (r_has_type_rw_unambiguous _ _ _ _ _ r2 r0_1).
-      dependent destruction r.
-      dependent destruction r0.
-      apply (r_has_type_rw_unambiguous _ _ _ _ _ r2 r0_1).
+      (* dependent destruction r. *)
+      (* dependent destruction r0. *)
+      (* apply (r_has_type_rw_unambiguous _ _ _ _ _ r2 r0_1). *)
       apply (r_has_type_rw_unambiguous _ _ _ _ _ r r0).
       apply (unamb_Var' _ _ _ _ w1 w2).
     +
@@ -324,7 +324,7 @@ Section RestrictedTyping.
       rewrite (r_has_type_ro_unambiguous _ _ _ _ r r0) in w1.
       apply (r_has_type_rw_unambiguous _ _ _ _ _ w1 w2).
       apply (r_has_type_rw_unambiguous _ _ _ _ _ w1_1 w2_1).
-      apply (r_has_type_rw_unambiguous _ _ _ _ _ w1_1 w2_1).
+      (* apply (r_has_type_rw_unambiguous _ _ _ _ _ w1_1 w2_1). *)
 
       {
         destruct l.
@@ -381,10 +381,10 @@ Section RestrictedTyping.
       rewrite (r_has_type_rw_unique _ _ _ _ w1_1 w2_1);
       rewrite (r_has_type_rw_unique _ _ _ _ w1_2 w2_2); reflexivity.
 
-    rewrite (r_has_type_ro_unique _ _ _ r r1);
-      rewrite (r_has_type_ro_unique _ _ _ r0 r2);
-      rewrite (r_has_type_rw_unique _ _ _ _ w1_1 w2_1);
-      rewrite (r_has_type_rw_unique _ _ _ _ w1_2 w2_2); reflexivity.
+    (* rewrite (r_has_type_ro_unique _ _ _ r r1); *)
+    (*   rewrite (r_has_type_ro_unique _ _ _ r0 r2); *)
+    (*   rewrite (r_has_type_rw_unique _ _ _ _ w1_1 w2_1); *)
+    (*   rewrite (r_has_type_rw_unique _ _ _ _ w1_2 w2_2); reflexivity. *)
 
     rewrite (prop_irrl _ l0 l2).
     assert (f = f0).
@@ -428,11 +428,11 @@ Section Unambiguity.
       apply (r_has_type_rw_Newvar _ _ _ _ σ); auto.
       apply r_has_type_ro_rw_Cond.
       apply (r_has_type_rw_Cond _ _ _ _ _ τ); auto.
-      {
-        (* binary case will be deleted later *)
-        apply r_has_type_ro_rw_Case.
-        apply (r_has_type_rw_Case _ _ _ _ _ _ τ); auto.
-      }
+      (* { *)
+      (*   (* binary case will be deleted later *) *)
+      (*   apply r_has_type_ro_rw_Case. *)
+      (*   apply (r_has_type_rw_Case _ _ _ _ _ _ τ); auto. *)
+      (* } *)
 
       {
         apply r_has_type_ro_rw_CaseList.
@@ -549,11 +549,11 @@ Section Unambiguity.
         apply has_type_rw_r_has_type_rw in w1;
         apply has_type_rw_r_has_type_rw in w2.
       apply (r_has_type_rw_Cond); auto.
-      apply has_type_ro_r_has_type_ro in h;
-        apply has_type_ro_r_has_type_ro in h0;
-        apply has_type_rw_r_has_type_rw in w1;
-        apply has_type_rw_r_has_type_rw in w2.
-      apply (r_has_type_rw_Case); auto.
+      (* apply has_type_ro_r_has_type_ro in h; *)
+      (*   apply has_type_ro_r_has_type_ro in h0; *)
+      (*   apply has_type_rw_r_has_type_rw in w1; *)
+      (*   apply has_type_rw_r_has_type_rw in w2. *)
+      (* apply (r_has_type_rw_Case); auto. *)
       {
         apply r_has_type_rw_CaseList.
         apply l0.
@@ -624,11 +624,11 @@ Section Unambiguity.
       apply r_has_type_ro_has_type_ro in r; auto.
       apply r_has_type_rw_has_type_rw in w1; auto.
       apply r_has_type_rw_has_type_rw in w2; auto.
-      apply (has_type_rw_Case).
-      apply r_has_type_ro_has_type_ro in r; auto.
-      apply r_has_type_rw_has_type_rw in w1; auto.
-      apply r_has_type_ro_has_type_ro in r0; auto.
-      apply r_has_type_rw_has_type_rw in w2; auto.
+      (* apply (has_type_rw_Case). *)
+      (* apply r_has_type_ro_has_type_ro in r; auto. *)
+      (* apply r_has_type_rw_has_type_rw in w1; auto. *)
+      (* apply r_has_type_ro_has_type_ro in r0; auto. *)
+      (* apply r_has_type_rw_has_type_rw in w2; auto. *)
 
       {
         apply has_type_rw_CaseList.
@@ -1097,11 +1097,11 @@ Proof.
   rewrite app_assoc.
   apply r_has_type_ro_add_auxiliary; auto.
 
-  apply (r_has_type_rw_Case); auto.
-  rewrite app_assoc.
-  apply r_has_type_ro_add_auxiliary; auto.
-  rewrite app_assoc.
-  apply r_has_type_ro_add_auxiliary; auto.
+  (* apply (r_has_type_rw_Case); auto. *)
+  (* rewrite app_assoc. *)
+  (* apply r_has_type_ro_add_auxiliary; auto. *)
+  (* rewrite app_assoc. *)
+  (* apply r_has_type_ro_add_auxiliary; auto. *)
 
   apply (r_has_type_rw_CaseList).
   exact l0.  

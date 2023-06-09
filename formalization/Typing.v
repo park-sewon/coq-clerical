@@ -68,7 +68,7 @@ with has_type_rw : rw_ctx -> exp -> datatype -> Type :=
 | has_type_rw_Cond : forall Γ Δ e c1 c2 τ, (Δ ++ Γ) |- e : DBoolean -> Γ ;;; Δ ||- c1 : τ -> Γ ;;; Δ ||- c2 : τ -> Γ ;;; Δ ||- Cond e c1 c2 : τ
 
 (* case *)
-| has_type_rw_Case : forall Γ Δ e1 c1 e2 c2 τ, (Δ ++ Γ) |- e1 : DBoolean -> Γ ;;; Δ ||- c1 : τ -> (Δ ++ Γ) |- e2 : DBoolean -> Γ ;;; Δ ||- c2 : τ -> Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ
+(* | has_type_rw_Case : forall Γ Δ e1 c1 e2 c2 τ, (Δ ++ Γ) |- e1 : DBoolean -> Γ ;;; Δ ||- c1 : τ -> (Δ ++ Γ) |- e2 : DBoolean -> Γ ;;; Δ ||- c2 : τ -> Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ *)
 
 (* case list *)
 | has_type_rw_CaseList : forall Γ Δ l τ,

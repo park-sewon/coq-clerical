@@ -557,42 +557,42 @@ Proof.
     split; auto.
     intros h1 h2 h3; auto.
 
-    clear IHX1 IHX2.
-    pose proof (admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p).
-    pose proof (admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X1).
-    pose proof (admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p0).
-    pose proof (admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X2).
-    apply (rw_case_prt _ _ _ _ _ _ _ wty_e1 wty_e2 wty_c1 wty_c2 wty _ (θ1 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ctx (Δ ++ Γ)) => θ (snd_app δγ))) (θ2 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ctx (Δ ++ Γ)) => θ (snd_app δγ)))).
-    apply (fun a => ro_imply_prt _ _ _ _ _ _ _ _ _ a X).
-    intros h1 h2.
-    split; destruct h2.
-    exact H.
-    exact H0.
-    intros h1 h2 h3; auto.
-    apply (fun a => ro_imply_prt _ _ _ _ _ _ _ _ _ a X3).
-    intros h1 h2.
-    split; destruct h2.
-    exact H.
-    exact H0.
-    intros h1 h2 h3; auto.
-    apply (fun a => rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X0).
-    intros h1 h2.
-    split; destruct h2.
-    exact H.
-    unfold snd_app in H0.
-    destruct h1.
-    rewrite tedious_equiv_1 in H0.
-    exact H0.
-    intros h1 h2 h3; auto.
-    apply (fun a => rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X4).
-    intros h1 h2.
-    split; destruct h2.
-    exact H.
-    unfold snd_app in H0.
-    destruct h1.
-    rewrite tedious_equiv_1 in H0.
-    exact H0.
-    intros h1 h2 h3; auto.
+    (* clear IHX1 IHX2. *)
+    (* pose proof (admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p). *)
+    (* pose proof (admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X1). *)
+    (* pose proof (admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p0). *)
+    (* pose proof (admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X2). *)
+    (* apply (rw_case_prt _ _ _ _ _ _ _ wty_e1 wty_e2 wty_c1 wty_c2 wty _ (θ1 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ctx (Δ ++ Γ)) => θ (snd_app δγ))) (θ2 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ctx (Δ ++ Γ)) => θ (snd_app δγ)))). *)
+    (* apply (fun a => ro_imply_prt _ _ _ _ _ _ _ _ _ a X). *)
+    (* intros h1 h2. *)
+    (* split; destruct h2. *)
+    (* exact H. *)
+    (* exact H0. *)
+    (* intros h1 h2 h3; auto. *)
+    (* apply (fun a => ro_imply_prt _ _ _ _ _ _ _ _ _ a X3). *)
+    (* intros h1 h2. *)
+    (* split; destruct h2. *)
+    (* exact H. *)
+    (* exact H0. *)
+    (* intros h1 h2 h3; auto. *)
+    (* apply (fun a => rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X0). *)
+    (* intros h1 h2. *)
+    (* split; destruct h2. *)
+    (* exact H. *)
+    (* unfold snd_app in H0. *)
+    (* destruct h1. *)
+    (* rewrite tedious_equiv_1 in H0. *)
+    (* exact H0. *)
+    (* intros h1 h2 h3; auto. *)
+    (* apply (fun a => rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X4). *)
+    (* intros h1 h2. *)
+    (* split; destruct h2. *)
+    (* exact H. *)
+    (* unfold snd_app in H0. *)
+    (* destruct h1. *)
+    (* rewrite tedious_equiv_1 in H0. *)
+    (* exact H0. *)
+    (* intros h1 h2 h3; auto. *)
 
 
     apply (rw_case_list_prt _ _ _ _ wty_l wty (ForallT_map (fun _ p => p /\\\ (fun _ x => θ (snd_app x))) θ0)).
@@ -762,70 +762,70 @@ Proof.
     split; auto.
     intros h1 h2 h3; auto.
 
-    clear IHX1 IHX2.
-    pose proof (admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p).
-    pose proof (admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ θ X1).
-    pose proof (admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p0).
-    pose proof (admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ θ X2).
-    pose proof (admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p1).
-    pose proof (admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p2).
+    (* clear IHX1 IHX2. *)
+    (* pose proof (admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p). *)
+    (* pose proof (admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ θ X1). *)
+    (* pose proof (admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p0). *)
+    (* pose proof (admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ θ X2). *)
+    (* pose proof (admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p1). *)
+    (* pose proof (admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p2). *)
 
-    apply (rw_case_tot _ _ _ _ _ _ _ wty_e1 wty_e2 wty_c1 wty_c2 wty _ (θ1 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ctx (Δ ++ Γ)) => θ (snd_app δγ))) (θ2 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ctx (Δ ++ Γ)) => θ (snd_app δγ)))
-                       _
-                       (ϕ1 /\\ (fun δγ : sem_ctx (Δ ++ Γ) => θ (snd_app δγ)))      
-                       (ϕ2 /\\ (fun δγ : sem_ctx (Δ ++ Γ) => θ (snd_app δγ)))
-          ).
-    apply (fun a => ro_imply_prt _ _ _ _ _ _ _ _ _ a X).
-    intros h1 h2.
-    split; destruct h2.
-    exact H.
-    exact H0.
-    intros h1 h2 h3; auto.
-    apply (fun a => ro_imply_prt _ _ _ _ _ _ _ _ _ a X3).
-    intros h1 h2.
-    split; destruct h2.
-    exact H.
-    exact H0.
-    intros h1 h2 h3; auto.
-    apply (fun a => rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X0).
-    intros h1 h2.
-    split; destruct h2.
-    exact H.
-    unfold snd_app in H0.
-    destruct h1.
-    rewrite tedious_equiv_1 in H0.
-    exact H0.
-    intros h1 h2 h3; auto.
-    apply (fun a => rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X4).
-    intros h1 h2.
-    split; destruct h2.
-    exact H.
-    unfold snd_app in H0.
-    destruct h1.
-    rewrite tedious_equiv_1 in H0.
-    exact H0.
-    intros h1 h2 h3; auto.
-    apply (fun a => ro_imply_tot _ _ _ _ _ _ _ _ _ a X5).
-    intros h1 h2.
-    split; destruct h2.
-    exact H.
-    exact H0.
-    intros h1 h2 h3; auto.
-    destruct h3.
-    auto.
-    apply (fun a => ro_imply_tot _ _ _ _ _ _ _ _ _ a X6).
-    intros h1 h2.
-    split; destruct h2.
-    exact H.
-    exact H0.
-    intros h1 h2 h3; auto.
-    destruct h3.
-    auto.
-    intros.
-    destruct H.
-    destruct (o _ H). 
-    left; split; auto.
-    right; split; auto.
+    (* apply (rw_case_tot _ _ _ _ _ _ _ wty_e1 wty_e2 wty_c1 wty_c2 wty _ (θ1 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ctx (Δ ++ Γ)) => θ (snd_app δγ))) (θ2 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ctx (Δ ++ Γ)) => θ (snd_app δγ))) *)
+    (*                    _ *)
+    (*                    (ϕ1 /\\ (fun δγ : sem_ctx (Δ ++ Γ) => θ (snd_app δγ)))       *)
+    (*                    (ϕ2 /\\ (fun δγ : sem_ctx (Δ ++ Γ) => θ (snd_app δγ))) *)
+    (*       ). *)
+    (* apply (fun a => ro_imply_prt _ _ _ _ _ _ _ _ _ a X). *)
+    (* intros h1 h2. *)
+    (* split; destruct h2. *)
+    (* exact H. *)
+    (* exact H0. *)
+    (* intros h1 h2 h3; auto. *)
+    (* apply (fun a => ro_imply_prt _ _ _ _ _ _ _ _ _ a X3). *)
+    (* intros h1 h2. *)
+    (* split; destruct h2. *)
+    (* exact H. *)
+    (* exact H0. *)
+    (* intros h1 h2 h3; auto. *)
+    (* apply (fun a => rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X0). *)
+    (* intros h1 h2. *)
+    (* split; destruct h2. *)
+    (* exact H. *)
+    (* unfold snd_app in H0. *)
+    (* destruct h1. *)
+    (* rewrite tedious_equiv_1 in H0. *)
+    (* exact H0. *)
+    (* intros h1 h2 h3; auto. *)
+    (* apply (fun a => rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X4). *)
+    (* intros h1 h2. *)
+    (* split; destruct h2. *)
+    (* exact H. *)
+    (* unfold snd_app in H0. *)
+    (* destruct h1. *)
+    (* rewrite tedious_equiv_1 in H0. *)
+    (* exact H0. *)
+    (* intros h1 h2 h3; auto. *)
+    (* apply (fun a => ro_imply_tot _ _ _ _ _ _ _ _ _ a X5). *)
+    (* intros h1 h2. *)
+    (* split; destruct h2. *)
+    (* exact H. *)
+    (* exact H0. *)
+    (* intros h1 h2 h3; auto. *)
+    (* destruct h3. *)
+    (* auto. *)
+    (* apply (fun a => ro_imply_tot _ _ _ _ _ _ _ _ _ a X6). *)
+    (* intros h1 h2. *)
+    (* split; destruct h2. *)
+    (* exact H. *)
+    (* exact H0. *)
+    (* intros h1 h2 h3; auto. *)
+    (* destruct h3. *)
+    (* auto. *)
+    (* intros. *)
+    (* destruct H. *)
+    (* destruct (o _ H).  *)
+    (* left; split; auto. *)
+    (* right; split; auto. *)
 
     
     apply (rw_case_list_tot _ _ _ _ wty_l wty
@@ -990,7 +990,7 @@ Proof.
     apply (rw_new_var_prt _ _ _ _ _ _ _ _ _ _ _ _ (admissible_ro_tot_prt _ _ _ _ _ _ p) (admissible_rw_tot_prt _ _ _ _ _ _ _ X)).
     apply (rw_assign_prt _ _ _ _ _ _ _ _ _ _ (admissible_ro_tot_prt _ _ _ _ _ _ p) ψ0).
     apply (rw_cond_prt _ _ _ _ _ _ _ _ _ _ _ _ _ (admissible_ro_tot_prt _ _ _ _ _ _ p) (admissible_rw_tot_prt _ _ _ _ _ _ _ X1) (admissible_rw_tot_prt _ _ _ _ _ _ _ X2)).
-    apply (rw_case_prt _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ p p0 (admissible_rw_tot_prt _ _ _ _ _ _ _ X1) (admissible_rw_tot_prt _ _ _ _ _ _ _ X2)).
+    (* apply (rw_case_prt _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ p p0 (admissible_rw_tot_prt _ _ _ _ _ _ _ X1) (admissible_rw_tot_prt _ _ _ _ _ _ _ X2)). *)
 
 
 
@@ -1017,3 +1017,26 @@ Proof.
              (admissible_rw_tot_prt _ _ _ _ _ _ _ X1)). 
 
 Defined.
+
+
+
+(* | rw_case_prt : forall Γ Δ e1 e2 c1 c2 τ (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) ϕ θ1 θ2 ψ, *)
+
+(*     wty_e1 |- {{rw_to_ro_pre ϕ}} e1 {{θ1}} ->  *)
+(*     wty_e2 |- {{rw_to_ro_pre ϕ}} e2 {{θ2}} ->  *)
+(*     wty_c1 ||- {{ro_to_rw_pre (θ1 true)}} c1 {{ψ}} ->  *)
+(*     wty_c2 ||- {{ro_to_rw_pre (θ2 true)}} c2 {{ψ}} -> *)
+(*     (*——————————-——————————-——————————-——————————-——————————-*) *)
+(*     wty ||- {{ϕ}} Case e1 c1 e2 c2 {{ψ}} *)
+
+(* | rw_case_tot : forall Γ Δ e1 e2 c1 c2 τ (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) ϕ θ1 θ2 ψ ϕ1 ϕ2, *)
+    
+(*     wty_e1 |- {{rw_to_ro_pre ϕ}} e1 {{θ1}} ->  *)
+(*     wty_e2 |- {{rw_to_ro_pre ϕ}} e2 {{θ2}} ->  *)
+(*     wty_c1 ||- [{ro_to_rw_pre (θ1 true)}] c1 [{ψ}] ->  *)
+(*     wty_c2 ||- [{ro_to_rw_pre (θ2 true)}] c2 [{ψ}] ->  *)
+(*     wty_e1 |- [{ϕ1}] e1 [{b |fun _ => b = true}] ->  *)
+(*     wty_e2 |- [{ϕ2}] e2 [{b | fun _ => b = true}] ->  *)
+(*     (forall x, (rw_to_ro_pre ϕ x) -> (ϕ1 x \/ ϕ2 x)) ->  *)
+(*     (*——————————-——————————-——————————-——————————-——————————-*) *)
+(*     wty ||- [{ϕ}] Case e1 c1 e2 c2 [{ψ}] *)
