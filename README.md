@@ -24,7 +24,10 @@ Here, `VAR k` denotes a variable with its De Bruijn index `k`.
 Mathematical symbols surrounded by `: :` denote integer operations 
 and those surrounded by `; ;` denote real operations.
 The definition `clerical_abs k` for each natural number `k` is a clerical expression 
-that computes the absolute value of the variable `k`.
+that computes the absolute value of the variable `k`. 
+Though in this example only binary nondeterministic case is used, 
+the formalization provdies arbitrarily many guarded expressions using the grammar 
+`CASE e1 ==> c1 | .. | en ==> cn END`.
 
 Using our prove rules, we prove the correctness of the expression:
 ```coq
@@ -33,9 +36,9 @@ Lemma clerical_abs_correct :
     Γ |--
       [{fun _ => True}]
       clerical_abs k 
-      [{y : REAL | fun x => y = Rabs (ro_access Γ k REAL w x) }].	  
+      [{y : REAL | fun γ => y = Rabs (ro_access Γ k REAL w γ) }].	  
 ```
-Here, `ro_access Γ k REAL w x` means the variable `k` in a state `x`.
+Here, `ro_access Γ k REAL w x` means the variable `k` in a state `γ : sem_ctx Γ`.
 
 In [Examples.ProgLogic](./examples/ProgLogic.v), we define and prove Boolean negation,
 in [Examples.ProgBounded](./examples/ProgBounded.v), we define and prove the soft boundedness test,
@@ -50,7 +53,7 @@ Lemma clerical_pi_correct :
 ```
 Here, `PI` is the constant `π` that we import from Coq's standard library.
 However, the theory isn't enough to prove our program. 
-For example, the proof of our program required the irrationality of `π`.
+For example, the proof of our program requires the irrationality of `π`.
 The _mathematical knowledge_ required in program proofs are partially proved 
 or admitted in [Examples.Mathematics](./examples/Mathematics.v).
 
