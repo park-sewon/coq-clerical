@@ -20,8 +20,8 @@ Lemma rw_new_var_prt_util {Γ Δ} {e c} {τ σ} {w1 : (Δ ++ Γ) |- e : σ} {w2 
       {ϕ} {ϕ'} {ψ} {θ} {θ'} {ψ'}:
   w1 |- {{ϕ'}} e {{θ}} ->
         w2 ||- {{θ'}} c {{ψ'}} ->
-        ((fun γδ : sem_ro_ctx (Δ ++ Γ) => ϕ (tedious_sem_app Δ Γ γδ)) ->> ϕ') ->
-        ((fun xδγ : sem_ro_ctx (σ :: Δ) * sem_ro_ctx Γ => θ (fst (fst xδγ)) (snd (fst xδγ); snd xδγ)) ->> θ') ->
+        ((fun γδ : sem_ctx (Δ ++ Γ) => ϕ (tedious_sem_app Δ Γ γδ)) ->> ϕ') ->
+        ((fun xδγ : sem_ctx (σ :: Δ) * sem_ctx Γ => θ (fst (fst xδγ)) (snd (fst xδγ); snd xδγ)) ->> θ') ->
         (ψ' ->>> (fun x xδγ => ψ x (snd (fst xδγ), snd xδγ))) ->
         w ||- {{ϕ}} Newvar e c {{ψ}}.
 Proof.
@@ -40,8 +40,8 @@ Lemma rw_new_var_tot_util {Γ Δ} {e c} {τ σ} {w1 : (Δ ++ Γ) |- e : σ} {w2 
       {ϕ} {ϕ'} {ψ} {θ} {θ'} {ψ'}:
   w1 |- [{ϕ'}] e [{θ}] ->
         w2 ||- [{θ'}] c [{ψ'}] ->
-        ((fun γδ : sem_ro_ctx (Δ ++ Γ) => ϕ (tedious_sem_app Δ Γ γδ)) ->> ϕ') ->
-        ((fun xδγ : sem_ro_ctx (σ :: Δ) * sem_ro_ctx Γ => θ (fst (fst xδγ)) (snd (fst xδγ); snd xδγ)) ->> θ') ->
+        ((fun γδ : sem_ctx (Δ ++ Γ) => ϕ (tedious_sem_app Δ Γ γδ)) ->> ϕ') ->
+        ((fun xδγ : sem_ctx (σ :: Δ) * sem_ctx Γ => θ (fst (fst xδγ)) (snd (fst xδγ); snd xδγ)) ->> θ') ->
         (ψ' ->>> (fun x xδγ => ψ x (snd (fst xδγ), snd xδγ))) ->
         w ||- [{ϕ}] Newvar e c [{ψ}].
 Proof.
@@ -59,8 +59,8 @@ Defined.
 Lemma rw_assign_prt_util {Γ Δ} {k} {e} {τ} {w : (Δ ++ Γ) |- e : τ}  {w' : Γ ;;; Δ ||- Assign k e : UNIT}
       {ϕ} {ϕ'} {ψ : post} {θ} :
   w |- {{ϕ'}} e {{θ}} ->
-       ((fun γδ : sem_ro_ctx (Δ ++ Γ) => ϕ (tedious_sem_app Δ Γ γδ)) ->> ϕ') ->
-       (forall (x : sem_datatype τ) (γ : sem_ro_ctx Γ) (δ : sem_ro_ctx Δ), θ x (δ; γ) -> ψ tt (update' w w' δ x, γ)) ->
+       ((fun γδ : sem_ctx (Δ ++ Γ) => ϕ (tedious_sem_app Δ Γ γδ)) ->> ϕ') ->
+       (forall (x : sem_datatype τ) (γ : sem_ctx Γ) (δ : sem_ctx Δ), θ x (δ; γ) -> ψ tt (update' w w' δ x, γ)) ->
        w' ||- {{ϕ}} Assign k e {{ψ}}.
 Proof.
   intros.
@@ -73,8 +73,8 @@ Defined.
 Lemma rw_assign_tot_util {Γ Δ} {k} {e} {τ} {w : (Δ ++ Γ) |- e : τ}  {w' : Γ ;;; Δ ||- Assign k e : UNIT}
       {ϕ} {ϕ'} {ψ : post} {θ} :
   w |- [{ϕ'}] e [{θ}] ->
-       ((fun γδ : sem_ro_ctx (Δ ++ Γ) => ϕ (tedious_sem_app Δ Γ γδ)) ->> ϕ') ->
-       (forall (x : sem_datatype τ) (γ : sem_ro_ctx Γ) (δ : sem_ro_ctx Δ), θ x (δ; γ) -> ψ tt (update' w w' δ x, γ)) ->
+       ((fun γδ : sem_ctx (Δ ++ Γ) => ϕ (tedious_sem_app Δ Γ γδ)) ->> ϕ') ->
+       (forall (x : sem_datatype τ) (γ : sem_ctx Γ) (δ : sem_ctx Δ), θ x (δ; γ) -> ψ tt (update' w w' δ x, γ)) ->
        w' ||- [{ϕ}] Assign k e [{ψ}].
 Proof.
   intros.
@@ -89,7 +89,7 @@ Lemma rw_cond_prt_util {Γ Δ} {e c1 c2} {τ} {w : (Δ ++ Γ) |- e : BOOL} {w1 :
   w |- {{ϕ'}} e {{θ}} ->
        w1 ||- {{θ1'}} c1 {{ψ1'}} ->
        w2 ||- {{θ2'}} c2 {{ψ2'}} ->
-       ((fun γδ : sem_ro_ctx (Δ ++ Γ) => ϕ (tedious_sem_app Δ Γ γδ)) ->> ϕ') ->
+       ((fun γδ : sem_ctx (Δ ++ Γ) => ϕ (tedious_sem_app Δ Γ γδ)) ->> ϕ') ->
        (ro_to_rw_pre (θ true) ->> θ1') -> 
        (ψ1' ->>> ψ) ->
        (ro_to_rw_pre (θ false) ->> θ2') -> 
@@ -115,7 +115,7 @@ Lemma rw_cond_tot_util {Γ Δ} {e c1 c2} {τ} {w : (Δ ++ Γ) |- e : BOOL} {w1 :
   w |- [{ϕ'}] e [{θ}] ->
        w1 ||- [{θ1'}] c1 [{ψ1'}] ->
        w2 ||- [{θ2'}] c2 [{ψ2'}] ->
-       ((fun γδ : sem_ro_ctx (Δ ++ Γ) => ϕ (tedious_sem_app Δ Γ γδ)) ->> ϕ') ->
+       ((fun γδ : sem_ctx (Δ ++ Γ) => ϕ (tedious_sem_app Δ Γ γδ)) ->> ϕ') ->
        (ro_to_rw_pre (θ true) ->> θ1') -> 
        (ψ1' ->>> ψ) ->
        (ro_to_rw_pre (θ false) ->> θ2') -> 
@@ -193,18 +193,18 @@ Defined.
 (* when we know where the limit converges to *)
 Lemma ro_lim_prt_util {Γ} {e}
       {w : Γ |- Lim e : REAL}
-      {ϕ} {ψ} (f : sem_ro_ctx Γ -> R) :
+      {ϕ} {ψ} (f : sem_ctx Γ -> R) :
   (has_type_ro_Lim_inverse Γ e w) |-
         [{fun x => ϕ (snd x)}]
           e
           [{y | fun x => Rabs (y - f(snd x)) < pow2 (- fst x)}] ->
-        ((fun y (x : sem_ro_ctx Γ) => ϕ x /\ y = f x) ->>> ψ) ->
+        ((fun y (x : sem_ctx Γ) => ϕ x /\ y = f x) ->>> ψ) ->
         w |- {{ϕ}} Lim e {{ψ}}.
 Proof.
   intros.
   pose proof
        (ro_lim_prt _ _ _ _ _ w
-                   (fun y (x : sem_ro_ctx Γ) => ϕ x /\ y = f x)
+                   (fun y (x : sem_ctx Γ) => ϕ x /\ y = f x)
                    X
        ).
   assert ((forall γ, ϕ γ ->
@@ -225,17 +225,17 @@ Defined.
 
 Lemma ro_lim_tot_util {Γ} {e}
       {w : Γ |- Lim e : REAL}
-      {ϕ} {ψ} (f : sem_ro_ctx Γ -> R) :
+      {ϕ} {ψ} (f : sem_ctx Γ -> R) :
   (has_type_ro_Lim_inverse Γ e w) |-
         [{fun x => ϕ (snd x)}]
           e
           [{y | fun x => Rabs (y - f(snd x)) < pow2 (- fst x)}] ->
-        ((fun y (x : sem_ro_ctx Γ) => ϕ x /\ y = f x) ->>> ψ) ->
+        ((fun y (x : sem_ctx Γ) => ϕ x /\ y = f x) ->>> ψ) ->
         w |- [{ϕ}] Lim e [{ψ}].
 Proof.
   intros.
   pose proof
-       (ro_lim_tot _ _ _ _ _ w (fun y (x : sem_ro_ctx Γ) => ϕ x /\ y = f x) X).
+       (ro_lim_tot _ _ _ _ _ w (fun y (x : sem_ctx Γ) => ϕ x /\ y = f x) X).
   assert ((forall γ, ϕ γ ->
                      exists y : R,
                        (fun y0 x => ϕ x /\ y0 = f x) y γ /\
@@ -299,7 +299,7 @@ Proof.
     try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
 Defined.
 
-Lemma pp_rw_pre_prt {Γ Δ} {e} {τ} {ϕ ϕ'} {ψ : sem_datatype τ -> sem_ro_ctx Δ * sem_ro_ctx Γ -> Prop} :
+Lemma pp_rw_pre_prt {Γ Δ} {e} {τ} {ϕ ϕ'} {ψ : sem_datatype τ -> sem_ctx Δ * sem_ctx Γ -> Prop} :
   Γ ;;; Δ ||-- {{ϕ}} e {{y : τ | ψ y}} -> ϕ' ->> ϕ -> Γ ;;; Δ ||-- {{ϕ'}} e {{y : τ | ψ y}}.
 Proof.
   intros.
@@ -309,7 +309,7 @@ Proof.
     try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
 Defined.
 
-Lemma pp_rw_pre_tot {Γ Δ} {e} {τ} {ϕ ϕ'} {ψ : sem_datatype τ -> sem_ro_ctx Δ * sem_ro_ctx Γ -> Prop} :
+Lemma pp_rw_pre_tot {Γ Δ} {e} {τ} {ϕ ϕ'} {ψ : sem_datatype τ -> sem_ctx Δ * sem_ctx Γ -> Prop} :
   Γ ;;; Δ ||-- [{ϕ}] e [{y : τ | ψ y}] -> ϕ' ->> ϕ ->  Γ ;;; Δ ||-- [{ϕ'}] e [{y : τ | ψ y}].
 Proof.
   intros.
@@ -340,7 +340,7 @@ Proof.
     try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
 Defined.
 
-Lemma pp_rw_post_prt {Γ Δ} {e} {τ} {ϕ} {ψ ψ' : sem_datatype τ -> sem_ro_ctx Δ * sem_ro_ctx Γ -> Prop} :
+Lemma pp_rw_post_prt {Γ Δ} {e} {τ} {ϕ} {ψ ψ' : sem_datatype τ -> sem_ctx Δ * sem_ctx Γ -> Prop} :
   Γ ;;; Δ ||-- {{ϕ}} e {{y : τ | ψ y}} ->  ψ ->>> ψ' -> Γ ;;; Δ ||-- {{ϕ}} e {{y : τ | ψ' y}}.
 Proof.
   intros.
@@ -350,7 +350,7 @@ Proof.
     try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
 Defined.
 
-Lemma pp_rw_post_tot {Γ Δ} {e} {τ} {ϕ} {ψ ψ' : sem_datatype τ -> sem_ro_ctx Δ * sem_ro_ctx Γ -> Prop} :
+Lemma pp_rw_post_tot {Γ Δ} {e} {τ} {ϕ} {ψ ψ' : sem_datatype τ -> sem_ctx Δ * sem_ctx Γ -> Prop} :
   Γ ;;; Δ ||-- [{ϕ}] e [{y : τ | ψ y}] -> ψ ->>> ψ' -> Γ ;;; Δ ||-- [{ϕ}] e [{y : τ | ψ' y}].
 Proof.
   intros.
@@ -518,9 +518,9 @@ Defined.
 
 
 
-Lemma pp_ro_lim_prt_util_known_limit {Γ} {e} {ϕ : sem_ro_ctx Γ -> Prop} {ψ} (f : sem_ro_ctx Γ -> R) :
+Lemma pp_ro_lim_prt_util_known_limit {Γ} {e} {ϕ : sem_ctx Γ -> Prop} {ψ} (f : sem_ctx Γ -> R) :
   (INTEGER :: Γ) |-- [{fun x => ϕ (snd x)}] e  [{y : REAL | fun x => Rabs (y - f(snd x)) < pow2 (- fst x)}] ->
-  ((fun y (x : sem_ro_ctx Γ) => ϕ x /\ y = f x) ->>> ψ) ->
+  ((fun y (x : sem_ctx Γ) => ϕ x /\ y = f x) ->>> ψ) ->
   Γ |-- {{ϕ}} Lim e {{y : REAL | ψ y}}.
 Proof.
   intros.
@@ -532,9 +532,9 @@ Proof.
   exact H.
 Defined.
 
-Lemma pp_ro_lim_tot_util_known_limit {Γ} {e} {ϕ : sem_ro_ctx Γ -> Prop} {ψ} (f : sem_ro_ctx Γ -> R) :
+Lemma pp_ro_lim_tot_util_known_limit {Γ} {e} {ϕ : sem_ctx Γ -> Prop} {ψ} (f : sem_ctx Γ -> R) :
   (INTEGER :: Γ) |-- [{fun x => ϕ (snd x)}] e  [{y : REAL | fun x => Rabs (y - f(snd x)) < pow2 (- fst x)}] ->
-  ((fun y (x : sem_ro_ctx Γ) => ϕ x /\ y = f x) ->>> ψ) ->
+  ((fun y (x : sem_ctx Γ) => ϕ x /\ y = f x) ->>> ψ) ->
   Γ |-- [{ϕ}] Lim e [{y : REAL | ψ y}].
 Proof.
   intros.
@@ -607,7 +607,7 @@ Defined.
     Γ ;;; Δ ||-- [{ro_to_rw_pre (θ true)}] c [{y : UNIT | ϕ }] -> 
     (Γ ++ Δ) ;;; Δ ||-- [{(fun x =>  ro_to_rw_pre (θ true) (fst x, fst_app (snd x)) /\ fst x = snd_app (snd x))}] c [{y : UNIT | ψ }] ->
     (forall δ γ,
-        ϕ (δ, γ) -> ~ (exists f : nat -> sem_ro_ctx Δ, f 0%nat = δ /\ (forall n : nat, ψ (f (S n), (γ; f n))))) ->
+        ϕ (δ, γ) -> ~ (exists f : nat -> sem_ctx Δ, f 0%nat = δ /\ (forall n : nat, ψ (f (S n), (γ; f n))))) ->
     ϕ' ->> ϕ ->
     (fun _ => ϕ /\\ ro_to_rw_pre (θ false)) ->>> ψ' ->    
     Γ ;;; Δ ||-- [{ϕ'}] While e c [{y : UNIT | ψ' y}].
@@ -665,7 +665,7 @@ Defined.
 
 
 Lemma pp_rw_new_var_tot_util2 {Γ Δ} {e c} {τ} σ {ϕ}
-         (θ : sem_datatype σ -> sem_ro_ctx (Δ ++ Γ) -> Prop)
+         (θ : sem_datatype σ -> sem_ctx (Δ ++ Γ) -> Prop)
          {ψ : post} :
   (Δ ++ Γ) |-- [{rw_to_ro_pre ϕ}] e [{y : σ | θ y}] ->
   Γ;;; (σ :: Δ) ||-- [{fun x => θ (fst (fst x)) (snd (fst x); snd x) /\ ϕ (snd (fst x), snd x)}]

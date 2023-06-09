@@ -39,7 +39,7 @@ Fixpoint sem_list_datatype (lst : ro_ctx) : Type :=
   | cons t lst => sem_datatype t * sem_list_datatype lst
   end.
 
-Definition sem_ro_ctx := sem_list_datatype.
+Definition sem_ctx := sem_list_datatype.
 
 
 (* Updating states *)
@@ -72,21 +72,11 @@ Proof.
   exact H2.
 Defined.
 
-Definition update' {Γ Δ} {k} {e} {τ} (w : (Δ ++ Γ) |- e : τ) (w' : Γ;;;Δ ||- Assign k e : DUnit) : sem_ro_ctx Δ -> sem_datatype τ -> sem_ro_ctx Δ.
+Definition update' {Γ Δ} {k} {e} {τ} (w : (Δ ++ Γ) |- e : τ) (w' : Γ;;;Δ ||- Assign k e : DUnit) : sem_ctx Δ -> sem_datatype τ -> sem_ctx Δ.
 Proof.
   intros δ v.
   exact (update _ v δ (assign_wty_assignable _ _ _ _ _ w w')).
 Defined.
-
-Definition sem_rw_ctx : rw_ctx -> Type.
-Proof.
-  intros [Γ Δ].
-  exact (sem_list_datatype Γ * sem_list_datatype Δ)%type.
-Defined.
-
-
-
-
 
 Section TediousList.
   (* We use list for context and cartesian products dependent to it as its semantics.
@@ -94,13 +84,13 @@ Section TediousList.
    seems very trivial, in formal level, they need some clerical tedious works.
    In the following section, before we define the semantics, let us define the operations
    and prove some obvious properties.
-   When we have Γ, Δ, γ : sem_ro_ctx Γ, and δ ∈ sem_ro_ctx Δ, we define
-   - (γ ; δ) : sem_ro_ctx (Γ ++ Δ) 
-   - fst_app : sem_ro_ctx (Γ ++ Δ) -> sem_ro_ctx Γ
-   - snd_app : sem_ro_ctx (Γ ++ Δ) -> sem_ro_ctx Δ
+   When we have Γ, Δ, γ : sem_ctx Γ, and δ ∈ sem_ctx Δ, we define
+   - (γ ; δ) : sem_ctx (Γ ++ Δ) 
+   - fst_app : sem_ctx (Γ ++ Δ) -> sem_ctx Γ
+   - snd_app : sem_ctx (Γ ++ Δ) -> sem_ctx Δ
    and prove their properties. *)
   
-  Definition tedious_sem_app Γ Δ : sem_ro_ctx (Γ ++ Δ) -> (sem_ro_ctx Γ) * sem_ro_ctx Δ.
+  Definition tedious_sem_app Γ Δ : sem_ctx (Γ ++ Δ) -> (sem_ctx Γ) * sem_ctx Δ.
   Proof.
     intro.
     induction Γ.
@@ -114,7 +104,7 @@ Section TediousList.
     exact ((s, s1), s2).
   Defined.
 
-  Definition tedious_prod_sem Γ Δ : (sem_ro_ctx Γ) * sem_ro_ctx Δ -> sem_ro_ctx (Γ ++ Δ).
+  Definition tedious_prod_sem Γ Δ : (sem_ctx Γ) * sem_ctx Δ -> sem_ctx (Γ ++ Δ).
   Proof.
     intros.
     induction Γ.
@@ -131,21 +121,21 @@ Section TediousList.
   Defined.
   Notation " ( γ ; δ ) " := (tedious_prod_sem _ _  (γ, δ)).
 
-  Definition fst_app {Γ Δ} : sem_ro_ctx (Γ ++ Δ) -> sem_ro_ctx Γ.
+  Definition fst_app {Γ Δ} : sem_ctx (Γ ++ Δ) -> sem_ctx Γ.
   Proof.
     intro γδ.
     destruct (tedious_sem_app _ _ γδ) as [γ _].
     exact γ.
   Defined.
 
-  Definition snd_app {Γ Δ} : sem_ro_ctx (Γ ++ Δ) -> sem_ro_ctx Δ.
+  Definition snd_app {Γ Δ} : sem_ctx (Γ ++ Δ) -> sem_ctx Δ.
   Proof.
     intro γδ.
     destruct (tedious_sem_app _ _ γδ) as [_ δ].
     exact δ.
   Defined.
 
-  Definition pair_app {Γ Δ} : sem_ro_ctx Γ -> sem_ro_ctx Δ -> sem_ro_ctx (Γ ++ Δ).
+  Definition pair_app {Γ Δ} : sem_ctx Γ -> sem_ctx Δ -> sem_ctx (Γ ++ Δ).
   Proof.
     intros γ δ.
     apply tedious_prod_sem.
@@ -167,7 +157,7 @@ Section TediousList.
     auto.
   Defined.
 
-  Lemma tedious_equiv_2_snd : forall Δ Γ τ  (γ : sem_ro_ctx ((τ :: Δ) ++ Γ)), snd_app γ = snd_app (snd γ).
+  Lemma tedious_equiv_2_snd : forall Δ Γ τ  (γ : sem_ctx ((τ :: Δ) ++ Γ)), snd_app γ = snd_app (snd γ).
   Proof.
     intros.
     unfold snd_app.
@@ -177,7 +167,7 @@ Section TediousList.
     destruct (tedious_sem_app Δ Γ s0); auto.
   Defined.
 
-  Lemma tedious_equiv_2_fst : forall Δ Γ τ  (γ : sem_ro_ctx ((τ :: Δ) ++  Γ)), fst_app γ = (fst γ, fst_app (snd γ)).
+  Lemma tedious_equiv_2_fst : forall Δ Γ τ  (γ : sem_ctx ((τ :: Δ) ++  Γ)), fst_app γ = (fst γ, fst_app (snd γ)).
   Proof.
     intro.
     intros.
@@ -188,7 +178,7 @@ Section TediousList.
     destruct (tedious_sem_app Δ Γ s0); auto.
   Defined.
 
-  Lemma tedious_equiv_2 {Δ Γ} (γ : sem_ro_ctx (Δ ++ Γ)) : γ = (fst_app γ; snd_app γ). 
+  Lemma tedious_equiv_2 {Δ Γ} (γ : sem_ctx (Δ ++ Γ)) : γ = (fst_app γ; snd_app γ). 
   Proof.
     dependent induction Δ.
     simpl.
@@ -218,9 +208,9 @@ Section TediousList.
   Defined.
 
   
-  Lemma tedious_equiv_snd : forall Γ Δ (x : sem_ro_ctx Γ) (y : sem_ro_ctx Δ), snd_app (x; y) = y.
+  Lemma tedious_equiv_snd : forall Γ Δ (x : sem_ctx Γ) (y : sem_ctx Δ), snd_app (x; y) = y.
   Proof. intros. unfold snd_app. rewrite tedious_equiv_1. reflexivity. Defined.
-  Lemma tedious_equiv_fst : forall Γ Δ (x : sem_ro_ctx Γ) (y : sem_ro_ctx Δ), fst_app (x; y) = x.
+  Lemma tedious_equiv_fst : forall Γ Δ (x : sem_ctx Γ) (y : sem_ctx Δ), fst_app (x; y) = x.
   Proof. intros. unfold fst_app. rewrite tedious_equiv_1. reflexivity. Defined.
 
   Lemma tedious_equiv_0 : forall Δ Γ x,  tedious_sem_app Δ Γ (tedious_prod_sem Δ Γ x) = x.
@@ -242,7 +232,7 @@ Proof.
 Defined.
 
 
-Fixpoint ro_access  Γ k τ (w: Γ |- Var k : τ) : sem_ro_ctx Γ -> sem_datatype τ.
+Fixpoint ro_access  Γ k τ (w: Γ |- Var k : τ) : sem_ctx Γ -> sem_datatype τ.
 Proof.
   inversion w.
   inversion H.
@@ -258,7 +248,7 @@ Proof.
   exact s0.
 Defined.
 
-Fixpoint p_ro_access  Γ k τ (w : r_has_type_ro Γ (Var k) τ) : sem_ro_ctx Γ -> sem_datatype τ.
+Fixpoint p_ro_access  Γ k τ (w : r_has_type_ro Γ (Var k) τ) : sem_ctx Γ -> sem_datatype τ.
 Proof.
   inversion w.  
   intro.
@@ -271,7 +261,7 @@ Proof.
   exact s0.
 Defined.
 
-Fixpoint ro_access_Var_0 Γ τ (w : (τ :: Γ) |- Var 0 : τ) {struct w} : forall x (γ : sem_ro_ctx Γ), ro_access (τ :: Γ) 0 τ w (x, γ) = x.
+Fixpoint ro_access_Var_0 Γ τ (w : (τ :: Γ) |- Var 0 : τ) {struct w} : forall x (γ : sem_ctx Γ), ro_access (τ :: Γ) 0 τ w (x, γ) = x.
 Proof.
   intros.
   dependent destruction w.
@@ -293,7 +283,7 @@ Proof.
   exact w.
 Defined.
 
-Fixpoint ro_access_Var_S Γ k τ σ (w : (τ :: Γ) |- Var (S k) : σ) {struct w} : forall x (γ : sem_ro_ctx Γ),
+Fixpoint ro_access_Var_S Γ k τ σ (w : (τ :: Γ) |- Var (S k) : σ) {struct w} : forall x (γ : sem_ctx Γ),
     ro_access (τ :: Γ) (S k) σ w (x, γ) = ro_access Γ k σ (has_type_ro_Var_S_inv _ _ _ _ w) γ .
 Proof.
   intros.
@@ -380,9 +370,9 @@ Proof.
 Qed.
 
 Fixpoint sem_ro_exp (Γ : ro_ctx) (e : exp) (τ : datatype) (D : Γ |- e : τ) {struct D} :
-  sem_ro_ctx Γ -> pdom (sem_datatype τ)
+  sem_ctx Γ -> pdom (sem_datatype τ)
 with sem_rw_exp (Γ Δ : ro_ctx) (c : exp) (τ : datatype) (D : Γ ;;; Δ ||- c : τ) {struct D} :
-  sem_ro_ctx Γ -> sem_ro_ctx Δ -> pdom (sem_ro_ctx Δ * sem_datatype τ).
+  sem_ctx Γ -> sem_ctx Δ -> pdom (sem_ctx Δ * sem_datatype τ).
 Proof.
   - (* read only expressions *)
     induction D; intro γ.
@@ -512,7 +502,7 @@ Proof.
     exact (Case2 B1 B2 X Y).
 
     (* has_type_rw_CaseList *)
-    assert (list ((pdom bool) * (pdom (sem_ro_ctx Δ * sem_datatype τ)))).
+    assert (list ((pdom bool) * (pdom (sem_ctx Δ * sem_datatype τ)))).
     clear l0.
     induction f.
     exact nil.

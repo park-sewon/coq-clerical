@@ -159,7 +159,7 @@ Proof.
 
   pose (ϕ :=
           fun δγ :
-            sem_ro_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ro_ctx (INTEGER :: Γ)  
+            sem_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ctx (INTEGER :: Γ)  
               =>
                 let m := fst (snd δγ) in
                 let x := ro_access _ _ _ w (snd (snd δγ)) in
@@ -172,7 +172,7 @@ Proof.
                     δ = pow2 (- m) /\ q = sin_q (S n) x /\ A = sin_A n x).
 
   pose (θ :=
-          fun (y : bool) (δγ : sem_ro_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ))) =>
+          fun (y : bool) (δγ : sem_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ))) =>
             let q := fst (fst_app δγ) in
             let δ := fst (snd (snd (snd (fst_app δγ)))) in
             ϕ (fst_app δγ, snd_app δγ) /\
@@ -180,7 +180,7 @@ Proof.
 
   pose (ψ :=
           fun δγδ :   
-                sem_ro_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ro_ctx ((INTEGER :: Γ) ++  (REAL :: REAL :: INTEGER :: REAL :: nil))
+                sem_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ctx ((INTEGER :: Γ) ++  (REAL :: REAL :: INTEGER :: REAL :: nil))
                =>
                  let m := fst (fst_app (snd δγδ)) in
                  let x := ro_access _ _ _ w (snd (fst_app (snd δγδ))) in
@@ -237,7 +237,7 @@ Proof.
            (Δ :=  REAL :: REAL :: INTEGER :: REAL :: nil)
            (θ :=
               fun _ (δγ :
-                sem_ro_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ro_ctx (INTEGER :: Γ))  
+                sem_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ctx (INTEGER :: Γ))  
               =>
                 let m := fst (snd δγ) in
                 let x := ro_access _ _ _ w (snd (snd δγ)) in
@@ -255,7 +255,7 @@ Proof.
             by repeat constructor.
         apply (pp_rw_assign_tot_util INTEGER
                  (θ := (fun y
-                            (δγ : sem_ro_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ)))
+                            (δγ : sem_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ)))
                         => 
                           let j := fst (snd (snd (fst_app δγ))) in
                           y = j + 1)%Z)
@@ -291,7 +291,7 @@ Proof.
                (Δ :=  REAL :: REAL :: INTEGER :: REAL :: nil)
                (θ :=
                   fun _ (δγ :
-                        sem_ro_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ro_ctx (INTEGER :: Γ))  
+                        sem_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ctx (INTEGER :: Γ))  
                   =>
                     let m := fst (snd δγ) in
                     let x := ro_access _ _ _ w (snd (snd δγ)) in
@@ -308,7 +308,7 @@ Proof.
             by repeat constructor.
         apply (pp_rw_assign_tot_util REAL
                  (θ := (fun y
-                            (δγ : sem_ro_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ)))
+                            (δγ : sem_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ)))
                         => 
                           let q := fst (fst_app δγ) in
                           let A := fst (snd (fst_app δγ)) in
@@ -340,7 +340,7 @@ Proof.
           by repeat constructor.
       apply (pp_rw_assign_tot_util REAL
                (θ := (fun y
-                          (δγ : sem_ro_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ)))
+                          (δγ : sem_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ)))
                       => 
                         let q := fst (fst_app δγ) in
                         let x := ro_access Γ k REAL w (snd (snd_app δγ)) in
@@ -474,7 +474,7 @@ Proof.
              (Γ := (INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: REAL :: nil)
              (Δ :=  REAL :: REAL :: INTEGER :: REAL :: nil)
              (θ :=
-                (fun _ (δγδ : sem_ro_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ro_ctx ((INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: REAL :: nil)) =>
+                (fun _ (δγδ : sem_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ctx ((INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: REAL :: nil)) =>
        let m := fst (fst_app (snd δγδ)) in
        let x := ro_access Γ k REAL w (snd (fst_app (snd δγδ))) in
        let j := fst (snd (snd (fst δγδ))) in
@@ -486,7 +486,7 @@ Proof.
             by repeat constructor.
         apply (pp_rw_assign_tot_util INTEGER
                  (θ := (fun y
-                            (δγ : sem_ro_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (_)))
+                            (δγ : sem_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (_)))
                         => 
                           let j := fst (snd (snd (fst_app δγ))) in
                           y = j + 1)%Z)
@@ -540,7 +540,7 @@ Proof.
                (Γ := (INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: REAL :: nil)
                (Δ :=  REAL :: REAL :: INTEGER :: REAL :: nil)
                (θ :=
-                  (fun _ (δγδ : sem_ro_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ro_ctx ((INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: REAL :: nil)) =>
+                  (fun _ (δγδ : sem_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ctx ((INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: REAL :: nil)) =>
                      let m := fst (fst_app (snd δγδ)) in
                      let x := ro_access Γ k REAL w (snd (fst_app (snd δγδ))) in
                      let j := fst (snd (snd (fst δγδ))) in
@@ -552,7 +552,7 @@ Proof.
             by repeat constructor.
         apply (pp_rw_assign_tot_util REAL
                  (θ := (fun y
-                            (δγ : sem_ro_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ ++ _)))
+                            (δγ : sem_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ ++ _)))
                         => 
                           let q := fst (fst_app δγ) in
                           let A := fst (snd (fst_app δγ)) in
@@ -586,7 +586,7 @@ Proof.
           by repeat constructor.
     apply (pp_rw_assign_tot_util REAL
                                  (θ := (fun y
-                                            (δγ : sem_ro_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ ((INTEGER :: Γ) ++ _)))
+                                            (δγ : sem_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ ((INTEGER :: Γ) ++ _)))
                                         => 
                                           let q := fst (fst_app δγ) in
                                           let x := ro_access Γ k REAL w (snd (fst_app (snd_app δγ))) in

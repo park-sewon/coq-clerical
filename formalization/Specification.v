@@ -8,26 +8,26 @@ Require Import Clerical.SemanticsProperties.
 
 Structure ro_prt {Γ : ro_ctx} {e : exp} {τ : datatype} (wty : Γ |- e : τ) :=
   {
-    ro_prt_pre : sem_ro_ctx Γ -> Prop ;
-    ro_prt_post : sem_datatype τ -> sem_ro_ctx Γ -> Prop
+    ro_prt_pre : sem_ctx Γ -> Prop ;
+    ro_prt_post : sem_datatype τ -> sem_ctx Γ -> Prop
   }.
 
 Structure ro_tot {Γ : ro_ctx} {e : exp} {τ : datatype} (wty : Γ |- e : τ) :=
   {
-    ro_tot_pre : sem_ro_ctx Γ -> Prop ;
-    ro_tot_post : sem_datatype τ-> sem_ro_ctx Γ ->  Prop
+    ro_tot_pre : sem_ctx Γ -> Prop ;
+    ro_tot_post : sem_datatype τ-> sem_ctx Γ ->  Prop
   }.
 
 Structure rw_prt {Γ Δ: ro_ctx} {c : exp} {τ : datatype} (wty : Γ ;;; Δ ||- c : τ) :=
   {
-    rw_prt_pre :  sem_ro_ctx Δ  * sem_ro_ctx Γ -> Prop ;
-    rw_prt_post : sem_datatype τ -> sem_ro_ctx Δ * sem_ro_ctx Γ ->  Prop
+    rw_prt_pre :  sem_ctx Δ  * sem_ctx Γ -> Prop ;
+    rw_prt_post : sem_datatype τ -> sem_ctx Δ * sem_ctx Γ ->  Prop
   }.
 
 Structure rw_tot {Γ Δ : ro_ctx} {c : exp} {τ : datatype} (wty : Γ ;;; Δ ||- c : τ) :=
   {
-    rw_tot_pre : sem_ro_ctx Δ * sem_ro_ctx Γ -> Prop ;
-    rw_tot_post :  sem_datatype τ -> sem_ro_ctx Δ * sem_ro_ctx Γ -> Prop
+    rw_tot_pre : sem_ctx Δ * sem_ctx Γ -> Prop ;
+    rw_tot_post :  sem_datatype τ -> sem_ctx Δ * sem_ctx Γ -> Prop
   }.
 
 Definition sem_ro_prt {Γ} {e} {τ} {wty} (t : ro_prt wty) :=

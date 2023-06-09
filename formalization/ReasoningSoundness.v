@@ -1,7 +1,6 @@
 Require Import List.
 Require Import Reals.
 Require Import Coq.Program.Equality.
-
 From Clerical.Preliminaries Require Import Preliminaries.
 From Clerical.Powerdomain Require Import Powerdomain.
 From Clerical Require Import Syntax.
@@ -83,7 +82,7 @@ Defined.
 
 Lemma proves_rw_prt_Assign_sound
   Γ Δ e k τ ϕ0 (ψ0 :post) θ (w : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit)  :
-  w |= {{(fun δγ : sem_ro_ctx (Δ ++ Γ) => ϕ0 (tedious_sem_app Δ Γ δγ))}} e {{θ}}
+  w |= {{(fun δγ : sem_ctx (Δ ++ Γ) => ϕ0 (tedious_sem_app Δ Γ δγ))}} e {{θ}}
   -> (forall x γ δ , θ x (δ; γ) -> ψ0 tt (update' w w' δ x, γ))
   ->  w' ||= {{ϕ0}} Assign k e {{ψ0}}.
 Proof.
@@ -144,7 +143,7 @@ Defined.
 
 Lemma proves_rw_tot_Assign_sound
   Γ Δ e k τ ϕ0 (ψ0 :post) θ (w : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit)  :
-  w |= [{(fun δγ : sem_ro_ctx (Δ ++ Γ) => ϕ0 (tedious_sem_app Δ Γ δγ))}] e [{θ}]
+  w |= [{(fun δγ : sem_ctx (Δ ++ Γ) => ϕ0 (tedious_sem_app Δ Γ δγ))}] e [{θ}]
   -> (forall x γ δ , θ x (δ; γ) -> ψ0 tt (update' w w' δ x, γ))
   ->  w' ||= [{ϕ0}] Assign k e [{ψ0}].
 Proof.
@@ -642,7 +641,7 @@ Lemma proves_rw_while_tot_sound :
     wty_c' ||= [{ro_to_rw_pre (θ true)}] c [{fun _  => ϕ}] ->
     wty_c ||= [{fun δγδ' => ro_to_rw_pre (θ true) (fst δγδ', fst_app (snd δγδ')) /\ fst δγδ' = snd_app (snd δγδ')}] c [{fun _ => ψ }] ->
     (forall δ γ, ϕ (δ, γ) ->
-            ~exists f : nat -> sem_ro_ctx Δ,
+            ~exists f : nat -> sem_ctx Δ,
                 f 0 = δ /\ forall n, ψ (f (S n), (γ ; f n))) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     wty ||= [{ϕ}] While e c [{fun _ => (ϕ /\\ ro_to_rw_pre (θ false))}].
@@ -2752,9 +2751,9 @@ Proof.
         pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip γ x').
         assert (rw_prt_pre w2
          (mk_rw_prt w2
-            (fun xδγ : sem_ro_ctx (σ :: Δ) * sem_ro_ctx Γ =>
+            (fun xδγ : sem_ctx (σ :: Δ) * sem_ctx Γ =>
              θ (fst (fst xδγ)) (tedious_prod_sem Δ Γ (snd (fst xδγ), snd xδγ)))
-            (fun (x : sem_datatype τ) (xδγ : sem_ro_ctx (σ :: Δ) * sem_ro_ctx Γ) => ψ0 x (snd (fst xδγ), snd xδγ)))
+            (fun (x : sem_datatype τ) (xδγ : sem_ctx (σ :: Δ) * sem_ctx Γ) => ψ0 x (snd (fst xδγ), snd xδγ)))
          (x', γ)).
         simpl.
         destruct x'.
@@ -3347,9 +3346,9 @@ Proof.
         pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip γ x').
         assert (rw_prt_pre w2
          (mk_rw_prt w2
-            (fun xδγ : sem_ro_ctx (σ :: Δ) * sem_ro_ctx Γ =>
+            (fun xδγ : sem_ctx (σ :: Δ) * sem_ctx Γ =>
              θ (fst (fst xδγ)) (tedious_prod_sem Δ Γ (snd (fst xδγ), snd xδγ)))
-            (fun (x : sem_datatype τ) (xδγ : sem_ro_ctx (σ :: Δ) * sem_ro_ctx Γ) => ψ0 x (snd (fst xδγ), snd xδγ)))
+            (fun (x : sem_datatype τ) (xδγ : sem_ctx (σ :: Δ) * sem_ctx Γ) => ψ0 x (snd (fst xδγ), snd xδγ)))
          (x', γ)).
         simpl.
         destruct x'.
@@ -3382,8 +3381,8 @@ Proof.
       induction H2.
       pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip γ x).
       assert (rw_tot_pre w2
-         (mk_rw_tot w2 (fun xδγ : sem_ro_ctx (σ :: Δ) * sem_ro_ctx Γ => θ (fst (fst xδγ)) (snd (fst xδγ); snd xδγ))
-            (fun (x : sem_datatype τ) (xδγ : sem_ro_ctx (σ :: Δ) * sem_ro_ctx Γ) => ψ0 x (snd (fst xδγ), snd xδγ))) (x, γ)).
+         (mk_rw_tot w2 (fun xδγ : sem_ctx (σ :: Δ) * sem_ctx Γ => θ (fst (fst xδγ)) (snd (fst xδγ); snd xδγ))
+            (fun (x : sem_datatype τ) (xδγ : sem_ctx (σ :: Δ) * sem_ctx Γ) => ψ0 x (snd (fst xδγ), snd xδγ))) (x, γ)).
       simpl.
       destruct x.
       simpl.
@@ -3809,7 +3808,7 @@ Proof.
       (*     wty_e |- [{rw_to_ro_pre ϕ}] e [{θ}] -> *)
       (*     wty_c ||- [{fun δγδ' => ro_to_rw_pre (θ true) (fst δγδ', fst_app (snd δγδ')) /\ fst δγδ' = snd_app (snd δγδ')}] c [{fun _ δγδ' => ϕ (fst δγδ', fst_app (snd δγδ')) /\ ψ δγδ' }] -> *)
       (*              (forall δ γ, ϕ (δ, γ) ->   *)
-      (*                            ~exists f : nat -> sem_ro_ctx Δ, *)
+      (*                            ~exists f : nat -> sem_ctx Δ, *)
       (*                                f 0 = δ /\ forall n, ψ (f (S n), (γ ; f n))) -> *)
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     wty ||- [{ϕ}] While e c [{fun _ => (ϕ /\\ ro_to_rw_pre (θ false))}] *)

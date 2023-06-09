@@ -51,7 +51,6 @@ Defined.
 
 
 
-
 Fixpoint admissible_ro_prt_pose_readonly Γ e τ (w : Γ |- e : τ) ϕ ψ θ (X : w |- {{ϕ}} e {{ψ}}) {struct X} :
   w |- {{ϕ /\\ θ}} e {{ψ /\\\ fun _ => θ}}
 with admissible_ro_tot_pose_readonly Γ e τ (w : Γ |- e : τ) ϕ ψ θ (X : w |- [{ϕ}] e [{ψ}]) {struct X} :
@@ -75,7 +74,7 @@ Proof.
     apply (ro_imply_prt _ _ _ _ _ _ _ _ _ H X0 H0).
 
     pose proof (ro_exfalso_prt Γ e τ w (ψ /\\\ (fun _ : sem_datatype τ => θ))).
-    assert (((fun _ : sem_ro_ctx Γ => False) /\\ θ) ->> (fun _ : sem_ro_ctx Γ => False)).
+    assert (((fun _ : sem_ctx Γ => False) /\\ θ) ->> (fun _ : sem_ctx Γ => False)).
     intros a [b c]; contradict b.
     assert ((ψ /\\\ (fun _ : sem_datatype τ => θ)) ->>> (ψ /\\\ (fun _ : sem_datatype τ => θ))).
     intros a b; auto.
@@ -240,7 +239,7 @@ Proof.
     apply H1.
     auto.
 
-    pose proof (admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun x : sem_ro_ctx (INTEGER :: Γ) => θ (snd x)) p).
+    pose proof (admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun x : sem_ctx (INTEGER :: Γ) => θ (snd x)) p).
     apply (ro_lim_prt _ _ _ _ _ _ _ X).
     intros.
     destruct H.
@@ -270,7 +269,7 @@ Proof.
     apply (ro_imply_tot _ _ _ _ _ _ _ _ _ H X0 H0).
 
     pose proof (ro_exfalso_tot Γ e τ w (ψ /\\\ (fun _ : sem_datatype τ => θ))).
-    assert (((fun _ : sem_ro_ctx Γ => False) /\\ θ) ->> (fun _ : sem_ro_ctx Γ => False)).
+    assert (((fun _ : sem_ctx Γ => False) /\\ θ) ->> (fun _ : sem_ctx Γ => False)).
     intros a [b c]; contradict b.
     assert ((ψ /\\\ (fun _ : sem_datatype τ => θ)) ->>> (ψ /\\\ (fun _ : sem_datatype τ => θ))).
     intros a b; auto.
@@ -431,7 +430,7 @@ Proof.
     split; auto.
     split; auto.
 
-    pose proof (admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun x : sem_ro_ctx (INTEGER :: Γ) => θ (snd x)) X).
+    pose proof (admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun x : sem_ctx (INTEGER :: Γ) => θ (snd x)) X).
     apply (ro_lim_tot _ _ _ _ _ _ _ X0).
     intros.
     destruct H.
@@ -458,7 +457,7 @@ Proof.
     intros h1 h2 h3.
     destruct h3; split; auto.
 
-    pose proof (rw_exfalso_prt _ _ _ _ w (ψ /\\\ fun (_ : sem_datatype τ) (δγ : sem_ro_ctx Δ * sem_ro_ctx Γ) => θ (snd δγ))).    
+    pose proof (rw_exfalso_prt _ _ _ _ w (ψ /\\\ fun (_ : sem_datatype τ) (δγ : sem_ctx Δ * sem_ctx Γ) => θ (snd δγ))).    
     apply (fun a => rw_imply_prt _ _ _ _ _ _ _ _ _ _ a X).
     intros h1 h2.
     destruct h2; auto.
@@ -510,7 +509,7 @@ Proof.
     clear IHX.
     pose proof (admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγγ' => θ (snd_app ( δγγ'))) p).
     pose proof (admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X).
-    apply (rw_new_var_prt Γ Δ e c τ σ w1 w2 (ϕ /\\ (fun δγ : sem_ro_ctx Δ * sem_ro_ctx Γ => θ (snd δγ))) (ψ /\\\ (fun (_ : sem_datatype τ) (δγ : sem_ro_ctx Δ * sem_ro_ctx Γ) => θ (snd δγ))) (θ0 /\\\ (fun (_ : sem_datatype σ) (δγγ' : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγγ'))) w').
+    apply (rw_new_var_prt Γ Δ e c τ σ w1 w2 (ϕ /\\ (fun δγ : sem_ctx Δ * sem_ctx Γ => θ (snd δγ))) (ψ /\\\ (fun (_ : sem_datatype τ) (δγ : sem_ctx Δ * sem_ctx Γ) => θ (snd δγ))) (θ0 /\\\ (fun (_ : sem_datatype σ) (δγγ' : sem_ctx (Δ ++ Γ)) => θ (snd_app δγγ'))) w').
     apply (fun a => ro_imply_prt _ _ _ _ _ _ _ _ _ a X0).
     intros h1 h2.
     destruct h2; split; auto.
@@ -522,7 +521,7 @@ Proof.
     intros h1 h2 h3; auto.
 
     pose proof (admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p).
-    apply (rw_assign_prt _ _ _ _ _ w _ (θ0 /\\\ (fun (_ : sem_datatype τ) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ))) _ w').
+    apply (rw_assign_prt _ _ _ _ _ w _ (θ0 /\\\ (fun (_ : sem_datatype τ) (δγ : sem_ctx (Δ ++ Γ)) => θ (snd_app δγ))) _ w').
     apply (fun a => ro_imply_prt _ _ _ _ _ _ _ _ _ a X).
     intros h1 h2.
     destruct h2; split; auto.
@@ -534,7 +533,7 @@ Proof.
     pose proof (admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p).
     pose proof (admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X1).
     pose proof (admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X2).
-    apply (rw_cond_prt _ _ _ _ _ _ w w1 w2 w' _ (θ0 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ)))).
+    apply (rw_cond_prt _ _ _ _ _ _ w w1 w2 w' _ (θ0 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ctx (Δ ++ Γ)) => θ (snd_app δγ)))).
     apply (fun a => ro_imply_prt _ _ _ _ _ _ _ _ _ a X).
     intros h1 h2.
     split; destruct h2; auto.
@@ -563,7 +562,7 @@ Proof.
     pose proof (admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X1).
     pose proof (admissible_ro_prt_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p0).
     pose proof (admissible_rw_prt_pose_readonly _ _ _ _ _ _ _ θ X2).
-    apply (rw_case_prt _ _ _ _ _ _ _ wty_e1 wty_e2 wty_c1 wty_c2 wty _ (θ1 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ))) (θ2 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ)))).
+    apply (rw_case_prt _ _ _ _ _ _ _ wty_e1 wty_e2 wty_c1 wty_c2 wty _ (θ1 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ctx (Δ ++ Γ)) => θ (snd_app δγ))) (θ2 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ctx (Δ ++ Γ)) => θ (snd_app δγ)))).
     apply (fun a => ro_imply_prt _ _ _ _ _ _ _ _ _ a X).
     intros h1 h2.
     split; destruct h2.
@@ -622,8 +621,8 @@ Proof.
     auto.
     intros h1 h2 h3; auto.
     assert
-      (wty ||- {{(ϕ /\\ (fun δγ : sem_ro_ctx Δ * sem_ro_ctx Γ => θ (snd δγ)))}} (WHILE e DO c END) {{y
-                                                                                                    | ((fun _ : unit => (ϕ /\\ (fun δγ : sem_ro_ctx Δ * sem_ro_ctx Γ => θ (snd δγ))) /\\
+      (wty ||- {{(ϕ /\\ (fun δγ : sem_ctx Δ * sem_ctx Γ => θ (snd δγ)))}} (WHILE e DO c END) {{y
+                                                                                                    | ((fun _ : unit => (ϕ /\\ (fun δγ : sem_ctx Δ * sem_ctx Γ => θ (snd δγ))) /\\
                                                                                                                                                                                      ro_to_rw_pre
                                                                                                                                                                                      ((θ0 /\\\ (fun _ δγ => θ (snd_app δγ))) false))) y}}).
     apply (rw_while_prt _ _ _ _ wty_e wty_c wty).
@@ -663,7 +662,7 @@ Proof.
     intros h1 h2 h3.
     destruct h3; split; auto.
 
-    pose proof (rw_exfalso_tot _ _ _ _ w (ψ /\\\ fun (_ : sem_datatype τ) (δγ : sem_ro_ctx Δ * sem_ro_ctx Γ) => θ (snd δγ))).    
+    pose proof (rw_exfalso_tot _ _ _ _ w (ψ /\\\ fun (_ : sem_datatype τ) (δγ : sem_ctx Δ * sem_ctx Γ) => θ (snd δγ))).    
     apply (fun a => rw_imply_tot _ _ _ _ _ _ _ _ _ _ a X).
     intros h1 h2.
     destruct h2; auto.
@@ -715,7 +714,7 @@ Proof.
     clear IHX.
     pose proof (admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγγ' => θ (snd_app ( δγγ'))) p).
     pose proof (admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ θ X).
-    apply (rw_new_var_tot Γ Δ e c τ σ w1 w2 (ϕ /\\ (fun δγ : sem_ro_ctx Δ * sem_ro_ctx Γ => θ (snd δγ))) (ψ /\\\ (fun (_ : sem_datatype τ) (δγ : sem_ro_ctx Δ * sem_ro_ctx Γ) => θ (snd δγ))) (θ0 /\\\ (fun (_ : sem_datatype σ) (δγγ' : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγγ'))) w').
+    apply (rw_new_var_tot Γ Δ e c τ σ w1 w2 (ϕ /\\ (fun δγ : sem_ctx Δ * sem_ctx Γ => θ (snd δγ))) (ψ /\\\ (fun (_ : sem_datatype τ) (δγ : sem_ctx Δ * sem_ctx Γ) => θ (snd δγ))) (θ0 /\\\ (fun (_ : sem_datatype σ) (δγγ' : sem_ctx (Δ ++ Γ)) => θ (snd_app δγγ'))) w').
     apply (fun a => ro_imply_tot _ _ _ _ _ _ _ _ _ a X0).
     intros h1 h2.
     destruct h2; split; auto.
@@ -727,7 +726,7 @@ Proof.
     intros h1 h2 h3; auto.
 
     pose proof (admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p).
-    apply (rw_assign_tot _ _ _ _ _ w _ (θ0 /\\\ (fun (_ : sem_datatype τ) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ))) _ w').
+    apply (rw_assign_tot _ _ _ _ _ w _ (θ0 /\\\ (fun (_ : sem_datatype τ) (δγ : sem_ctx (Δ ++ Γ)) => θ (snd_app δγ))) _ w').
     apply (fun a => ro_imply_tot _ _ _ _ _ _ _ _ _ a X).
     intros h1 h2.
     destruct h2; split; auto.
@@ -739,7 +738,7 @@ Proof.
     pose proof (admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p).
     pose proof (admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ θ X1).
     pose proof (admissible_rw_tot_pose_readonly _ _ _ _ _ _ _ θ X2).
-    apply (rw_cond_tot _ _ _ _ _ _ w w1 w2 w' _ (θ0 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ)))).
+    apply (rw_cond_tot _ _ _ _ _ _ w w1 w2 w' _ (θ0 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ctx (Δ ++ Γ)) => θ (snd_app δγ)))).
     apply (fun a => ro_imply_tot _ _ _ _ _ _ _ _ _ a X).
     intros h1 h2.
     split; destruct h2; auto.
@@ -771,10 +770,10 @@ Proof.
     pose proof (admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p1).
     pose proof (admissible_ro_tot_pose_readonly _ _ _ _ _ _ (fun δγ => θ (snd_app ( δγ))) p2).
 
-    apply (rw_case_tot _ _ _ _ _ _ _ wty_e1 wty_e2 wty_c1 wty_c2 wty _ (θ1 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ))) (θ2 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ro_ctx (Δ ++ Γ)) => θ (snd_app δγ)))
+    apply (rw_case_tot _ _ _ _ _ _ _ wty_e1 wty_e2 wty_c1 wty_c2 wty _ (θ1 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ctx (Δ ++ Γ)) => θ (snd_app δγ))) (θ2 /\\\ (fun (_ : sem_datatype BOOL) (δγ : sem_ctx (Δ ++ Γ)) => θ (snd_app δγ)))
                        _
-                       (ϕ1 /\\ (fun δγ : sem_ro_ctx (Δ ++ Γ) => θ (snd_app δγ)))      
-                       (ϕ2 /\\ (fun δγ : sem_ro_ctx (Δ ++ Γ) => θ (snd_app δγ)))
+                       (ϕ1 /\\ (fun δγ : sem_ctx (Δ ++ Γ) => θ (snd_app δγ)))      
+                       (ϕ2 /\\ (fun δγ : sem_ctx (Δ ++ Γ) => θ (snd_app δγ)))
           ).
     apply (fun a => ro_imply_prt _ _ _ _ _ _ _ _ _ a X).
     intros h1 h2.
@@ -877,8 +876,8 @@ Proof.
     exact H1.
 
     assert
-      (wty ||- [{(ϕ /\\ (fun δγ : sem_ro_ctx Δ * sem_ro_ctx Γ => θ (snd δγ)))}] (WHILE e DO c END) [{y
-                                                                                                    | ((fun _ : unit => (ϕ /\\ (fun δγ : sem_ro_ctx Δ * sem_ro_ctx Γ => θ (snd δγ))) /\\
+      (wty ||- [{(ϕ /\\ (fun δγ : sem_ctx Δ * sem_ctx Γ => θ (snd δγ)))}] (WHILE e DO c END) [{y
+                                                                                                    | ((fun _ : unit => (ϕ /\\ (fun δγ : sem_ctx Δ * sem_ctx Γ => θ (snd δγ))) /\\
                                                                                                                                                                                      ro_to_rw_pre
                                                                                                                                                                                      ((θ0 /\\\ (fun _ δγ => θ (snd_app δγ))) false))) y}]).
     {
@@ -957,7 +956,7 @@ Proof.
     apply (ro_real_op_plus_prt _ _ _ _ _ _ _ _ _ _ (admissible_ro_tot_prt _ _ _ _ _ _ X1) (admissible_ro_tot_prt _ _ _ _ _ _ X2) ψ0).
     apply (ro_real_op_mult_prt _ _ _ _ _ _ _ _ _ _ (admissible_ro_tot_prt _ _ _ _ _ _ X1) (admissible_ro_tot_prt _ _ _ _ _ _ X2) ψ0).
     apply (ro_real_op_minus_prt _ _ _ _ _ _ _ _ _ _ (admissible_ro_tot_prt _ _ _ _ _ _ X1) (admissible_ro_tot_prt _ _ _ _ _ _ X2) ψ0).
-    assert (sc:  (θ /\\\ (fun (x : sem_datatype REAL) (_ : sem_ro_ctx Γ) => x <> Rdefinitions.IZR BinNums.Z0)) ->>>
+    assert (sc:  (θ /\\\ (fun (x : sem_datatype REAL) (_ : sem_ctx Γ) => x <> Rdefinitions.IZR BinNums.Z0)) ->>>
                                                                                                                (fun x : sem_datatype REAL => ψ (Rdefinitions.RinvImpl.Rinv x))).
     {
       intros γ δ [m1 m2].
@@ -967,7 +966,7 @@ Proof.
     apply (ro_int_comp_eq_prt _ _ _ _ _ _ _ _ _ _ (admissible_ro_tot_prt _ _ _ _ _ _ X1) (admissible_ro_tot_prt _ _ _ _ _ _ X2) ψ0).
     apply (ro_int_comp_lt_prt _ _ _ _ _ _ _ _ _ _ (admissible_ro_tot_prt _ _ _ _ _ _ X1) (admissible_ro_tot_prt _ _ _ _ _ _ X2) ψ0).
 
-    assert (sc : (forall (y1 y2 : sem_datatype REAL) (γ : sem_ro_ctx Γ),
+    assert (sc : (forall (y1 y2 : sem_datatype REAL) (γ : sem_ctx Γ),
                      ψ1 y1 γ -> ψ2 y2 γ -> y1 <> y2 -> ψ (Rltb'' y1 y2) γ)).
     {
       intros; apply a; auto.

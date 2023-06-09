@@ -24,7 +24,7 @@ Inductive simple_arithmetical : forall e, Type :=
 | SA_false : simple_arithmetical FALSE
 .
 
-Fixpoint simple_arithmetical_value_prt e (p : simple_arithmetical e) Γ τ (w : Γ |- e :τ) : sem_ro_ctx Γ -> sem_datatype τ.
+Fixpoint simple_arithmetical_value_prt e (p : simple_arithmetical e) Γ τ (w : Γ |- e :τ) : sem_ctx Γ -> sem_datatype τ.
 Proof.
   dependent destruction p.
   exact (ro_access _ _ _ w).
@@ -322,7 +322,7 @@ Defined.
 
 
 Fixpoint simple_arithmetical_value_tot e (p : simple_arithmetical e) Γ τ (w : Γ |- e : τ)  :
-  (sem_ro_ctx Γ -> Prop) * (sem_ro_ctx Γ -> sem_datatype τ).
+  (sem_ctx Γ -> Prop) * (sem_ctx Γ -> sem_datatype τ).
 Proof.
   dependent destruction p.
   exact (fun _ => True, ro_access _ _ _ w).

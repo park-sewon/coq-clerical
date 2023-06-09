@@ -42,14 +42,14 @@ Proof.
   proves_simple_arithmetical.
 
   apply (pp_rw_sequence_tot
-           (θ := fun _ (δγ : sem_ro_ctx (REAL :: REAL :: INTEGER :: nil) * sem_ro_ctx (INTEGER :: nil))  => 
+           (θ := fun _ (δγ : sem_ctx (REAL :: REAL :: INTEGER :: nil) * sem_ctx (INTEGER :: nil))  => 
                    let p := fst (snd δγ) in
                    let l := fst (snd (fst δγ)) in
                    let u := fst (fst δγ) in 
                    Rabs (PI - (l + u) / 2) < pow2 (- p))).
   {
     
-    pose (ϕ :=  fun (δγ : sem_ro_ctx (REAL :: REAL :: INTEGER :: nil) * sem_ro_ctx (INTEGER :: nil))  => 
+    pose (ϕ :=  fun (δγ : sem_ctx (REAL :: REAL :: INTEGER :: nil) * sem_ctx (INTEGER :: nil))  => 
                   let p := fst (snd δγ) in
                   let k := fst (snd (snd (fst δγ))) in
                   let l := fst (snd (fst δγ)) in
@@ -58,7 +58,7 @@ Proof.
                     3 <= l /\ l < PI < u /\ u <= 4 /\ u - l = pow2 (- k)).
 
     pose (θ :=
-            fun (y : bool) (δγ : sem_ro_ctx ((REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil))) => 
+            fun (y : bool) (δγ : sem_ctx ((REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil))) => 
               let p := fst (snd_app δγ) in
               let k := fst (snd (snd (fst_app δγ))) in
               let l := fst (snd (fst_app δγ)) in
@@ -66,7 +66,7 @@ Proof.
               ϕ (fst_app δγ, snd_app δγ) /\
                 (y = true <-> k < p)%Z).
     
-    pose (ψ := fun (δγδ : sem_ro_ctx (REAL :: REAL :: INTEGER :: nil) * sem_ro_ctx ((INTEGER :: nil) ++ REAL :: REAL :: INTEGER :: nil)) => 
+    pose (ψ := fun (δγδ : sem_ctx (REAL :: REAL :: INTEGER :: nil) * sem_ctx ((INTEGER :: nil) ++ REAL :: REAL :: INTEGER :: nil)) => 
                  let p := fst (fst_app (snd δγδ)) in
 
                  let k := fst (snd (snd (fst δγδ))) in
@@ -97,7 +97,7 @@ Proof.
     {
       (* loop invariant *)
       apply (pp_rw_sequence_tot
-               (θ := fun _ (δγ : sem_ro_ctx (REAL :: REAL :: INTEGER :: nil) * sem_ro_ctx (INTEGER :: nil))  => 
+               (θ := fun _ (δγ : sem_ctx (REAL :: REAL :: INTEGER :: nil) * sem_ctx (INTEGER :: nil))  => 
                        let p := fst (snd δγ) in
                        let k := fst (snd (snd (fst δγ))) in
                        let l := fst (snd (fst δγ)) in
@@ -105,7 +105,7 @@ Proof.
                        is_rational l /\ is_rational u /\
                          3 <= l /\ l < PI < u /\ u <= 4 /\ u - l = pow2 (- (k + 1)))).
       
-      apply (pp_rw_new_var_tot_util2 REAL (fun y (δγ : sem_ro_ctx ((REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)))  =>
+      apply (pp_rw_new_var_tot_util2 REAL (fun y (δγ : sem_ctx ((REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)))  =>
                                              let p := fst (snd_app δγ) in
                                              let k := fst (snd (snd (fst_app δγ))) in
                                              let l := fst (snd (fst_app δγ)) in
@@ -126,14 +126,14 @@ Proof.
       {
         (* conditional *)
         apply (pp_rw_cond_tot_util
-                 (fun y (δγ : sem_ro_ctx ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)))  =>
+                 (fun y (δγ : sem_ctx ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)))  =>
                     let x := fst (fst_app δγ) in 
                     (y = true -> 0 < sin x) /\ (y= false -> sin x < 0))).
         {
           (* branch condition *)
           apply (pp_ro_real_comp_lt_tot_util
                    (fun y _ => y = 0)
-                   (fun y (δγ : sem_ro_ctx ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)))  =>
+                   (fun y (δγ : sem_ctx ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)))  =>
                       let x := fst (fst_app δγ) in 
                       y = sin x)).
           
@@ -199,7 +199,7 @@ Proof.
           (* first branch *)
           assert (assignable (REAL :: REAL :: REAL :: INTEGER :: nil) REAL 2) as a by repeat constructor.
           apply (pp_rw_assign_tot_util REAL
-                   (θ := (fun y (x : sem_ro_ctx ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)))  => y = fst x)) a).
+                   (θ := (fun y (x : sem_ctx ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)))  => y = fst x)) a).
           
           proves_simple_arithmetical.
           rewrite val; reduce_ro_access; auto.
@@ -232,7 +232,7 @@ Proof.
           (* second branch *)
           assert (assignable (REAL :: REAL :: REAL :: INTEGER :: nil) REAL 1) as a by repeat constructor.
           apply (pp_rw_assign_tot_util REAL
-                   (θ := (fun y (x : sem_ro_ctx ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)))  => y = fst x)) a).
+                   (θ := (fun y (x : sem_ctx ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)))  => y = fst x)) a).
           
           proves_simple_arithmetical.
           rewrite val; reduce_ro_access; auto.
@@ -266,7 +266,7 @@ Proof.
         (* after the local variable creatation, increase the counter *)
         assert (assignable (REAL :: REAL :: INTEGER :: nil) INTEGER 2) as a by repeat constructor.
         apply (pp_rw_assign_tot_util INTEGER
-                 (θ := (fun y (x : sem_ro_ctx ((REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)))  => y = fst (snd (snd x)) + 1)%Z) a).
+                 (θ := (fun y (x : sem_ctx ((REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)))  => y = fst (snd (snd x)) + 1)%Z) a).
         
         proves_simple_arithmetical.
         rewrite val; reduce_ro_access; auto.
@@ -283,7 +283,7 @@ Proof.
       (* loop invariant *)
       apply (pp_rw_sequence_tot
                (θ := fun _
-                         (δγ : sem_ro_ctx (REAL :: REAL :: INTEGER :: nil) * sem_ro_ctx ((INTEGER :: nil) ++ (REAL :: REAL :: INTEGER :: nil)))  => 
+                         (δγ : sem_ctx (REAL :: REAL :: INTEGER :: nil) * sem_ctx ((INTEGER :: nil) ++ (REAL :: REAL :: INTEGER :: nil)))  => 
 
                        let p := fst (fst_app (snd δγ)) in
                        let k := fst (snd (snd (fst δγ))) in
@@ -297,7 +297,7 @@ Proof.
                        (k < p /\ k = k')%Z)).
       
       apply (pp_rw_new_var_tot_util2 REAL
-               (fun y (δγ : sem_ro_ctx ((REAL :: REAL :: INTEGER :: nil) ++ ((INTEGER :: nil) ++ (REAL :: REAL :: INTEGER :: nil))))  => 
+               (fun y (δγ : sem_ctx ((REAL :: REAL :: INTEGER :: nil) ++ ((INTEGER :: nil) ++ (REAL :: REAL :: INTEGER :: nil))))  => 
                   
                   let p := fst (fst_app (snd_app δγ)) in
                   let k := fst (snd (snd (fst_app δγ))) in
@@ -324,7 +324,7 @@ Proof.
       {
         (* conditional *)
         apply (pp_rw_cond_tot_util
-                 (fun y (δγ : sem_ro_ctx ((REAL ::REAL :: REAL :: INTEGER :: nil) ++ ((INTEGER :: nil) ++ ( REAL :: REAL :: INTEGER :: nil))))  => 
+                 (fun y (δγ : sem_ctx ((REAL ::REAL :: REAL :: INTEGER :: nil) ++ ((INTEGER :: nil) ++ ( REAL :: REAL :: INTEGER :: nil))))  => 
                   let p := fst (fst_app (snd_app δγ)) in
 
                   let k := fst (snd (snd (snd (fst_app δγ)))) in
@@ -341,7 +341,7 @@ Proof.
           (* branch condition *)
           apply (pp_ro_real_comp_lt_tot_util
                    (fun y _ => y = 0)
-                   (fun y (δγ : sem_ro_ctx ((REAL ::REAL :: REAL :: INTEGER :: nil) ++ ((INTEGER :: nil) ++ ( REAL :: REAL :: INTEGER :: nil))))  => 
+                   (fun y (δγ : sem_ctx ((REAL ::REAL :: REAL :: INTEGER :: nil) ++ ((INTEGER :: nil) ++ ( REAL :: REAL :: INTEGER :: nil))))  => 
                   let p := fst (fst_app (snd_app δγ)) in
 
                   let k := fst (snd (snd (snd (fst_app δγ)))) in
@@ -417,7 +417,7 @@ Proof.
           (* first branch *)
           assert (assignable (REAL :: REAL :: REAL :: INTEGER :: nil) REAL 2) as a by repeat constructor.
           apply (pp_rw_assign_tot_util REAL
-                   (θ := (fun y (x : sem_ro_ctx ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil ++ _)))  => y = fst x)) a).
+                   (θ := (fun y (x : sem_ctx ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil ++ _)))  => y = fst x)) a).
           
           proves_simple_arithmetical.
           rewrite val; reduce_ro_access; auto.
@@ -444,7 +444,7 @@ Proof.
           (* second branch *)
           assert (assignable (REAL :: REAL :: REAL :: INTEGER :: nil) REAL 1) as a by repeat constructor.
           apply (pp_rw_assign_tot_util REAL
-                   (θ := (fun y (x : sem_ro_ctx ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil ++ _)))  => y = fst x)) a).
+                   (θ := (fun y (x : sem_ctx ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil ++ _)))  => y = fst x)) a).
           
           proves_simple_arithmetical.
           rewrite val; reduce_ro_access; auto.
@@ -472,7 +472,7 @@ Proof.
         (* after the local variable creatation, increase the counter *)
         assert (assignable (REAL :: REAL :: INTEGER :: nil) INTEGER 2) as a by repeat constructor.
         apply (pp_rw_assign_tot_util INTEGER
-                 (θ := (fun y (x : sem_ro_ctx ((REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil ++ _)))  => y = fst (snd (snd x)) + 1)%Z) a).
+                 (θ := (fun y (x : sem_ctx ((REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil ++ _)))  => y = fst (snd (snd x)) + 1)%Z) a).
         
         proves_simple_arithmetical.
         rewrite val; reduce_ro_access; auto.

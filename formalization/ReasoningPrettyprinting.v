@@ -84,7 +84,7 @@ Section LogicalRules.
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
   Defined.
 
-  Lemma pp_rw_imply_prt {Γ Δ} {e} {τ} {ϕ ϕ'} {ψ ψ' : sem_datatype τ -> sem_ro_ctx Δ * sem_ro_ctx Γ -> Prop} :
+  Lemma pp_rw_imply_prt {Γ Δ} {e} {τ} {ϕ ϕ'} {ψ ψ' : sem_datatype τ -> sem_ctx Δ * sem_ctx Γ -> Prop} :
     Γ ;;; Δ ||-- {{ϕ}} e {{y : τ | ψ y}} -> ϕ' ->> ϕ -> ψ ->>> ψ' -> Γ ;;; Δ ||-- {{ϕ'}} e {{y : τ | ψ' y}}.
   Proof.
     intros.
@@ -94,7 +94,7 @@ Section LogicalRules.
       try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
   Defined.
 
-  Lemma pp_rw_imply_tot {Γ Δ} {e} {τ} {ϕ ϕ'} {ψ ψ' : sem_datatype τ -> sem_ro_ctx Δ * sem_ro_ctx Γ -> Prop} :
+  Lemma pp_rw_imply_tot {Γ Δ} {e} {τ} {ϕ ϕ'} {ψ ψ' : sem_datatype τ -> sem_ctx Δ * sem_ctx Γ -> Prop} :
     Γ ;;; Δ ||-- [{ϕ}] e [{y : τ | ψ y}] -> ϕ' ->> ϕ -> ψ ->>> ψ' -> Γ ;;; Δ ||-- [{ϕ'}] e [{y : τ | ψ' y}].
   Proof.
     intros.
@@ -516,9 +516,9 @@ Section BinaryOp.
 End BinaryOp.
 
 Section Limits.
-  Lemma pp_ro_lim_prt {Γ} {e} {ϕ : sem_ro_ctx Γ -> Prop} {θ} {ψ} :
+  Lemma pp_ro_lim_prt {Γ} {e} {ϕ : sem_ctx Γ -> Prop} {θ} {ψ} :
     (INTEGER :: Γ) |-- [{fun x => ϕ (snd x)}] e [{y : REAL | θ y}] ->
-    (forall γ : sem_ro_ctx Γ, ϕ γ ->
+    (forall γ : sem_ctx Γ, ϕ γ ->
                               exists y, ψ y γ /\
                                           forall x z, θ z (x, γ) -> (Rabs (z - y)%R < pow2 (- x))%R) ->
     Γ |-- {{ϕ}} Lim e {{y : REAL | ψ y}}.
@@ -528,9 +528,9 @@ Section Limits.
     apply (ro_lim_prt _ _ _ _ _ _ _ p X).
   Defined.
 
-  Lemma pp_ro_lim_tot {Γ} {e} {ϕ : sem_ro_ctx Γ -> Prop} {θ} {ψ} :
+  Lemma pp_ro_lim_tot {Γ} {e} {ϕ : sem_ctx Γ -> Prop} {θ} {ψ} :
     (INTEGER :: Γ) |-- [{fun x => ϕ (snd x)}] e [{y : REAL | θ y}] ->
-    (forall γ : sem_ro_ctx Γ, ϕ γ ->
+    (forall γ : sem_ctx Γ, ϕ γ ->
                               exists y, ψ y γ /\
                                           forall x z, θ z (x, γ) -> (Rabs (z - y)%R < pow2 (- x))%R) ->
     Γ |-- [{ϕ}] Lim e [{y : REAL | ψ y}].
@@ -684,9 +684,9 @@ Section Commands.
   Lemma pp_rw_case_list_prt {Γ Δ} {l} {τ} (h : (1 <= length l)%nat)
         (* (wty_l : ForallT (fun ec => ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))%type l) *)
         (* (wty : Γ ;;; Δ ||- CaseList l : τ) *)
-        (θ : ForallT (fun _ => bool -> sem_ro_ctx (Δ ++ Γ) -> Prop) l)
+        (θ : ForallT (fun _ => bool -> sem_ctx (Δ ++ Γ) -> Prop) l)
         {ϕ} {ψ} :
-    ForallT1 _ (fun ec (θ : bool -> sem_ro_ctx (Δ ++ Γ) -> Prop)
+    ForallT1 _ (fun ec (θ : bool -> sem_ctx (Δ ++ Γ) -> Prop)
                 =>
                   ((Δ ++ Γ) |-- {{rw_to_ro_pre ϕ}} fst ec {{y : BOOL | θ y}}) *
                     (Γ ;;; Δ ||-- {{ro_to_rw_pre (θ true)}} snd ec {{y : τ | ψ y}}))%type l θ ->
@@ -731,18 +731,18 @@ Section Commands.
   Lemma pp_rw_case_list_tot {Γ Δ} {l} {τ} (h : (1 <= length l)%nat)
         (* (wty_l : ForallT (fun ec => ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))%type l) *)
         (* (wty : Γ ;;; Δ ||- CaseList l : τ) *)
-        (θ : ForallT (fun _ => bool -> sem_ro_ctx (Δ ++ Γ) -> Prop) l)
-        (ϕi : ForallT (fun _ => sem_ro_ctx (Δ ++ Γ) -> Prop) l)
+        (θ : ForallT (fun _ => bool -> sem_ctx (Δ ++ Γ) -> Prop) l)
+        (ϕi : ForallT (fun _ => sem_ctx (Δ ++ Γ) -> Prop) l)
         {ϕ} {ψ} :
     ForallT2 _ _ (fun ec θ ϕi =>
                     ((Δ ++ Γ) |-- {{rw_to_ro_pre ϕ}} fst ec {{y : BOOL | θ y}}) *
                       (Γ ;;; Δ ||-- [{ro_to_rw_pre (θ true)}] snd ec [{y : τ | ψ y}]) *
                       ((Δ ++ Γ) |-- [{ϕi}] fst ec [{y : BOOL | fun _ => y = true}])
                  )%type l θ ϕi  ->
-    (forall x : sem_ro_ctx (Δ ++ Γ),
+    (forall x : sem_ctx (Δ ++ Γ),
         rw_to_ro_pre ϕ x ->
-        ForallT_disj (fun _ : exp * exp => sem_ro_ctx (Δ ++ Γ) -> Prop)
-                     (fun (_ : exp * exp) (ϕi0 : sem_ro_ctx (Δ ++ Γ) -> Prop) => ϕi0 x) l ϕi) ->
+        ForallT_disj (fun _ : exp * exp => sem_ctx (Δ ++ Γ) -> Prop)
+                     (fun (_ : exp * exp) (ϕi0 : sem_ctx (Δ ++ Γ) -> Prop) => ϕi0 x) l ϕi) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     Γ ;;; Δ ||-- [{ϕ}] CaseList l [{y : τ | ψ y}].
   Proof.
@@ -811,7 +811,7 @@ Section Commands.
     Γ ;;; Δ ||-- [{ro_to_rw_pre (θ true)}] c [{y : UNIT | ϕ }] -> 
     (Γ ++ Δ) ;;; Δ ||-- [{(fun x =>  ro_to_rw_pre (θ true) (fst x, fst_app (snd x)) /\ fst x = snd_app (snd x))}] c [{y : UNIT | ψ }] ->
     (forall δ γ,
-        ϕ (δ, γ) -> ~ (exists f : nat -> sem_ro_ctx Δ, f 0%nat = δ /\ (forall n : nat, ψ (f (S n), (γ; f n))))) -> 
+        ϕ (δ, γ) -> ~ (exists f : nat -> sem_ctx Δ, f 0%nat = δ /\ (forall n : nat, ψ (f (S n), (γ; f n))))) -> 
     Γ ;;; Δ ||-- [{ϕ}] While e c [{y : UNIT | (ϕ /\\ ro_to_rw_pre (θ false))}].
   Proof.
     intros [w1 p1] [w2 p2] [w3 p3] h.

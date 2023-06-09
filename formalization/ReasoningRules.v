@@ -13,8 +13,7 @@ Require Import Clerical.Specification.
 
 
 
-
-Definition ro_asrt_imp {Γ} (P Q : sem_ro_ctx Γ -> Prop) : Prop :=
+Definition ro_asrt_imp {Γ} (P Q : sem_ctx Γ -> Prop) : Prop :=
   forall γ, P γ -> Q γ.
 
 Definition asrt_imp {X : Type} (P Q : X -> Prop) : Prop :=
@@ -53,7 +52,7 @@ Reserved Notation " w ||- [{ P }] e [{ y | Q }] " (at level 50, P, e, y, Q at ne
 
 
 
-(* Fixpoint ro_access  Γ k τ (w: Γ |- Var k : τ) : sem_ro_ctx Γ -> sem_datatype τ. *)
+(* Fixpoint ro_access  Γ k τ (w: Γ |- Var k : τ) : sem_ctx Γ -> sem_datatype τ. *)
 (* Proof. *)
 (*   inversion w. *)
 (*   inversion H. *)
@@ -69,10 +68,10 @@ Reserved Notation " w ||- [{ P }] e [{ y | Q }] " (at level 50, P, e, y, Q at ne
 (*   exact s0. *)
 (* Defined. *)
 
-Definition rw_to_ro_pre {Γ Δ} (ϕ : sem_ro_ctx Δ * sem_ro_ctx Γ -> Prop) :=
+Definition rw_to_ro_pre {Γ Δ} (ϕ : sem_ctx Δ * sem_ctx Γ -> Prop) :=
                         fun δγ => ϕ (tedious_sem_app _ _ δγ).
 
-Definition ro_to_rw_pre {Γ Δ} (ϕ : sem_ro_ctx (Δ ++ Γ) -> Prop) : sem_ro_ctx Δ * sem_ro_ctx Γ -> Prop := fun δγ => ϕ (tedious_prod_sem Δ Γ δγ) .
+Definition ro_to_rw_pre {Γ Δ} (ϕ : sem_ctx (Δ ++ Γ) -> Prop) : sem_ctx Δ * sem_ctx Γ -> Prop := fun δγ => ϕ (tedious_prod_sem Δ Γ δγ) .
 
 Definition post {X Y : Type} := X -> Y -> Prop.
 
@@ -247,8 +246,8 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
 (* Limit *)
 | ro_lim_prt : forall Γ e (w : (INTEGER :: Γ) |- e : REAL) ϕ θ (w' : Γ |- Lim e : REAL) ψ,
 
-    w |- [{fun γ' : sem_ro_ctx _ => ϕ (snd γ')}] e [{θ}] ->
-    (forall γ : sem_ro_ctx Γ, ϕ γ -> exists y, ψ y γ /\ forall x z, θ z (x, γ) -> (Rabs (z - y)%R < powerRZ 2 (- x))%R) ->
+    w |- [{fun γ' : sem_ctx _ => ϕ (snd γ')}] e [{θ}] ->
+    (forall γ : sem_ctx Γ, ϕ γ -> exists y, ψ y γ /\ forall x z, θ z (x, γ) -> (Rabs (z - y)%R < powerRZ 2 (- x))%R) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     w' |- {{ϕ}} Lim e {{ψ}}
                                                         
@@ -424,8 +423,8 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
 (* Limit *)
 | ro_lim_tot : forall Γ e (w : (INTEGER :: Γ) |- e : REAL) ϕ θ (w' : Γ |- Lim e : REAL) ψ,
 
-    w |- [{fun γ' : sem_ro_ctx _ => ϕ (snd γ')}] e [{θ}] ->
-    (forall γ :sem_ro_ctx Γ, ϕ γ -> exists y, ψ y γ /\ forall x z, θ z (x, γ) -> (Rabs (z - y)%R < powerRZ 2 (- x))%R) ->
+    w |- [{fun γ' : sem_ctx _ => ϕ (snd γ')}] e [{θ}] ->
+    (forall γ :sem_ctx Γ, ϕ γ -> exists y, ψ y γ /\ forall x z, θ z (x, γ) -> (Rabs (z - y)%R < powerRZ 2 (- x))%R) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     w' |- [{ϕ}] Lim e [{ψ}]
                                                         
@@ -516,10 +515,10 @@ with proves_rw_prt : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_prt w -> T
 | rw_case_list_prt : forall Γ Δ l τ
                             (wty_l : ForallT (fun ec => ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))%type l)
                             (wty : Γ ;;; Δ ||- CaseList l : τ)
-                            (θ : ForallT (fun _ => bool -> sem_ro_ctx (Δ ++ Γ) -> Prop) l)
+                            (θ : ForallT (fun _ => bool -> sem_ctx (Δ ++ Γ) -> Prop) l)
                             ϕ ψ,
     ForallT2 _ _ 
-    (fun ec (wty_l : ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))  (θ : bool -> sem_ro_ctx (Δ ++ Γ) -> Prop)  =>
+    (fun ec (wty_l : ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))  (θ : bool -> sem_ctx (Δ ++ Γ) -> Prop)  =>
          
     (fst (wty_l) |- {{rw_to_ro_pre ϕ}} fst ec {{θ}}) *
     (snd (wty_l) ||- {{ro_to_rw_pre (θ true)}} snd ec {{ψ}}))%type l wty_l θ ->
@@ -626,11 +625,11 @@ with proves_rw_tot : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_tot w -> T
 | rw_case_list_tot : forall Γ Δ l τ
                             (wty_l : ForallT (fun ec => ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))%type l)
                             (wty : Γ ;;; Δ ||- CaseList l : τ)
-                            (θ : ForallT (fun _ => bool -> sem_ro_ctx (Δ ++ Γ) -> Prop) l)
-                            (ϕi : ForallT (fun _ => sem_ro_ctx (Δ ++ Γ) -> Prop) l)
+                            (θ : ForallT (fun _ => bool -> sem_ctx (Δ ++ Γ) -> Prop) l)
+                            (ϕi : ForallT (fun _ => sem_ctx (Δ ++ Γ) -> Prop) l)
                             ϕ ψ,
     ForallT3 _ _ _
-    (fun ec (wty_l : ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))  (θ : bool -> sem_ro_ctx (Δ ++ Γ) -> Prop) (ϕi : sem_ro_ctx (Δ ++ Γ) -> Prop)  =>
+    (fun ec (wty_l : ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))  (θ : bool -> sem_ctx (Δ ++ Γ) -> Prop) (ϕi : sem_ctx (Δ ++ Γ) -> Prop)  =>
          
     (fst (wty_l) |- {{rw_to_ro_pre ϕ}} fst ec {{θ}}) *
     (snd (wty_l) ||- [{ro_to_rw_pre (θ true)}] snd ec [{ψ}]) * 
@@ -648,7 +647,7 @@ with proves_rw_tot : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_tot w -> T
                c
                [{fun _ x => ψ x }] ->
              (forall δ γ, ϕ (δ, γ) ->  
-                           ~exists f : nat -> sem_ro_ctx Δ,
+                           ~exists f : nat -> sem_ctx Δ,
                                f O = δ /\ forall n, ψ (f (S n), (γ ; f n))) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     wty ||- [{ϕ}] While e c [{fun _ => (ϕ /\\ ro_to_rw_pre (θ false))}]
