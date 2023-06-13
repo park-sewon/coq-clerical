@@ -6,19 +6,13 @@ Reserved Notation " Γ |- t : T " (at level 50, t, T at next level).
 Reserved Notation " Γ ;;; Δ ||- t : T " (at level 50, Δ, t, T at next level). 
 
 (* A typing context. *)
-Definition ro_ctx := list datatype.
-Structure rw_ctx := {
-  ctx_rw : ro_ctx ;
-  ctx_ro : ro_ctx
-}.
+Definition ctx := list datatype.
 
-Definition mk_rw_ctx Γ Δ := {| ctx_ro := Γ ; ctx_rw := Δ|}.
-
-Inductive assignable : ro_ctx -> datatype -> nat -> Type :=
+Inductive assignable : ctx -> datatype -> nat -> Type :=
   assignable_0 : forall Δ τ, assignable (τ :: Δ) τ 0
 | assignable_S : forall Δ τ σ k, assignable Δ τ k -> assignable (σ :: Δ) τ (S k). 
 
-Inductive has_type_ro : ro_ctx -> exp -> datatype -> Type :=
+Inductive has_type_ro : ctx -> exp -> datatype -> Type :=
 (* from readwrite *)
 | has_type_ro_rw : forall Γ e τ, Γ ;;; nil ||- e : τ -> Γ |- e : τ 
 
@@ -51,12 +45,12 @@ Inductive has_type_ro : ro_ctx -> exp -> datatype -> Type :=
 (* limit *)
 | has_type_ro_Lim : forall Γ e, (DInteger :: Γ) |- e : DReal -> Γ |- Lim e : DReal
                                                                                                          
-with has_type_rw : rw_ctx -> exp -> datatype -> Type :=
+with has_type_rw : ctx -> ctx -> exp -> datatype -> Type :=
 (* from readonly *)
 | has_type_rw_ro : forall Γ Δ e τ, (Δ ++ Γ) |- e : τ -> Γ ;;; Δ ||- e : τ
 
 (* sequential *)
-| has_type_rw_Seq : forall Γ Δ c1 c2 τ, Γ ;;; Δ ||- c1 : DUnit -> Γ;;; Δ ||- c2 : τ -> Γ ;;; Δ ||- (Seq c1 c2) : τ 
+| has_type_rw_Seq : forall Γ Δ c1 c2 τ, Γ ;;; Δ ||- c1 : DUnit -> Γ ;;; Δ ||- c2 : τ -> Γ ;;; Δ ||- (Seq c1 c2) : τ 
                                                                         
 (* assignment *)
 | has_type_rw_Assign : forall Γ Δ e τ k, assignable Δ τ k -> (Δ ++ Γ) |- e : τ -> Γ ;;; Δ ||- Assign k e : DUnit
@@ -80,4 +74,4 @@ with has_type_rw : rw_ctx -> exp -> datatype -> Type :=
 | has_type_rw_While : forall Γ Δ e c, (Δ ++ Γ) |- e : DBoolean -> Γ ;;; Δ ||- c : DUnit -> Γ ;;; Δ ||- While e c : DUnit
                                                                                                                                                                  
                                                                                                              
-where " Γ |- c : τ " := (has_type_ro Γ c τ) and " Γ ;;; Δ ||- c : τ " := (has_type_rw (mk_rw_ctx Γ Δ) c τ).
+where " Γ |- c : τ " := (has_type_ro Γ c τ) and " Γ ;;; Δ ||- c : τ " := (has_type_rw  Γ Δ c τ).

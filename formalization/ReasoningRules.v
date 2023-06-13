@@ -39,14 +39,14 @@ Infix "\//" := asrt_or (at level 80).
 
 
 Section Rules.
-Reserved Notation " w |- {{ P }} e {{ Q }} " (at level 50, P, e, Q at next level).
-Reserved Notation " w |- {{ P }} e {{ y | Q }} " (at level 50, P, e,y, Q at next level).
-Reserved Notation " w |- [{ P }] e [{ Q }] " (at level 50, P, e, Q at next level).
-Reserved Notation " w ||- {{ P }} e {{ Q }} " (at level 50, P, e, Q at next level).
-Reserved Notation " w ||- [{ P }] e [{ Q }] " (at level 50, P, e, Q at next level).
-Reserved Notation " w |- [{ P }] e [{ y | Q }] " (at level 50, P, e, y, Q at next level).
-Reserved Notation " w ||- {{ P }} e {{ y | Q }} " (at level 50, P, e, y, Q at next level).
-Reserved Notation " w ||- [{ P }] e [{ y | Q }] " (at level 50, P, e, y, Q at next level).
+  Reserved Notation " ' x : Γ |- w {{ ϕ }} e {{ y : τ | ψ }}ᵖ "
+    (at level 50,  Γ, w, ϕ, e, y, τ, ψ at next level, x pattern).
+  Reserved Notation " ' x : Γ |- w {{ ϕ }} e {{ y : τ | ψ }}ᵗ "
+    (at level 50,  Γ, w, ϕ, e, y, τ, ψ at next level, x pattern).
+  Reserved Notation " ' x : Γ ;;; ' y : Δ ||- w {{ ϕ }} e {{ z : τ | ψ }}ᵖ "
+    (at level 50,  Γ,  Δ, w, ϕ, e, z, τ, ψ at next level, x pattern, y pattern).
+  Reserved Notation " ' x : Γ ;;; ' y : Δ ||- w {{ ϕ }} e {{ z : τ | ψ }}ᵗ "
+    (at level 50,  Γ,  Δ, w, ϕ, e, z, τ, ψ at next level, x pattern, y pattern).
 
 (* This file defines the proof rules for specifications. *)
 
@@ -75,69 +75,75 @@ Definition ro_to_rw_pre {Γ Δ} (ϕ : sem_ctx (Δ ++ Γ) -> Prop) : sem_ctx Δ *
 
 Definition post {X Y : Type} := X -> Y -> Prop.
 
+Definition rwpost {X Y Z : Type} := X -> Y -> Z -> Prop.
+Definition rwpre {X Y : Type} := X -> Y -> Prop.
+
+
 Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
 (*  partial correctness triple for read only expressions *)
 (** logical rules *)
 | ro_imply_prt : forall Γ e τ (w w' : Γ |- e : τ) P Q P' Q',
 
     P' ->> P -> 
-    w |- {{ P }} e {{ Q }} -> 
+    ' x : Γ |- w {{ P x }} e {{y : τ | Q x y}}ᵖ -> 
     Q ->>> Q' -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- {{ P'}}  e {{ Q' }}
+    ' x : Γ |- w' {{ P x }} e {{y : τ | Q x y}}ᵖ
 
 | ro_exfalso_prt : forall Γ e τ (w : Γ |- e : τ) Q,
     
     (*——————————-——————————-——————————-——————————-——————————-*)    
-    w |- {{ (fun _ => False) }} e {{ Q }}
+    ' x : Γ |- w {{False}} e {{y : τ | Q y x }}ᵖ
 
-| ro_conj_prt : forall Γ e τ (w : Γ |- e : τ) P Q Q',
+| ro_conj_prt : forall Γ e τ (w : Γ |- e : τ) P Q1 Q2,
     
 
-    w |- {{P}} e {{Q}} -> 
-    w |- {{P}} e {{Q'}} -> 
+    ' x : Γ |- w {{ P x }} e {{y : τ | Q1 x y}}ᵖ -> 
+    ' x : Γ |- w {{ P x }} e {{y : τ | Q2 x y}}ᵖ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- {{P}} e {{Q /\\\ Q'}}
+    ' x : Γ |- w {{ P x }} e {{y : τ | Q1 x y /\ Q2 x y}}ᵖ 
 
-| ro_disj_prt : forall Γ e τ (w : Γ |- e : τ) P P' Q,
+| ro_disj_prt : forall Γ e τ (w : Γ |- e : τ) P1 P2 Q,
 
-    w |- {{P}} e {{Q}} -> 
-    w |- {{P'}} e {{Q}} -> 
+    ' x : Γ |- w {{ P1 x }} e {{y : τ | Q x y}}ᵖ -> 
+    ' x : Γ |- w {{ P2 x }} e {{y : τ | Q x y}}ᵖ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- {{P \// P'}} e {{Q}}
+    ' x : Γ |- w {{ P1 x /\ P2 x }} e {{y : τ | Q x y}}ᵖ  
 
 (** variables and constants *)
 | ro_var_prt : forall Γ k τ (w : Γ |- VAR k : τ) Q,
     
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- {{fun γ => Q (ro_access Γ k τ w γ) γ}} VAR k {{Q}}
+    ' x : Γ |- w {{ Q x (ro_access Γ k τ w x) }} VAR k {{y : τ | Q x y}}ᵖ
 
 | ro_skip_prt : forall Γ (w : Γ |- SKIP : UNIT) Q,
     
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- {{Q tt}} SKIP {{Q}}
+    ' x : Γ |- w {{ Q x tt}} SKIP {{y : UNIT | Q x y}}ᵖ
 
+                  
 | ro_true_prt : forall Γ (w : Γ |- TRUE : BOOL) Q,
 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- {{Q true}} TRUE {{Q}}
+    ' x : Γ |- w {{ Q x true }} TRUE {{y : BOOL | Q x y}}ᵖ
 
 | ro_false_prt : forall Γ (w : Γ |- FALSE : BOOL) Q,
 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- {{Q false}} FALSE {{Q}}
+    ' x : Γ |- w {{ Q x false }} FALSE {{y : BOOL | Q x y}}ᵖ
 
 | ro_int_prt : forall Γ k (w : Γ |- INT k : INTEGER) Q,
 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- {{Q k}} INT k {{Q}}
+    ' x : Γ |- w {{ Q x k }} INT k {{y : INTEGER | Q x y}}ᵖ
 
 (** passage between read-only and read-write correctness *)
 | ro_rw_prt : forall Γ c τ (w : Γ ;;; nil ||- c : τ) P Q (w' : Γ |- c : τ),
-    
-    w ||- {{P}} c {{Q}} -> 
+
+    ' γ : Γ ;;; ' _ : nil  ||- w {{ P γ tt }} c {{y : τ | Q γ tt y}}ᵖ ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- {{fun γ => P (tt, γ)}} c {{fun v w => Q v (tt, w)}}
+    ' γ : Γ |- w' {{ P γ tt }} c {{y : τ | Q γ tt y}}ᵖ
+
 
 (* (** restricting auxiliary variables *) *)
 (* | ro_proj_prt : forall Γ Γ' e τ (w : Γ |- e : τ) (w' : (Γ ++ Γ') |- e : τ) ϕ ψ,  *)
@@ -149,323 +155,328 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
 (** coercion and exponentiation *)
 | ro_coerce_prt : forall Γ e (w : Γ |- e : INTEGER) P Q (w' : Γ |- RE e : REAL),
     
-    w |- {{P}} e {{y | Q (IZR y)}} -> 
-    (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- {{P}} RE e {{Q}}
+    ' γ : Γ |- w {{ P γ }} e {{y : INTEGER | Q γ (IZR y)}}ᵖ ->
+   (*——————————-——————————-——————————-——————————-——————————-*)
+    ' γ : Γ |- w' {{ P γ }} RE e {{y : REAL | Q γ y}}ᵖ
 
 | ro_exp_prt : forall Γ e (w : Γ |- e : INTEGER) P Q (w' : Γ |- EXP e : REAL),
     
-    w |- {{P}} e {{y | Q (powerRZ 2 y)}} -> 
-    (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- {{P}} EXP e {{Q}}
+    ' γ : Γ |- w {{ P γ }} e {{y : INTEGER | Q γ (pow2 y)}}ᵖ ->
+   (*——————————-——————————-——————————-——————————-——————————-*)
+    ' γ : Γ |- w' {{ P γ }} EXP e {{y : REAL | Q γ y}}ᵖ    
 
 (** integer arithmetic  *)
 | ro_int_op_plus_prt : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2 (w' : Γ |- (e1 :+: e2) : INTEGER) (ψ :post),
-    
-    w1 |- {{ϕ}} e1 {{ψ1}} -> 
-    w2 |- {{ϕ}} e2 {{ψ2}} -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> ψ (Zplus y1 y2) γ)->
+
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵖ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵖ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zplus y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-     w' |- {{ϕ}} e1 :+: e2 {{ψ}}
+    ' γ : Γ |- w' {{ ϕ γ }} e1 :+: e2  {{y : INTEGER | ψ γ y}}ᵖ
 
 | ro_int_op_mult_prt : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2 (w' : Γ |- (e1 :*: e2) : INTEGER) (ψ : post),
     
-    w1 |- {{ϕ}} e1 {{ψ1}} -> 
-    w2 |- {{ϕ}} e2 {{ψ2}} -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> ψ (Zmult y1 y2) γ) -> 
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵖ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵖ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zmult y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- {{ϕ}} (e1 :*: e2) {{ψ}}
+    ' γ : Γ |- w' {{ ϕ γ }} e1 :*: e2  {{y : INTEGER | ψ γ y}}ᵖ
 
 | ro_int_op_minus_prt : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2 (w' : Γ |- (e1 :-: e2) : INTEGER) (ψ : post),
     
-    w1 |- {{ϕ}} e1 {{ψ1}} -> 
-    w2 |- {{ϕ}} e2 {{ψ2}} -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> ψ (Zminus y1 y2) γ) ->
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵖ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵖ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zminus y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- {{ϕ}} (e1 :-: e2) {{ψ}}
+    ' γ : Γ |- w' {{ ϕ γ }} e1 :-: e2  {{y : INTEGER | ψ γ y}}ᵖ
 
 (** real arithmetic  *)
 | ro_real_op_plus_prt : forall Γ e1 e2 (w1 : Γ |- e1 : REAL) (w2 : Γ |- e2 : REAL) ϕ ψ1 ψ2 (w' : Γ |- (e1 ;+; e2) : REAL) (ψ : post),
     
-    w1 |- {{ϕ}} e1 {{ψ1}} -> 
-    w2 |- {{ϕ}} e2 {{ψ2}} -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> ψ (Rplus y1 y2) γ) ->
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : REAL | ψ1 γ y}}ᵖ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : REAL | ψ2 γ y}}ᵖ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rplus y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- {{ϕ}} (e1 ;+; e2) {{ψ}}
+    ' γ : Γ |- w' {{ ϕ γ }} e1 ;+; e2  {{y : REAL | ψ γ y}}ᵖ
 
 | ro_real_op_mult_prt : forall Γ e1 e2 (w1 : Γ |- e1 : REAL) (w2 : Γ |- e2 : REAL) ϕ ψ1 ψ2 (w' : Γ |- (e1 ;*; e2) : REAL) (ψ : post),
     
-    w1 |- {{ϕ}} e1 {{ψ1}} -> 
-    w2 |- {{ϕ}} e2 {{ψ2}} -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> ψ (Rmult y1 y2) γ) ->
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : REAL | ψ1 γ y}}ᵖ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : REAL | ψ2 γ y}}ᵖ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rmult y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- {{ϕ}} (e1 ;*; e2) {{ψ}}
+    ' γ : Γ |- w' {{ ϕ γ }} e1 ;*; e2  {{y : REAL | ψ γ y}}ᵖ
 
 | ro_real_op_minus_prt : forall Γ e1 e2 (w1 : Γ |- e1 : REAL) (w2 : Γ |- e2 : REAL) ϕ ψ1 ψ2 (w' : Γ |- (e1 ;-; e2) : REAL) (ψ : post),
 
-    w1 |- {{ϕ}} e1 {{ψ1}} -> 
-    w2 |- {{ϕ}} e2 {{ψ2}} -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> ψ (Rminus y1 y2) γ) -> 
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : REAL | ψ1 γ y}}ᵖ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : REAL | ψ2 γ y}}ᵖ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rminus y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- {{ϕ}} (e1 ;-; e2) {{ψ}}
+    ' γ : Γ |- w' {{ ϕ γ }} e1 ;-; e2  {{y : REAL | ψ γ y}}ᵖ
 
 (** reciprocal *)
-| ro_recip_prt : forall Γ e (w : Γ |- e : REAL) ϕ θ (w' : Γ |- ;/; e : REAL) ψ,
+| ro_recip_prt : forall Γ e (w : Γ |- e : REAL) ϕ θ (w' : Γ |- ;/; e : REAL) (ψ : post),
 
-    w |- {{ϕ}} e {{θ}} -> 
-    (θ /\\\ (fun x γδ => x <> 0%R) ->>> fun x => ψ (/x)%R) -> 
+    ' γ : Γ |- w {{ ϕ γ }} e {{y : REAL | θ γ y}}ᵖ -> 
+     (forall γ x, θ γ x /\ x <> 0%R -> ψ γ (/x)%R) -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- {{ϕ}} UniOp OpRrecip e {{ψ}}
+    ' γ : Γ |- w' {{ ϕ γ }} ;/; e  {{y : REAL | ψ γ y}}ᵖ
 
 (** integer comparison  *)
 | ro_int_comp_eq_prt : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2  (w' : Γ |- (e1 :=: e2) : BOOL) (ψ : post),
 
-    w1 |- {{ϕ}} e1 {{ψ1}} -> 
-    w2 |- {{ϕ}} e2 {{ψ2}} -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> ψ (Z.eqb y1 y2) γ) ->
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵖ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵖ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ  γ (Z.eqb y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- {{ϕ}} (e1 :=: e2) {{ψ}}
+    ' γ : Γ |- w' {{ ϕ γ }} e1 :=: e2  {{y : BOOL | ψ γ y}}ᵖ
 
-| ro_int_comp_lt_prt : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) P ψ1 ψ2 (w' : Γ |- (e1 :<: e2) : BOOL) (ψ : post),
+| ro_int_comp_lt_prt : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2 (w' : Γ |- (e1 :<: e2) : BOOL) (ψ : post),
 
-    w1 |- {{P}} e1 {{ψ1}} -> 
-    w2 |- {{P}} e2 {{ψ2}} -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> ψ (Z.ltb y1 y2) γ) ->
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵖ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵖ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ  γ (Z.ltb y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- {{P}} (e1 :<: e2) {{ψ}}
+    ' γ : Γ |- w' {{ ϕ γ }} e1 :<: e2  {{y : BOOL | ψ γ y}}ᵖ
 
 (** real comparison  *)
-| ro_real_lt_prt : forall Γ e1 e2 (w1 : Γ |- e1 : REAL) (w2 : Γ |- e2 : REAL) P ψ1 ψ2 (w' : Γ |- (e1 ;<; e2) : BOOL) (ψ : post),
+| ro_real_lt_prt : forall Γ e1 e2 (w1 : Γ |- e1 : REAL) (w2 : Γ |- e2 : REAL) ϕ ψ1 ψ2 (w' : Γ |- (e1 ;<; e2) : BOOL) (ψ : post),
     
-    w1 |- {{P}} e1 {{ψ1}} -> 
-    w2 |- {{P}} e2 {{ψ2}} -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> y1 <> y2 -> ψ (Rltb'' y1 y2) γ) ->
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : REAL | ψ1 γ y}}ᵖ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : REAL | ψ2 γ y}}ᵖ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rltb'' y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- {{P}} (e1 ;<; e2) {{ψ}}
+    ' γ : Γ |- w' {{ ϕ γ }} e1 ;<; e2  {{y : BOOL | ψ γ y}}ᵖ
 
 (* Limit *)
 | ro_lim_prt : forall Γ e (w : (INTEGER :: Γ) |- e : REAL) ϕ θ (w' : Γ |- Lim e : REAL) ψ,
 
-    w |- [{fun γ' : sem_ctx _ => ϕ (snd γ')}] e [{θ}] ->
-    (forall γ : sem_ctx Γ, ϕ γ -> exists y, ψ y γ /\ forall x z, θ z (x, γ) -> (Rabs (z - y)%R < powerRZ 2 (- x))%R) ->
+    ' (x, γ) : (INTEGER :: Γ) |- w {{ ϕ γ }} e {{y : REAL | θ (x, γ) y}}ᵗ -> 
+
+         
+         (forall γ : sem_ctx Γ, ϕ γ -> exists y, ψ γ y /\ forall x z, θ (x, γ) z -> (Rabs (z - y)%R < powerRZ 2 (- x))%R) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- {{ϕ}} Lim e {{ψ}}
+    ' γ : Γ |- w' {{ ϕ γ }} Lim e  {{y : REAL | ψ γ y}}ᵖ
                                                         
 with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
+(** logical rules *)
 (** logical rules *)
 | ro_imply_tot : forall Γ e τ (w w' : Γ |- e : τ) P Q P' Q',
 
     P' ->> P -> 
-    w |- [{ P }] e [{ Q }] -> 
+    ' x : Γ |- w {{ P x }} e {{y : τ | Q x y}}ᵗ -> 
     Q ->>> Q' -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- [{ P'}]  e [{ Q' }]
+    ' x : Γ |- w' {{ P x }} e {{y : τ | Q x y}}ᵗ
 
 | ro_exfalso_tot : forall Γ e τ (w : Γ |- e : τ) Q,
     
     (*——————————-——————————-——————————-——————————-——————————-*)    
-    w |- [{ (fun _ => False) }] e [{ Q }]
+    ' x : Γ |- w {{False}} e {{y : τ | Q y x }}ᵗ
 
-| ro_conj_tot : forall Γ e τ (w : Γ |- e : τ) P Q Q',
+| ro_conj_tot : forall Γ e τ (w : Γ |- e : τ) P Q1 Q2,
     
 
-    w |- [{P}] e [{Q}] -> 
-    w |- [{P}] e [{Q'}] -> 
+    ' x : Γ |- w {{ P x }} e {{y : τ | Q1 x y}}ᵗ -> 
+    ' x : Γ |- w {{ P x }} e {{y : τ | Q2 x y}}ᵗ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- [{P}] e [{Q /\\\ Q'}]
+    ' x : Γ |- w {{ P x }} e {{y : τ | Q1 x y /\ Q2 x y}}ᵗ 
 
-| ro_disj_tot : forall Γ e τ (w : Γ |- e : τ) P P' Q,
+| ro_disj_tot : forall Γ e τ (w : Γ |- e : τ) P1 P2 Q,
 
-    w |- [{P}] e [{Q}] -> 
-    w |- [{P'}] e [{Q}] -> 
+    ' x : Γ |- w {{ P1 x }} e {{y : τ | Q x y}}ᵗ -> 
+    ' x : Γ |- w {{ P2 x }} e {{y : τ | Q x y}}ᵗ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- [{P \// P'}] e [{Q}]
+    ' x : Γ |- w {{ P1 x /\ P2 x }} e {{y : τ | Q x y}}ᵗ  
 
 (** variables and constants *)
 | ro_var_tot : forall Γ k τ (w : Γ |- VAR k : τ) Q,
     
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- [{fun γ => Q (ro_access Γ k τ w γ) γ}] VAR k [{Q}]
+    ' x : Γ |- w {{ Q x (ro_access Γ k τ w x) }} VAR k {{y : τ | Q x y}}ᵗ
 
 | ro_skip_tot : forall Γ (w : Γ |- SKIP : UNIT) Q,
     
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- [{Q tt}] SKIP [{Q}]
+    ' x : Γ |- w {{ Q x tt}} SKIP {{y : UNIT | Q x y}}ᵗ
 
+                  
 | ro_true_tot : forall Γ (w : Γ |- TRUE : BOOL) Q,
 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- [{Q true}] TRUE [{Q}]
+    ' x : Γ |- w {{ Q x true }} TRUE {{y : BOOL | Q x y}}ᵗ
 
 | ro_false_tot : forall Γ (w : Γ |- FALSE : BOOL) Q,
 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- [{Q false}] FALSE [{Q}]
+    ' x : Γ |- w {{ Q x false }} FALSE {{y : BOOL | Q x y}}ᵗ
 
 | ro_int_tot : forall Γ k (w : Γ |- INT k : INTEGER) Q,
 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w |- [{Q k}] INT k [{Q}]
+    ' x : Γ |- w {{ Q x k }} INT k {{y : INTEGER | Q x y}}ᵗ
 
 (** passage between read-only and read-write correctness *)
 | ro_rw_tot : forall Γ c τ (w : Γ ;;; nil ||- c : τ) P Q (w' : Γ |- c : τ),
-    
-    w ||- [{P}] c [{Q}] -> 
+
+    ' γ : Γ ;;; ' _ : nil  ||- w {{ P γ tt }} c {{y : τ | Q γ tt y}}ᵗ ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- [{fun γ => P (tt, γ)}] c [{fun v w => Q v (tt, w)}]
+    ' γ : Γ |- w' {{ P γ tt }} c {{y : τ | Q γ tt y}}ᵗ
+
 
 (* (** restricting auxiliary variables *) *)
 (* | ro_proj_tot : forall Γ Γ' e τ (w : Γ |- e : τ) (w' : (Γ ++ Γ') |- e : τ) ϕ ψ,  *)
-(*     w' |- [{ϕ}] e [{ψ}] -> *)
+(*     w' |- {{ϕ}} e {{ψ}} -> *)
 (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
-(*     w |- [{fun γ => exists γ', ϕ (γ ; γ')}] e [{y | fun γ => exists γ', ψ y (γ ; γ')}] *)
+(*     w |- {{fun γ => exists γ', ϕ (γ ; γ')}} e {{y | fun γ => exists γ', ψ y (γ ; γ')}} *)
 
                                  
 (** coercion and exponentiation *)
-| ro_coerce_tot : forall Γ e (w : Γ |- e : INTEGER) ϕ ψ (w' : Γ |- RE e : REAL),
+| ro_coerce_tot : forall Γ e (w : Γ |- e : INTEGER) P Q (w' : Γ |- RE e : REAL),
     
-    w |- [{ϕ}] e [{y | ψ (IZR y)}] -> 
-    (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- [{ϕ}] RE e [{ψ}]
+    ' γ : Γ |- w {{ P γ }} e {{y : INTEGER | Q γ (IZR y)}}ᵗ ->
+   (*——————————-——————————-——————————-——————————-——————————-*)
+    ' γ : Γ |- w' {{ P γ }} RE e {{y : REAL | Q γ y}}ᵗ
 
-| ro_exp_tot : forall Γ e (w : Γ |- e : INTEGER) ϕ ψ (w' : Γ |- EXP e : REAL),
+| ro_exp_tot : forall Γ e (w : Γ |- e : INTEGER) P Q (w' : Γ |- EXP e : REAL),
     
-    w |- [{ϕ}] e [{y | ψ (powerRZ 2 y)}] -> 
-    (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- [{ϕ}] EXP e [{ψ}]
+    ' γ : Γ |- w {{ P γ }} e {{y : INTEGER | Q γ (pow2 y)}}ᵗ ->
+   (*——————————-——————————-——————————-——————————-——————————-*)
+    ' γ : Γ |- w' {{ P γ }} EXP e {{y : REAL | Q γ y}}ᵗ    
 
 (** integer arithmetic  *)
 | ro_int_op_plus_tot : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2 (w' : Γ |- (e1 :+: e2) : INTEGER) (ψ :post),
-    
-    w1 |- [{ϕ}] e1 [{ψ1}] -> 
-    w2 |- [{ϕ}] e2 [{ψ2}] -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> ψ (Zplus y1 y2) γ)->
+
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵗ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵗ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zplus y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-     w' |- [{ϕ}] e1 :+: e2 [{ψ}]
+    ' γ : Γ |- w' {{ ϕ γ }} e1 :+: e2  {{y : INTEGER | ψ γ y}}ᵗ
 
 | ro_int_op_mult_tot : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2 (w' : Γ |- (e1 :*: e2) : INTEGER) (ψ : post),
     
-    w1 |- [{ϕ}] e1 [{ψ1}] -> 
-    w2 |- [{ϕ}] e2 [{ψ2}] -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> ψ (Zmult y1 y2) γ) -> 
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵗ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵗ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zmult y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- [{ϕ}] (e1 :*: e2) [{ψ}]
+    ' γ : Γ |- w' {{ ϕ γ }} e1 :*: e2  {{y : INTEGER | ψ γ y}}ᵗ
 
 | ro_int_op_minus_tot : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2 (w' : Γ |- (e1 :-: e2) : INTEGER) (ψ : post),
     
-    w1 |- [{ϕ}] e1 [{ψ1}] -> 
-    w2 |- [{ϕ}] e2 [{ψ2}] -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> ψ (Zminus y1 y2) γ) ->
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵗ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵗ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zminus y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- [{ϕ}] (e1 :-: e2) [{ψ}]
+    ' γ : Γ |- w' {{ ϕ γ }} e1 :-: e2  {{y : INTEGER | ψ γ y}}ᵗ
 
 (** real arithmetic  *)
 | ro_real_op_plus_tot : forall Γ e1 e2 (w1 : Γ |- e1 : REAL) (w2 : Γ |- e2 : REAL) ϕ ψ1 ψ2 (w' : Γ |- (e1 ;+; e2) : REAL) (ψ : post),
     
-    w1 |- [{ϕ}] e1 [{ψ1}] -> 
-    w2 |- [{ϕ}] e2 [{ψ2}] -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> ψ (Rplus y1 y2) γ) ->
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : REAL | ψ1 γ y}}ᵗ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : REAL | ψ2 γ y}}ᵗ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rplus y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- [{ϕ}] (e1 ;+; e2) [{ψ}]
+    ' γ : Γ |- w' {{ ϕ γ }} e1 ;+; e2  {{y : REAL | ψ γ y}}ᵗ
 
 | ro_real_op_mult_tot : forall Γ e1 e2 (w1 : Γ |- e1 : REAL) (w2 : Γ |- e2 : REAL) ϕ ψ1 ψ2 (w' : Γ |- (e1 ;*; e2) : REAL) (ψ : post),
     
-    w1 |- [{ϕ}] e1 [{ψ1}] -> 
-    w2 |- [{ϕ}] e2 [{ψ2}] -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> ψ (Rmult y1 y2) γ) ->
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : REAL | ψ1 γ y}}ᵗ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : REAL | ψ2 γ y}}ᵗ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rmult y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- [{ϕ}] (e1 ;*; e2) [{ψ}]
+    ' γ : Γ |- w' {{ ϕ γ }} e1 ;*; e2  {{y : REAL | ψ γ y}}ᵗ
 
 | ro_real_op_minus_tot : forall Γ e1 e2 (w1 : Γ |- e1 : REAL) (w2 : Γ |- e2 : REAL) ϕ ψ1 ψ2 (w' : Γ |- (e1 ;-; e2) : REAL) (ψ : post),
 
-    w1 |- [{ϕ}] e1 [{ψ1}] -> 
-    w2 |- [{ϕ}] e2 [{ψ2}] -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> ψ (Rminus y1 y2) γ) -> 
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : REAL | ψ1 γ y}}ᵗ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : REAL | ψ2 γ y}}ᵗ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rminus y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- [{ϕ}] (e1 ;-; e2) [{ψ}]
-  
+    ' γ : Γ |- w' {{ ϕ γ }} e1 ;-; e2  {{y : REAL | ψ γ y}}ᵗ
 
 (** reciprocal *)
-| ro_recip_tot : forall Γ e (w : Γ |- e : REAL) ϕ θ (w' : Γ |- ;/; e : REAL) ψ,
+| ro_recip_tot : forall Γ e (w : Γ |- e : REAL) ϕ θ (w' : Γ |- ;/; e : REAL) (ψ : post),
 
-    w |- [{ϕ}] e [{θ}] -> 
-    (θ ->>> ((fun x γδ => x <> 0%R) /\\\ (fun x => ψ (/x)%R))) -> 
+    ' γ : Γ |- w {{ ϕ γ }} e {{y : REAL | θ γ y}}ᵗ -> 
+     (forall γ x, θ γ x /\ x <> 0%R -> ψ γ (/x)%R) -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- [{ϕ}] ;/; e [{ψ}]
+    ' γ : Γ |- w' {{ ϕ γ }} ;/; e  {{y : REAL | ψ γ y}}ᵗ
 
 (** integer comparison  *)
 | ro_int_comp_eq_tot : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2  (w' : Γ |- (e1 :=: e2) : BOOL) (ψ : post),
 
-    w1 |- [{ϕ}] e1 [{ψ1}] -> 
-    w2 |- [{ϕ}] e2 [{ψ2}] -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> ψ (Z.eqb y1 y2) γ) ->
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵗ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵗ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ  γ (Z.eqb y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- [{ϕ}] (e1 :=: e2) [{ψ}]
+    ' γ : Γ |- w' {{ ϕ γ }} e1 :=: e2  {{y : BOOL | ψ γ y}}ᵗ
 
-| ro_int_comp_lt_tot : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) P ψ1 ψ2 (w' : Γ |- (e1 :<: e2) : BOOL) (ψ : post),
+| ro_int_comp_lt_tot : forall Γ e1 e2 (w1 : Γ |- e1 : INTEGER) (w2 : Γ |- e2 : INTEGER) ϕ ψ1 ψ2 (w' : Γ |- (e1 :<: e2) : BOOL) (ψ : post),
 
-    w1 |- [{P}] e1 [{ψ1}] -> 
-    w2 |- [{P}] e2 [{ψ2}] -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> ψ (Z.ltb y1 y2) γ) ->
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵗ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵗ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ  γ (Z.ltb y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- [{P}] (e1 :<: e2) [{ψ}]
+    ' γ : Γ |- w' {{ ϕ γ }} e1 :<: e2  {{y : BOOL | ψ γ y}}ᵗ
 
 (** real comparison  *)
-| ro_real_lt_tot : forall Γ e1 e2 (w1 : Γ |- e1 : REAL) (w2 : Γ |- e2 : REAL) ϕ ψ1 ψ2  (w' : Γ |- (e1 ;<; e2) : BOOL) (ψ : post),
+| ro_real_lt_tot : forall Γ e1 e2 (w1 : Γ |- e1 : REAL) (w2 : Γ |- e2 : REAL) ϕ ψ1 ψ2 (w' : Γ |- (e1 ;<; e2) : BOOL) (ψ : post),
     
-    w1 |- [{ϕ}] e1 [{ψ1}] -> 
-    w2 |- [{ϕ}] e2 [{ψ2}] -> 
-    (forall y1 y2 γ, ψ1 y1 γ -> ψ2 y2 γ -> (y1 <> y2 /\ ψ (Rltb'' y1 y2) γ)) ->
+    ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : REAL | ψ1 γ y}}ᵗ -> 
+    ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : REAL | ψ2 γ y}}ᵗ -> 
+    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> (y1 <> y2)%R /\ ψ γ (Rltb'' y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- [{ϕ}] (e1 ;<; e2) [{ψ}]
-
+    ' γ : Γ |- w' {{ ϕ γ }} e1 ;<; e2  {{y : BOOL | ψ γ y}}ᵗ
 
 (* Limit *)
 | ro_lim_tot : forall Γ e (w : (INTEGER :: Γ) |- e : REAL) ϕ θ (w' : Γ |- Lim e : REAL) ψ,
 
-    w |- [{fun γ' : sem_ctx _ => ϕ (snd γ')}] e [{θ}] ->
-    (forall γ :sem_ctx Γ, ϕ γ -> exists y, ψ y γ /\ forall x z, θ z (x, γ) -> (Rabs (z - y)%R < powerRZ 2 (- x))%R) ->
+    ' (x, γ) : (INTEGER :: Γ) |- w {{ ϕ γ }} e {{y : REAL | θ (x, γ) y}}ᵗ -> 
+
+         
+         (forall γ : sem_ctx Γ, ϕ γ -> exists y, ψ γ y /\ forall x z, θ (x, γ) z -> (Rabs (z - y)%R < powerRZ 2 (- x))%R) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' |- [{ϕ}] Lim e [{ψ}]
+    ' γ : Γ |- w' {{ ϕ γ }} Lim e  {{y : REAL | ψ γ y}}ᵗ
                                                         
 
                                                         
                                                         
 with proves_rw_prt : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_prt w -> Type :=
 (** logical rules *)
-| rw_imply_prt : forall Γ Δ e τ (w w' : Γ ;;; Δ ||- e : τ) ϕ ψ ϕ' ψ',
+| rw_imply_prt : forall Γ Δ e τ (w w' : Γ ;;; Δ ||- e : τ) (ϕ ϕ': rwpre) (ψ ψ' : rwpost),
     
-    ϕ' ->> ϕ -> 
-    w ||- {{ ϕ }} e {{ ψ }} -> 
-    ψ ->>> ψ' -> 
+    (forall γ δ, ϕ' γ δ -> ϕ γ δ) -> 
+    'γ : Γ ;;; 'δ : Δ ||- w {{ ϕ γ δ }} e {{y : τ | ψ γ δ y }}ᵖ -> 
+    (forall γ δ y, ψ γ δ y -> ψ' γ δ y) -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' ||- {{ ϕ'}}  e {{ ψ' }}
+    'γ : Γ ;;; 'δ : Δ ||- w' {{ ϕ' γ δ }} e {{y : τ | ψ' γ δ y }}ᵖ 
 
 | rw_exfalso_prt : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ψ,
     
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w ||- {{ (fun _ => False) }} e {{ ψ }}
-
+    'γ : Γ ;;; 'δ : Δ ||- w {{False}} e {{y : τ | ψ γ δ y }}ᵖ  
+    
 | rw_conj_prt : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ ψ',
     
-    w ||- {{ϕ}} e {{ψ}} -> 
-    w ||- {{ϕ}} e {{ψ'}} -> 
+    'γ : Γ ;;; 'δ : Δ ||- w {{ ϕ γ δ }} e {{y : τ | ψ γ δ y }}ᵖ -> 
+    'γ : Γ ;;; 'δ : Δ ||- w {{ ϕ γ δ }} e {{y : τ | ψ' γ δ y }}ᵖ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w ||- {{ϕ}} e {{ψ /\\\ ψ'}}
+    'γ : Γ ;;; 'δ : Δ ||- w {{ ϕ γ δ }} e {{y : τ | (ψ γ δ y) /\ (ψ' γ δ y) }}ᵖ
 
 | rw_disj_prt : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ϕ' ψ,
     
-    w ||- {{ϕ}} e {{ψ}} -> 
-    w ||- {{ϕ'}} e {{ψ}} -> 
+    'γ : Γ ;;; 'δ : Δ ||- w {{ ϕ γ δ }} e {{y : τ | ψ γ δ y }}ᵖ -> 
+    'γ : Γ ;;; 'δ : Δ ||- w {{ ϕ' γ δ }} e {{y : τ | ψ γ δ y }}ᵖ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w ||- {{ϕ \// ϕ'}} e {{ψ}}
+    'γ : Γ ;;; 'δ : Δ ||- w {{ (ϕ γ δ) \/ (ϕ' γ δ) }} e {{y : τ | ψ γ δ y }}ᵖ 
 
 (** passage between read-only and read-write correctness *)
 | rw_ro_prt : forall Γ Δ e τ (w : (Δ ++ Γ) |- e : τ) ϕ ψ (w' : Γ ;;; Δ ||- e : τ),
     
-    w |- {{ϕ}} e {{ψ}} -> 
+    'γ : (Δ ++ Γ) |- w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵖ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' ||- {{fun γδ => ϕ (tedious_prod_sem _ _ γδ)}} e {{fun v γδ => ψ v (tedious_prod_sem _ _ γδ)}}
+    'γ : Γ ;;; 'δ : Δ ||- w' {{ϕ (δ ; γ)}} e {{y : τ | ψ (δ ; γ) y}}ᵖ
 
 (* (** restricting auxiliary variables *) *)
 (* | rw_proj_prt : forall Γ Δ Γ' e τ (w : Γ ;;; Δ ||- e : τ) (w' : (Γ ++ Γ') ;;; Δ ||- e : τ) ϕ ψ,  *)
@@ -476,201 +487,177 @@ with proves_rw_prt : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_prt w -> T
 (** operational proof rules  *)                            
 | rw_sequence_prt : forall Γ Δ c1 c2 τ (w1 : Γ ;;; Δ ||- c1 : DUnit) (w2 : Γ ;;; Δ ||- c2 : τ) ϕ θ ψ (w' : Γ ;;; Δ ||- (c1 ;; c2) : τ),
     
-    w1 ||- {{ϕ}} c1 {{θ}} -> 
-    w2 ||- {{θ tt}} c2 {{ψ}} -> 
+    'γ : Γ ;;; 'δ : Δ ||- w1 {{ϕ γ δ}} c1 {{y : UNIT | θ γ δ y}}ᵖ -> 
+    'γ : Γ ;;; 'δ : Δ ||- w2 {{θ γ δ tt}} c2 {{y : τ | ψ γ δ y}}ᵖ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' ||- {{ϕ}} c1 ;; c2 {{ψ}}
+    'γ : Γ ;;; 'δ : Δ ||- w' {{ϕ γ δ}} c1 ;; c2 {{y : τ | ψ γ δ y}}ᵖ
 
 | rw_new_var_prt : forall Γ Δ e c τ σ (w1 : (Δ ++ Γ) |- e : σ) (w2 : Γ ;;; (σ :: Δ) ||- c : τ) ϕ ψ θ (w' : Γ ;;; Δ ||- (NEWVAR e IN c) : τ),
 
-    w1 |- {{fun γδ => (ϕ (tedious_sem_app _ _ γδ))}} e {{θ}} -> 
-    w2 ||- {{fun xδγ => θ (fst (fst xδγ)) (tedious_prod_sem _ _ (snd (fst xδγ), snd xδγ))}} c {{fun x xδγ => ψ x (snd (fst xδγ), snd xδγ)}} -> 
+    'x : (Δ ++ Γ) |- w1 {{ϕ (snd_app x) (fst_app x)}} e {{y : σ | θ (snd_app x) (fst_app x) y}}ᵖ -> 
+    'γ : Γ ;;; '(x, δ) : (σ :: Δ) ||- w2 {{θ γ δ x}} c {{y : τ | ψ γ δ y}}ᵖ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' ||- {{ϕ}} NEWVAR e IN c {{ψ}}
+    'γ : Γ ;;; 'δ : Δ ||- w' {{ϕ γ δ}} NEWVAR e IN c {{y : τ | ψ γ δ y}}ᵖ
 
-| rw_assign_prt : forall Γ Δ e k τ (w : (Δ ++ Γ) |- e : τ) ϕ θ (ψ : post) (w' : Γ ;;; Δ ||- (LET k := e) : UNIT),
+| rw_assign_prt : forall Γ Δ e k τ (w : (Δ ++ Γ) |- e : τ) ϕ θ (ψ : rwpost) (w' : Γ ;;; Δ ||- (LET k := e) : UNIT),
 
-    w |- {{fun δγ => ϕ (tedious_sem_app _ _ δγ)}} e {{θ}} -> 
-    (forall x γ δ, θ x (tedious_prod_sem _ _ (δ, γ)) -> ψ tt (update' w w' δ x, γ)) ->
+    'x : (Δ ++ Γ) |- w {{ϕ (snd_app x) (fst_app x)}} e {{y : τ | θ x y}}ᵖ -> 
+    (forall x γ δ, θ (δ; γ) x -> ψ γ (update' w w' δ x) tt) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' ||- {{ϕ}} LET k := e {{ψ}}
+    'γ : Γ ;;; 'δ : Δ ||- w' {{ϕ γ δ}} LET k := e {{y : UNIT | ψ γ δ y}}ᵖ
 
 | rw_cond_prt : forall Γ Δ e c1 c2 τ (w : (Δ ++ Γ) |- e : BOOL) (w1 : Γ ;;; Δ ||- c1 : τ) (w2 : Γ ;;; Δ ||- c2 : τ) (w' : Γ ;;; Δ ||- Cond e c1 c2 : τ) ϕ θ ψ,
 
-    w |- {{rw_to_ro_pre ϕ}} e {{θ}} ->
-    w1 ||- {{ro_to_rw_pre (θ true)}} c1 {{ψ}} ->
-    w2 ||- {{ro_to_rw_pre (θ false)}} c2 {{ψ}} ->
+    'x : (Δ ++ Γ) |- w {{ϕ (snd_app x) (fst_app x)}} e {{y : BOOL | θ x y}}ᵖ -> 
+    'γ : Γ ;;; 'δ : Δ ||- w1 {{θ (δ ; γ) true}} c1 {{y : τ | ψ γ δ y}}ᵖ ->
+    'γ : Γ ;;; 'δ : Δ ||- w2 {{θ (δ ; γ) false}} c2 {{y : τ | ψ γ δ y}}ᵖ ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' ||- {{ϕ}} Cond e c1 c2 {{ψ}}
-
-(* | rw_case_prt : forall Γ Δ e1 e2 c1 c2 τ (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) ϕ θ1 θ2 ψ, *)
-
-(*     wty_e1 |- {{rw_to_ro_pre ϕ}} e1 {{θ1}} ->  *)
-(*     wty_e2 |- {{rw_to_ro_pre ϕ}} e2 {{θ2}} ->  *)
-(*     wty_c1 ||- {{ro_to_rw_pre (θ1 true)}} c1 {{ψ}} ->  *)
-(*     wty_c2 ||- {{ro_to_rw_pre (θ2 true)}} c2 {{ψ}} -> *)
-(*     (*——————————-——————————-——————————-——————————-——————————-*) *)
-(*     wty ||- {{ϕ}} Case e1 c1 e2 c2 {{ψ}} *)
+    'γ : Γ ;;; 'δ : Δ ||- w' {{ϕ γ δ}} Cond e c1 c2 {{y : τ | ψ γ δ y}}ᵖ
 
 | rw_case_list_prt : forall Γ Δ l τ
                             (wty_l : ForallT (fun ec => ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))%type l)
                             (wty : Γ ;;; Δ ||- CaseList l : τ)
-                            (θ : ForallT (fun _ => bool -> sem_ctx (Δ ++ Γ) -> Prop) l)
+                            (θ : ForallT (fun _ =>  sem_ctx (Δ ++ Γ) -> bool -> Prop) l)
                             ϕ ψ,
     ForallT2 _ _ 
-    (fun ec (wty_l : ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))  (θ : bool -> sem_ctx (Δ ++ Γ) -> Prop)  =>
+    (fun ec (wty_l : ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))  (θ : sem_ctx (Δ ++ Γ) -> bool ->  Prop)  =>
          
-    (fst (wty_l) |- {{rw_to_ro_pre ϕ}} fst ec {{θ}}) *
-    (snd (wty_l) ||- {{ro_to_rw_pre (θ true)}} snd ec {{ψ}}))%type l wty_l θ ->
+       ('x : (Δ ++ Γ) |- (fst wty_l) {{ϕ (snd_app x) (fst_app x)}} fst ec {{y : BOOL | θ x y}}ᵖ)
+       * ('γ : Γ ;;; 'δ : Δ ||- (snd wty_l) {{θ (δ ; γ) true}} snd ec {{y : τ | ψ γ δ y}}ᵗ)
+    )%type l wty_l θ ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    wty ||- {{ϕ}} CaseList l {{ψ}}
+    'γ : Γ ;;; 'δ : Δ ||- wty {{ϕ γ δ}} CaseList l {{y : τ | ψ γ δ y}}ᵖ
 
 
         
 | rw_while_prt : forall Γ Δ e c (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : Γ ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT)  ϕ θ,
 
-    wty_e |- {{rw_to_ro_pre ϕ}} e {{θ}} -> 
-    wty_c ||- {{ro_to_rw_pre (θ true)}} c {{fun _ => ϕ}} -> 
+    'x : (Δ ++ Γ) |- wty_e {{ϕ (snd_app x) (fst_app x)}} e {{y : BOOL | θ x y}}ᵖ -> 
+    'γ : Γ ;;; 'δ : Δ ||- wty_c {{θ (δ ; γ) true}} c {{y : UNIT | ϕ γ δ}}ᵖ ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    wty ||- {{ϕ}} While e c {{fun _ => (ϕ /\\ ro_to_rw_pre (θ false))}}
-                        
+    'γ : Γ ;;; 'δ : Δ ||- wty {{ϕ γ δ}} While e c {{y : UNIT | (ϕ γ δ) /\ θ (δ; γ) false}}ᵖ
+       
 
                                   
 with proves_rw_tot : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_tot w -> Type :=
 (** logical rules *)
-| rw_imply_tot : forall Γ Δ e τ (w w' : Γ ;;; Δ ||- e : τ) ϕ ψ ϕ' ψ',
+| rw_imply_tot : forall Γ Δ e τ (w w' : Γ ;;; Δ ||- e : τ) (ϕ ϕ': rwpre) (ψ ψ' : rwpost),
     
-    ϕ' ->> ϕ -> 
-    w ||- [{ ϕ }] e [{ ψ }] -> 
-    ψ ->>> ψ' -> 
+    (forall γ δ, ϕ' γ δ -> ϕ γ δ) -> 
+    'γ : Γ ;;; 'δ : Δ ||- w {{ ϕ γ δ }} e {{y : τ | ψ γ δ y }}ᵗ -> 
+    (forall γ δ y, ψ γ δ y -> ψ' γ δ y) -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' ||- [{ ϕ'}]  e [{ ψ' }]
+    'γ : Γ ;;; 'δ : Δ ||- w' {{ ϕ' γ δ }} e {{y : τ | ψ' γ δ y }}ᵗ 
 
 | rw_exfalso_tot : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ψ,
     
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w ||- [{ (fun _ => False) }] e [{ ψ }]
-
+    'γ : Γ ;;; 'δ : Δ ||- w {{False}} e {{y : τ | ψ γ δ y }}ᵗ  
+    
 | rw_conj_tot : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ ψ',
     
-    w ||- [{ϕ}] e [{ψ}] -> 
-    w ||- [{ϕ}] e [{ψ'}] -> 
+    'γ : Γ ;;; 'δ : Δ ||- w {{ ϕ γ δ }} e {{y : τ | ψ γ δ y }}ᵗ -> 
+    'γ : Γ ;;; 'δ : Δ ||- w {{ ϕ γ δ }} e {{y : τ | ψ' γ δ y }}ᵗ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w ||- [{ϕ}] e [{ψ /\\\ ψ'}]
+    'γ : Γ ;;; 'δ : Δ ||- w {{ ϕ γ δ }} e {{y : τ | (ψ γ δ y) /\ (ψ' γ δ y) }}ᵗ
 
 | rw_disj_tot : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ϕ' ψ,
     
-    w ||- [{ϕ}] e [{ψ}] -> 
-    w ||- [{ϕ'}] e [{ψ}] -> 
+    'γ : Γ ;;; 'δ : Δ ||- w {{ ϕ γ δ }} e {{y : τ | ψ γ δ y }}ᵗ -> 
+    'γ : Γ ;;; 'δ : Δ ||- w {{ ϕ' γ δ }} e {{y : τ | ψ γ δ y }}ᵗ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w ||- [{ϕ \// ϕ'}] e [{ψ}]
+    'γ : Γ ;;; 'δ : Δ ||- w {{ (ϕ γ δ) \/ (ϕ' γ δ) }} e {{y : τ | ψ γ δ y }}ᵗ 
 
 (** passage between read-only and read-write correctness *)
 | rw_ro_tot : forall Γ Δ e τ (w : (Δ ++ Γ) |- e : τ) ϕ ψ (w' : Γ ;;; Δ ||- e : τ),
     
-    w |- [{ϕ}] e [{ψ}] -> 
+    'γ : (Δ ++ Γ) |- w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵗ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' ||- [{fun γδ => ϕ (tedious_prod_sem _ _ γδ)}] e [{fun v γδ => ψ v (tedious_prod_sem _ _ γδ)}]
+    'γ : Γ ;;; 'δ : Δ ||- w' {{ϕ (δ ; γ)}} e {{y : τ | ψ (δ ; γ) y}}ᵗ
 
 (* (** restricting auxiliary variables *) *)
 (* | rw_proj_tot : forall Γ Δ Γ' e τ (w : Γ ;;; Δ ||- e : τ) (w' : (Γ ++ Γ') ;;; Δ ||- e : τ) ϕ ψ,  *)
-(*     w' ||- [{ϕ}] e [{ψ}] -> *)
+(*     w' ||- {{ϕ}} e {{ψ}} -> *)
 (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
-(*     w ||- [{fun δγ => exists γ', ϕ (fst δγ, (snd δγ ; γ'))}] e [{y | fun δγ => exists γ', ψ y (fst δγ, (snd δγ ; γ'))}] *)
-      
+(*     w ||- {{fun δγ => exists γ', ϕ (fst δγ, (snd δγ ; γ'))}} e {{y | fun δγ => exists γ', ψ y (fst δγ, (snd δγ ; γ'))}} *)
+
 (** operational proof rules  *)                            
-| rw_sequence_tot : forall Γ Δ c1 c2 τ (w1 : Γ ;;; Δ ||- c1 : UNIT) (w2 : Γ ;;; Δ ||- c2 : τ) ϕ θ ψ (w' : Γ ;;; Δ ||- (c1 ;; c2) : τ),
+| rw_sequence_tot : forall Γ Δ c1 c2 τ (w1 : Γ ;;; Δ ||- c1 : DUnit) (w2 : Γ ;;; Δ ||- c2 : τ) ϕ θ ψ (w' : Γ ;;; Δ ||- (c1 ;; c2) : τ),
     
-    w1 ||- [{ϕ}] c1 [{θ}] -> 
-    w2 ||- [{θ tt}] c2 [{ψ}] -> 
+    'γ : Γ ;;; 'δ : Δ ||- w1 {{ϕ γ δ}} c1 {{y : UNIT | θ γ δ y}}ᵗ -> 
+    'γ : Γ ;;; 'δ : Δ ||- w2 {{θ γ δ tt}} c2 {{y : τ | ψ γ δ y}}ᵗ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' ||- [{ϕ}] c1 ;; c2 [{ψ}]
+    'γ : Γ ;;; 'δ : Δ ||- w' {{ϕ γ δ}} c1 ;; c2 {{y : τ | ψ γ δ y}}ᵗ
 
 | rw_new_var_tot : forall Γ Δ e c τ σ (w1 : (Δ ++ Γ) |- e : σ) (w2 : Γ ;;; (σ :: Δ) ||- c : τ) ϕ ψ θ (w' : Γ ;;; Δ ||- (NEWVAR e IN c) : τ),
 
-    w1 |- [{fun γδ => (ϕ (tedious_sem_app _ _ γδ))}] e [{θ}] -> 
-    w2 ||- [{fun xδγ => θ (fst (fst xδγ)) (tedious_prod_sem _ _ (snd (fst xδγ), snd xδγ))}] c [{fun x xδγ => ψ x (snd (fst xδγ), snd xδγ)}] -> 
+    'x : (Δ ++ Γ) |- w1 {{ϕ (snd_app x) (fst_app x)}} e {{y : σ | θ (snd_app x) (fst_app x) y}}ᵗ -> 
+    'γ : Γ ;;; '(x, δ) : (σ :: Δ) ||- w2 {{θ γ δ x}} c {{y : τ | ψ γ δ y}}ᵗ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' ||- [{ϕ}] NEWVAR e IN c [{ψ}]
+    'γ : Γ ;;; 'δ : Δ ||- w' {{ϕ γ δ}} NEWVAR e IN c {{y : τ | ψ γ δ y}}ᵗ
 
-| rw_assign_tot : forall Γ Δ e k τ (w : (Δ ++ Γ) |- e : τ) ϕ θ (ψ : post) (w' : Γ ;;; Δ ||- (LET k := e) : UNIT),
+| rw_assign_tot : forall Γ Δ e k τ (w : (Δ ++ Γ) |- e : τ) ϕ θ (ψ : rwpost) (w' : Γ ;;; Δ ||- (LET k := e) : UNIT),
 
-    w |- [{fun δγ => ϕ (tedious_sem_app _ _ δγ)}] e [{θ}] -> 
-    (forall x γ δ, θ x (tedious_prod_sem _ _ (δ, γ)) -> ψ tt (update' w w' δ x, γ)) ->
+    'x : (Δ ++ Γ) |- w {{ϕ (snd_app x) (fst_app x)}} e {{y : τ | θ x y}}ᵗ -> 
+    (forall x γ δ, θ (δ; γ) x -> ψ γ (update' w w' δ x) tt) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' ||- [{ϕ}] LET k := e [{ψ}]
+    'γ : Γ ;;; 'δ : Δ ||- w' {{ϕ γ δ}} LET k := e {{y : UNIT | ψ γ δ y}}ᵗ
 
 | rw_cond_tot : forall Γ Δ e c1 c2 τ (w : (Δ ++ Γ) |- e : BOOL) (w1 : Γ ;;; Δ ||- c1 : τ) (w2 : Γ ;;; Δ ||- c2 : τ) (w' : Γ ;;; Δ ||- Cond e c1 c2 : τ) ϕ θ ψ,
 
-    w |- [{rw_to_ro_pre ϕ}] e [{θ}] ->
-    w1 ||- [{ro_to_rw_pre (θ true)}] c1 [{ψ}] ->
-    w2 ||- [{ro_to_rw_pre (θ false)}] c2 [{ψ}] ->
+    'x : (Δ ++ Γ) |- w {{ϕ (snd_app x) (fst_app x)}} e {{y : BOOL | θ x y}}ᵗ -> 
+    'γ : Γ ;;; 'δ : Δ ||- w1 {{θ (δ ; γ) true}} c1 {{y : τ | ψ γ δ y}}ᵗ ->
+    'γ : Γ ;;; 'δ : Δ ||- w2 {{θ (δ ; γ) false}} c2 {{y : τ | ψ γ δ y}}ᵗ ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    w' ||- [{ϕ}] Cond e c1 c2 [{ψ}]
-
-
-(* | rw_case_tot : forall Γ Δ e1 e2 c1 c2 τ (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) ϕ θ1 θ2 ψ ϕ1 ϕ2, *)
-    
-(*     wty_e1 |- {{rw_to_ro_pre ϕ}} e1 {{θ1}} ->  *)
-(*     wty_e2 |- {{rw_to_ro_pre ϕ}} e2 {{θ2}} ->  *)
-(*     wty_c1 ||- [{ro_to_rw_pre (θ1 true)}] c1 [{ψ}] ->  *)
-(*     wty_c2 ||- [{ro_to_rw_pre (θ2 true)}] c2 [{ψ}] ->  *)
-(*     wty_e1 |- [{ϕ1}] e1 [{b |fun _ => b = true}] ->  *)
-(*     wty_e2 |- [{ϕ2}] e2 [{b | fun _ => b = true}] ->  *)
-(*     (forall x, (rw_to_ro_pre ϕ x) -> (ϕ1 x \/ ϕ2 x)) ->  *)
-(*     (*——————————-——————————-——————————-——————————-——————————-*) *)
-(*     wty ||- [{ϕ}] Case e1 c1 e2 c2 [{ψ}] *)
-
+    'γ : Γ ;;; 'δ : Δ ||- w' {{ϕ γ δ}} Cond e c1 c2 {{y : τ | ψ γ δ y}}ᵗ
 
 | rw_case_list_tot : forall Γ Δ l τ
                             (wty_l : ForallT (fun ec => ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))%type l)
                             (wty : Γ ;;; Δ ||- CaseList l : τ)
-                            (θ : ForallT (fun _ => bool -> sem_ctx (Δ ++ Γ) -> Prop) l)
+                            (θ : ForallT (fun _ =>  sem_ctx (Δ ++ Γ) -> bool -> Prop) l)
                             (ϕi : ForallT (fun _ => sem_ctx (Δ ++ Γ) -> Prop) l)
                             ϕ ψ,
     ForallT3 _ _ _
-    (fun ec (wty_l : ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))  (θ : bool -> sem_ctx (Δ ++ Γ) -> Prop) (ϕi : sem_ctx (Δ ++ Γ) -> Prop)  =>
+    (fun ec (wty_l : ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))  (θ : sem_ctx (Δ ++ Γ) -> bool -> Prop) (ϕi : sem_ctx (Δ ++ Γ) -> Prop)  =>
          
-    (fst (wty_l) |- {{rw_to_ro_pre ϕ}} fst ec {{θ}}) *
-    (snd (wty_l) ||- [{ro_to_rw_pre (θ true)}] snd ec [{ψ}]) * 
-    (fst (wty_l) |- [{ϕi}] fst ec [{b | fun _ => b = true}])) %type l wty_l θ ϕi ->
-    (forall x, (rw_to_ro_pre ϕ x) -> ForallT_disj _ (fun _ ϕi => ϕi x) l ϕi) ->
+    ('x : (Δ ++ Γ) |- fst (wty_l) {{ϕ (snd_app x) (fst_app x)}} fst ec {{y : BOOL | θ x y}}ᵖ) *
+    ('γ : Γ ;;; 'δ : Δ ||- snd (wty_l) {{θ (δ; γ) true}} snd ec {{y : τ | ψ γ δ y}}ᵗ) * 
+    ('x : (Δ ++ Γ) |- fst (wty_l) {{ϕi x}} fst ec {{b : BOOL | b = true}}ᵗ)) %type l wty_l θ ϕi ->
+    (forall x, (ϕ (snd_app x) (fst_app x)) -> ForallT_disj _ (fun _ ϕi => ϕi x) l ϕi) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    wty ||- [{ϕ}] CaseList l [{ψ}]
+    'γ : Γ ;;; 'δ : Δ ||- wty {{ϕ γ δ}} CaseList l {{y : τ | ψ γ δ y}}ᵗ
 
  | rw_while_tot : forall Γ Δ e c (wty_e : (Δ ++ Γ) |- e : BOOL)
                                                (wty_c : (Γ ++ Δ) ;;; Δ ||- c : UNIT) (wty_c' : Γ ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT) ϕ θ ψ,
-    
-     wty_e  |- [{rw_to_ro_pre ϕ}] e [{θ}] ->
-     wty_c'||- [{ro_to_rw_pre (θ true)}] c [{fun _ => ϕ }] ->
-     wty_c ||- [{fun x => ro_to_rw_pre (θ true) (fst x, fst_app (snd x)) /\ fst x = snd_app (snd x)}]
-               c
-               [{fun _ x => ψ x }] ->
-             (forall δ γ, ϕ (δ, γ) ->  
+     'x : (Δ ++ Γ) |- wty_e {{ϕ (snd_app x) (fst_app x)}} e {{y : BOOL | θ x y}}ᵗ -> 
+    'γ : Γ ;;; 'δ : Δ ||- wty_c' {{θ (δ ; γ) true}} c {{y : UNIT | ϕ γ δ}}ᵗ ->
+    'x : (Γ ++ Δ) ;;; 'δ : Δ ||- wty_c {{θ (δ ; (fst_app x)) true}} c {{y : UNIT | ψ x δ}}ᵗ ->
+             (forall δ γ, ϕ γ δ  ->  
                            ~exists f : nat -> sem_ctx Δ,
-                               f O = δ /\ forall n, ψ (f (S n), (γ ; f n))) ->
-    (*——————————-——————————-——————————-——————————-——————————-*)
-    wty ||- [{ϕ}] While e c [{fun _ => (ϕ /\\ ro_to_rw_pre (θ false))}]
+                               f O = δ /\ forall n, ψ (γ ; f n) (f (S n))) ->
+                    (*——————————-——————————-——————————-——————————-——————————-*)
+    'γ : Γ ;;; 'δ : Δ ||- wty {{ϕ γ δ}} While e c {{y : UNIT | (ϕ γ δ) /\ θ (δ; γ) false}}ᵗ
 
                                                                                                        
 where
-" w |- {{ P }} e {{ Q }} " := (proves_ro_prt _ e _ w (mk_ro_prt w P Q)) and  " w |- {{ P }} e {{ y | Q }} " := (proves_ro_prt _ e _ w (mk_ro_prt w P (fun y => Q))) and " w |- [{ P }] e [{ y | Q }] " := (proves_ro_tot _ e _ w (mk_ro_tot w P (fun y => Q))) and " w ||- {{ P }} e {{ y | Q }} " := (proves_rw_prt _ _ e _ w (mk_rw_prt w P (fun y => Q))) and " w ||- [{ P }] e [{ y | Q }] " := (proves_rw_tot _ _ e _ w (mk_rw_tot w P (fun y => Q))) and " w |- [{ P }] e [{ Q }] " := (proves_ro_tot _ e _ w (mk_ro_tot w P Q)) and " w ||- {{ P }} e {{ Q }} " := (proves_rw_prt _ _ e _ w (mk_rw_prt w P Q)) and " w ||- [{ P }] e [{ Q }] " := (proves_rw_tot _ _ e _ w (mk_rw_tot w P Q)).
+" ' x : Γ |- w {{ P }} e {{ y : τ | Q }}ᵖ " := (proves_ro_prt Γ e τ w (mk_ro_prt w (fun x => P) (fun x y => Q))) and
+" ' x : Γ |- w {{ P }} e {{ y : τ | Q }}ᵗ " := (proves_ro_tot Γ e τ w (mk_ro_tot w (fun x => P) (fun x y => Q))) and
+" ' x : Γ ;;; ' y : Δ ||- w {{ P }} e {{ z : τ | Q }}ᵖ " := (proves_rw_prt Γ Δ e τ w (mk_rw_prt w (fun x y => P) (fun x y z => Q))) and
+" ' x : Γ ;;; ' y : Δ ||- w {{ P }} e {{ z : τ | Q }}ᵗ " := (proves_rw_tot Γ Δ e τ w (mk_rw_tot w (fun x y => P) (fun x y z => Q))).
 
 
 End Rules.
 
-Notation " w |- {{ P }} e {{ Q }} " := (proves_ro_prt _ e _ w (mk_ro_prt w P Q))  (at level 50, P, e, Q at next level) : clerical_scope.
+Notation " ' x : Γ |- w {{ ϕ }} e {{ y : τ | ψ }}ᵖ "
+  := (proves_ro_prt Γ e τ w (mk_ro_prt w (fun x => ϕ) (fun x y => ψ)))
+       (at level 50,  Γ, w, ϕ, e, y, τ, ψ at next level, x pattern).
+Notation " ' x : Γ |- w {{ ϕ }} e {{ y : τ | ψ }}ᵗ "
+  := (proves_ro_tot Γ e τ w (mk_ro_tot w (fun x => ϕ) (fun x y => ψ)))
+       (at level 50,  Γ, w, ϕ, e, y, τ, ψ at next level, x pattern).
+Notation " ' x : Γ ;;; ' y : Δ ||- w {{ P }} e {{ z : τ | Q }}ᵖ "
+  := (proves_rw_prt Γ Δ e τ w (mk_rw_prt w (fun x y => P) (fun x y z => Q)))
+       (at level 50,  Γ,  Δ, w, P, e, z, τ, Q at next level, x pattern, y pattern).
+Notation " ' x : Γ ;;; ' y : Δ ||- w {{ P }} e {{ z : τ | Q }}ᵗ "
+  := (proves_rw_tot Γ Δ e τ w (mk_rw_tot w (fun x y => P) (fun x y z => Q)))
+       (at level 50,  Γ,  Δ, w, P, e, z, τ, Q at next level, x pattern, y pattern).
 
-Notation " w |- [{ P }] e [{ Q }] " := (proves_ro_tot _ e _ w (mk_ro_tot w P Q)) (at level 50, P, e, Q at next level) : clerical_scope.
-
-Notation " w ||- {{ P }} e {{ Q }} " := (proves_rw_prt _ _ e _ w (mk_rw_prt w P Q)) (at level 50, P, e, Q at next level) : clerical_scope.
-
-Notation " w ||- [{ P }] e [{ Q }] " := (proves_rw_tot _ _ e _ w (mk_rw_tot w P Q)) (at level 50, P, e, Q at next level) : clerical_scope.
-
-Notation  " w |- {{ P }} e {{ y | Q }} " := (proves_ro_prt _ e _ w (mk_ro_prt w P (fun y => Q))) (at level 50, P, e, Q, y at next level) : clerical_scope.
-
-Notation " w |- [{ P }] e [{ y | Q }] " := (proves_ro_tot _ e _ w (mk_ro_tot w P (fun y => Q))) (at level 50, P, e, Q, y  at next level) : clerical_scope.
-
-Notation " w ||- {{ P }} e {{ y | Q }} " := (proves_rw_prt _ _ e _ w (mk_rw_prt w P (fun y => Q))) (at level 50, P, e, Q, y  at next level) : clerical_scope.
-
-Notation " w ||- [{ P }] e [{ y | Q }] " := (proves_rw_tot _ _ e _ w (mk_rw_tot w P (fun y => Q))) (at level 50, P, e, Q, y at next level) : clerical_scope.

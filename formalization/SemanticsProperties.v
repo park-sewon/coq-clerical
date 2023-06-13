@@ -22,8 +22,8 @@ From Clerical Require Import Semantics.
    To prove it, again we define a semantics to restricted typing rules, proving the properties on the restricted semantics and transfer the result back.
  *)
 
-Fixpoint r_sem_ro_exp (Γ : ro_ctx) (e : exp) (τ : datatype) (D : Γ |~ e : τ) {struct D} : sem_ctx Γ -> pdom (sem_datatype τ)
-with r_sem_rw_exp (Γ Δ : ro_ctx) (c : exp) (τ : datatype) (D : Γ ;;; Δ ||~ c : τ) {struct D} : sem_ctx Γ -> sem_ctx Δ -> pdom (sem_ctx Δ * sem_datatype τ).
+Fixpoint r_sem_ro_exp (Γ : ctx) (e : exp) (τ : datatype) (D : Γ |~ e : τ) {struct D} : sem_ctx Γ -> pdom (sem_datatype τ)
+with r_sem_rw_exp (Γ Δ : ctx) (c : exp) (τ : datatype) (D : Γ ;;; Δ ||~ c : τ) {struct D} : sem_ctx Γ -> sem_ctx Δ -> pdom (sem_ctx Δ * sem_datatype τ).
 Proof.
   - (* read only expressions *)
     induction D; intro γ.
@@ -308,7 +308,7 @@ Proof.
   intros [a b]; simpl; reflexivity.
 Qed.
 
-Lemma r_sem_rw_ro_ctx_rewrite : forall Γ1 Γ2 Δ e τ (w : Γ1 ;;; Δ ||~ e : τ) (p : Γ1 = Γ2) γ δ,
+Lemma r_sem_rw_ctx_rewrite : forall Γ1 Γ2 Δ e τ (w : Γ1 ;;; Δ ||~ e : τ) (p : Γ1 = Γ2) γ δ,
     r_sem_rw_exp _ _ _ _ w γ δ =
       (r_sem_rw_exp _ _ _ _ (tr (fun Γ => Γ ;;; Δ ||~ e : τ) p w) (tr (fun Δ => sem_ctx Δ) p γ) δ).
 Proof.
@@ -414,104 +414,6 @@ Lemma pl : forall {X Y} (f g: X -> Y) (x : X), f = g -> f x = g x.
 Proof.
   intros.
   rewrite H; auto.
-Defined.
-
-Lemma Case2_post_processing {X Y} (f : X -> Y) e1 e2 c1 c2 :
-  Case2 e1 e2 (pdom_lift f c1) (pdom_lift f c2) = pdom_lift f (Case2 e1 e2 c1 c2). 
-Proof.
-  unfold Case2.
-  destruct (lem (pdom_is_empty (pdom_case2 e1 e2 (pdom_lift f c1) (pdom_lift f c2)))).
-  destruct (lem (pdom_is_empty (pdom_lift f (pdom_case2 e1 e2 c1 c2)))).
-  rewrite (pdom_is_empty_is_empty _ H).
-  rewrite (pdom_is_empty_is_empty _ H0).
-  auto.
-  contradict H0.
-  apply pdom_case2_empty_2 in H.
-  apply pdom_lift_empty_1.  
-  apply pdom_case2_empty_1.
-  repeat destruct H; auto.
-  apply pdom_lift_empty_2 in H0.
-  auto.
-  apply pdom_lift_empty_2 in H0.
-  auto.
-  destruct (lem (pdom_is_empty (pdom_lift f (pdom_case2 e1 e2 c1 c2)))).
-  contradict H.
-  apply pdom_lift_empty_2 in H0.
-  apply pdom_case2_empty_1.
-  apply pdom_case2_empty_2 in H0.
-  repeat destruct H0; auto.
-  destruct H.
-  auto.
-  destruct H.
-  right.
-  right.
-  left.
-  destruct H; split; auto.
-  apply pdom_lift_empty_1; auto.
-  right.
-  right.
-  right.
-  destruct H; split; auto.
-  apply pdom_lift_empty_1; auto.
-
-  (* when both hand sides are non empty *)
-  assert (~ pdom_is_empty (pdom_case2 e1 e2 c1 c2)).
-  intro.
-  contradict H0.
-  apply pdom_lift_empty_1.
-  auto.
-  
-  apply sig_eq.
-  apply pred_ext; intros.
-  +
-    
-    destruct a.
-    
-    apply pdom_case2_bot_2 in H2.
-    apply pdom_lift_bot_1.
-    apply pdom_case2_bot_1; auto.
-    repeat destruct H2; auto.
-    apply pdom_lift_bot_2 in H3; left; split; auto.
-    apply pdom_lift_bot_2 in H3; right; left; split; auto.
-    apply pdom_case2_total_2 in H2.
-    apply pdom_lift_total_1.
-    destruct H2.
-    destruct H2.
-    apply pdom_lift_total_2 in H3.
-    destruct H3.
-    exists x.
-    destruct H3; split; auto.
-    apply pdom_case2_total_1; auto.
-    destruct H2.
-    apply pdom_lift_total_2 in H3.
-    destruct H3.
-    exists x.
-    destruct H3; split; auto.
-    apply pdom_case2_total_1; auto.
-    
-  +
-
-    destruct a.
-    apply pdom_lift_bot_2 in H2.
-    apply pdom_case2_bot_1; auto.
-    apply pdom_case2_bot_2 in H2.
-    repeat destruct H2; auto.
-    left; split; auto.
-    apply pdom_lift_bot_1; auto.
-    right; left; split; auto.
-    apply pdom_lift_bot_1; auto.
-    apply pdom_lift_total_2 in H2.
-    destruct H2.
-    destruct H2.
-    apply pdom_case2_total_1; auto.
-    apply pdom_case2_total_2 in H2.
-    destruct H2.
-    left; destruct H2; split; auto.
-    apply pdom_lift_total_1.
-    exists x; auto.
-    right; destruct H2; split; auto.
-    apply pdom_lift_total_1.
-    exists x; auto.
 Defined.
 
 Lemma pdom_case_list_post_processing {X Y} (f : X -> Y) l :
@@ -917,8 +819,8 @@ Proof.
   reflexivity.
   destruct δ.
   replace (tedious_prod_sem (@cons datatype σ Δ) Δ'
-             (@pair (sem_list_datatype (@cons datatype σ Δ)) (sem_ctx Δ')
-                (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_list_datatype Δ) s s0)
+             (@pair (sem_ctx (@cons datatype σ Δ)) (sem_ctx Δ')
+                (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_ctx Δ) s s0)
                    (assignable_S Δ τ σ k a)) δ'))
     with
     (s, (update k x s0 a; δ')).
@@ -2007,14 +1909,14 @@ Proof.
   dependent destruction a2; auto.
   destruct δ.
   assert (
-      (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_list_datatype Δ) s s0) (assignable_S Δ τ σ k a1))
+      (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_ctx Δ) s s0) (assignable_S Δ τ σ k a1))
             = (s, update k x s0 a1)). 
   simpl.
   unfold update.
   unfold assignable_rect.
   destruct a1; auto.
   assert (
-      (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_list_datatype Δ) s s0) (assignable_S Δ τ σ k a2))
+      (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_ctx Δ) s s0) (assignable_S Δ τ σ k a2))
             = (s, update k x s0 a2)). 
   simpl.
   unfold update.

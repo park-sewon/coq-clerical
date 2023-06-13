@@ -51,7 +51,7 @@ Defined.
 
   
 Fixpoint proves_ro_prt_Var_sound  k Γ τ (w : Γ |- Var k : τ) ϕ {struct w} :
-    w |= {{fun γ => ϕ (ro_access Γ k τ w γ) γ}} Var k {{ϕ}}.
+    'x : Γ |=  w {{ϕ x (ro_access Γ k τ w x)}} Var k {{y : τ | ϕ x y}}ᵖ.
 Proof.
   intros γ m.
   rewrite Var_sem_ro_access_equiv.

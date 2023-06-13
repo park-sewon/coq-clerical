@@ -6,28 +6,28 @@ Require Import Clerical.Semantics.
 Require Import Clerical.SemanticsProperties.
 
 
-Structure ro_prt {Γ : ro_ctx} {e : exp} {τ : datatype} (wty : Γ |- e : τ) :=
+Structure ro_prt {Γ : ctx} {e : exp} {τ : datatype} (wty : Γ |- e : τ) :=
   {
     ro_prt_pre : sem_ctx Γ -> Prop ;
-    ro_prt_post : sem_datatype τ -> sem_ctx Γ -> Prop
+    ro_prt_post : sem_ctx Γ -> sem_datatype τ -> Prop
   }.
 
-Structure ro_tot {Γ : ro_ctx} {e : exp} {τ : datatype} (wty : Γ |- e : τ) :=
+Structure ro_tot {Γ : ctx} {e : exp} {τ : datatype} (wty : Γ |- e : τ) :=
   {
     ro_tot_pre : sem_ctx Γ -> Prop ;
-    ro_tot_post : sem_datatype τ-> sem_ctx Γ ->  Prop
+    ro_tot_post : sem_ctx Γ -> sem_datatype τ ->  Prop
   }.
 
-Structure rw_prt {Γ Δ: ro_ctx} {c : exp} {τ : datatype} (wty : Γ ;;; Δ ||- c : τ) :=
+Structure rw_prt {Γ Δ: ctx} {c : exp} {τ : datatype} (wty : Γ ;;; Δ ||- c : τ) :=
   {
-    rw_prt_pre :  sem_ctx Δ  * sem_ctx Γ -> Prop ;
-    rw_prt_post : sem_datatype τ -> sem_ctx Δ * sem_ctx Γ ->  Prop
+    rw_prt_pre :  sem_ctx Γ -> sem_ctx Δ -> Prop ;
+    rw_prt_post : sem_ctx Γ -> sem_ctx Δ -> sem_datatype τ -> Prop
   }.
 
-Structure rw_tot {Γ Δ : ro_ctx} {c : exp} {τ : datatype} (wty : Γ ;;; Δ ||- c : τ) :=
+Structure rw_tot {Γ Δ : ctx} {c : exp} {τ : datatype} (wty : Γ ;;; Δ ||- c : τ) :=
   {
-    rw_tot_pre : sem_ctx Δ * sem_ctx Γ -> Prop ;
-    rw_tot_post :  sem_datatype τ -> sem_ctx Δ * sem_ctx Γ -> Prop
+    rw_tot_pre : sem_ctx Γ -> sem_ctx Δ -> Prop ;
+    rw_tot_post : sem_ctx Γ -> sem_ctx Δ -> sem_datatype τ -> Prop
   }.
 
 Definition sem_ro_prt {Γ} {e} {τ} {wty} (t : ro_prt wty) :=
@@ -35,36 +35,34 @@ Definition sem_ro_prt {Γ} {e} {τ} {wty} (t : ro_prt wty) :=
   let Q := ro_prt_post _ t in
   forall γ, P γ ->
             let V := sem_ro_exp Γ e τ wty γ in
-            pdom_neg_is_empty V /\ forall v, v ∈ V -> forall v', v = total v' -> Q v' γ.
+            pdom_neg_is_empty V /\
+              forall v, v ∈ V -> forall v', v = total v' -> Q γ v'.
 
 Definition sem_ro_tot {Γ} {e} {τ} {wty} (t : ro_tot wty) :=
   let P := ro_tot_pre _ t in
   let Q := ro_tot_post _ t in
   forall γ, P γ ->
             let V := sem_ro_exp Γ e τ wty γ in
-            pdom_neg_is_empty    V /\ forall v, v ∈ V -> exists v', v = total v' /\ Q v' γ.
-
-
-(* Definition sem_rw_prt {Γ Δ} {c} {τ} {wty} (t : rw_prt wty) := *)
-(*   let P := rw_prt_pre _ t in *)
-(*   let Q := rw_prt_post _ t in *)
-(*   forall γ δ, P (δ, γ) -> *)
-(*             let V := sem_rw_exp Γ Δ c τ wty γ δ in *)
-(*             pdom_neg_is_empty V /\ forall v, (total v) ∈ V -> Q (snd v) (fst v, γ). *)
+            pdom_neg_is_empty V /\
+              forall v, v ∈ V -> exists v', v = total v' /\ Q γ v'.
 
 Definition sem_rw_prt {Γ Δ} {c} {τ} {wty} (t : rw_prt wty) :=
   let P := rw_prt_pre _ t in
   let Q := rw_prt_post _ t in
-  forall γ δ, P (δ, γ) ->
+  forall γ δ, P γ δ ->
             let V := sem_rw_exp Γ Δ c τ wty γ δ in
-            pdom_neg_is_empty V /\ forall v, v ∈ V -> forall v', v = total v' -> Q (snd v') (fst v', γ).
+            pdom_neg_is_empty V /\
+              forall v, v ∈ V -> forall v',
+                  v = total v' -> Q γ (fst v') (snd v').
 
 Definition sem_rw_tot {Γ Δ} {c} {τ} {wty} (t : rw_tot wty) :=
   let P := rw_tot_pre _ t in
   let Q := rw_tot_post _ t in
-  forall γ δ, P (δ, γ) ->
+  forall γ δ, P γ δ ->
               let V := sem_rw_exp Γ Δ c τ wty γ δ in
-              pdom_neg_is_empty V /\ forall v, v ∈ V -> exists v', v = total v' /\ Q (snd v') (fst v', γ).
+              pdom_neg_is_empty V /\
+                forall v, v ∈ V -> exists v',
+                  v = total v' /\ Q γ (fst v') (snd v').
 
 Definition mk_ro_prt {Γ} {e} {τ} (w : Γ |- e : τ) P Q : ro_prt w
   := {| ro_prt_pre := P ; ro_prt_post := Q |}.
@@ -79,17 +77,29 @@ Definition mk_rw_tot {Γ Δ} {e} {τ} (w : Γ ;;; Δ ||- e : τ) P Q : rw_tot w
   := {| rw_tot_pre := P ; rw_tot_post := Q |}.
 
 
-Notation " w |= {{ ϕ }} e {{ ψ }} ":= (sem_ro_prt (@mk_ro_prt _ e _ w ϕ ψ)) (at level 85).
-Notation " w |= [{ ϕ }] e [{ ψ }] ":= (sem_ro_tot (@mk_ro_tot _ e _ w ϕ ψ)) (at level 85).
-Notation " w ||= {{ ϕ }} e {{ ψ }} ":= (sem_rw_prt (@mk_rw_prt _ _ e _ w ϕ ψ)) (at level 85).
-Notation " w ||= [{ ϕ }] e [{ ψ }] ":= (sem_rw_tot (@mk_rw_tot _ _ e _ w ϕ ψ)) (at level 85).
-
+Notation " ' x ':' Γ '|=' w '{{' ϕ '}}' e '{{' y ':' τ '|' ψ '}}ᵖ' "
+  := (sem_ro_prt (@mk_ro_prt Γ e τ w (fun x => ϕ) (fun x y => ψ)))
+       (at level 50, Γ, w, ϕ, e, y, τ, ψ at next level, x pattern) : clerical_scope.
+Notation "' x : Γ  |= w {{ ϕ }} e {{ y : τ | ψ }}ᵗ "
+  := (sem_ro_tot (@mk_ro_tot Γ e τ w (fun x => ϕ) (fun x y => ψ)))
+       (at level 50, Γ, w, ϕ, e, y, τ, ψ at next level, x pattern) : clerical_scope.
+Notation " ' x : Γ  ;;;  ' y : Δ  ||= w {{ ϕ }} e {{ z : τ | ψ }}ᵖ "
+  := (sem_rw_prt (@mk_rw_prt Γ Δ e τ w (fun x y => ϕ) (fun x y z => ψ)))
+       (at level 50, Γ, w, ϕ, e, z, τ, ψ at next level, x pattern, y pattern) : clerical_scope.
+Notation " ' x : Γ  ;;;  ' y : Δ  ||= w {{ ϕ }} e {{ z : τ | ψ }}ᵗ "
+  := (sem_rw_tot (@mk_rw_tot Γ Δ e τ w (fun x y => ϕ) (fun x y z => ψ)))
+       (at level 50, Γ, w, ϕ, e, z, τ, ψ at next level, x pattern, y pattern) : clerical_scope.
 (* Now let us prove some properties *)
 
+
+(* Notation "[ x ':' Γ ]  '|-' '{{' ϕ '}}' e '{{' y ':' τ '|' ψ '}}ᵖ' " := *)
+(*   (proves_ro_prt_pp Γ e τ (fun x => ϕ) (fun y x => ψ)) (at level 50, Γ, ϕ, e, y, τ, ψ at next level, x pattern) : clerical_scope. *)
+
+
 Lemma sem_ro_prt_excludes_bot_is_tot : forall Γ e τ ϕ ψ (w : Γ |- e : τ), 
-    w |= {{ϕ}} e {{ψ}} -> 
+    'γ : Γ |= w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵖ -> 
     (forall γ, ϕ γ -> ⊥ ∉ sem_ro_exp _ _ _ w γ) ->
-    w |= [{ϕ}] e [{ψ}].
+    'γ : Γ |= w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵗ.
 Proof.
   intros Γ e τ ϕ ψ w h1 h2 γ m; simpl; simpl in m.
   destruct (h1 γ m) as [h3 h4]; split; auto.
@@ -101,9 +111,9 @@ Proof.
 Qed.
 
 Lemma sem_rw_prt_excludes_bot_is_tot : forall Γ Δ e τ ϕ ψ (w : Γ ;;; Δ ||- e : τ), 
-    w ||= {{ϕ}} e {{ψ}} -> 
-    (forall γ δ, ϕ (δ, γ) -> ⊥ ∉ sem_rw_exp _ _ _ _ w γ δ) ->
-    w ||= [{ϕ}] e [{ψ}].
+    'γ : Γ ;;; 'δ : Δ ||=  w {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵖ -> 
+    (forall γ δ, ϕ γ δ -> ⊥ ∉ sem_rw_exp _ _ _ _ w γ δ) ->
+    'γ : Γ ;;; 'δ : Δ ||= w {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵗ. 
 Proof.
   intros Γ Δ e τ ϕ ψ w h1 h2 γ δ m; simpl; simpl in m.
   destruct (h1 γ δ m) as [h3 h4]; split; auto.
@@ -115,8 +125,8 @@ Proof.
 Qed.
 
 Lemma sem_ro_tot_is_prt_excludes_bot : forall Γ e τ ϕ ψ (w : Γ |- e : τ), 
-    w |= [{ϕ}] e [{ψ}] ->
-    w |= {{ϕ}} e {{ψ}} /\ 
+    'γ : Γ |= w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵗ -> 
+     'γ : Γ |= w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵖ /\ 
     (forall γ, ϕ γ -> ⊥ ∉ sem_ro_exp _ _ _ w γ).
 Proof.
   intros Γ e τ ϕ ψ w h1.
@@ -138,16 +148,16 @@ Proof.
 Qed.
 
 Lemma sem_ro_tot_excludes_bot : forall Γ e τ ϕ ψ (w : Γ |- e : τ), 
-    w |= [{ϕ}] e [{ψ}] ->
-    (forall γ, ϕ γ -> ⊥ ∉ sem_ro_exp _ _ _ w γ).
+    'γ : Γ |= w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵗ ->
+         (forall γ, ϕ γ -> ⊥ ∉ sem_ro_exp _ _ _ w γ).
 Proof.
   apply sem_ro_tot_is_prt_excludes_bot.
 Defined.
     
 Lemma sem_rw_tot_is_prt_excludes_bot : forall Γ Δ e τ ϕ ψ (w : Γ ;;; Δ ||- e : τ), 
-    w ||= [{ϕ}] e [{ψ}] ->
-    w ||= {{ϕ}} e {{ψ}} /\ 
-    (forall γ δ, ϕ (δ, γ) -> ⊥ ∉ sem_rw_exp _ _ _ _ w γ δ).
+    'γ : Γ ;;; 'δ : Δ ||=  w {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵗ ->
+    'γ : Γ ;;; 'δ : Δ ||=  w {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵖ /\ 
+                      (forall γ δ, ϕ γ δ -> ⊥ ∉ sem_rw_exp _ _ _ _ w γ δ).
 Proof.
   intros Γ Δ e τ ϕ ψ w h1.
   split.
@@ -168,17 +178,16 @@ Proof.
 Qed.
 
 Lemma sem_rw_tot_excludes_bot : forall Γ Δ e τ ϕ ψ (w : Γ ;;; Δ ||- e : τ), 
-    w ||= [{ϕ}] e [{ψ}] ->
-    (forall γ δ, ϕ (δ, γ) -> ⊥ ∉ sem_rw_exp _ _ _ _ w γ δ).
+    'γ : Γ ;;; 'δ : Δ ||=  w {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵗ ->
+                      (forall γ δ, ϕ γ δ -> ⊥ ∉ sem_rw_exp _ _ _ _ w γ δ).
 Proof.
   apply sem_rw_tot_is_prt_excludes_bot.
 Defined.
 
     
 Lemma ro_prt_post_pre : forall Γ e τ ϕ ψ (w : Γ |- e : τ),
-    (w |= {{ϕ}} e {{ψ}}) ->
-    forall y,
-    forall γ, ϕ γ -> total y ∈ sem_ro_exp _ _ _ w γ -> ψ y γ.
+    'γ : Γ |= w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵖ ->
+         forall y γ, ϕ γ -> total y ∈ sem_ro_exp _ _ _ w γ -> ψ γ y.
 Proof.
   intros.
   pose proof (H γ H0) as [H2 H3].
@@ -186,9 +195,9 @@ Proof.
 Defined.
 
 Lemma ro_tot_post_pre : forall Γ e τ ϕ ψ (w : Γ |- e : τ),
-    (w |= [{ϕ}] e [{ψ}]) ->
-    forall y,
-    forall γ, ϕ γ -> total y ∈ sem_ro_exp _ _ _ w γ -> ψ y γ.
+    'γ : Γ |= w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵗ ->
+         forall y,
+         forall γ, ϕ γ -> total y ∈ sem_ro_exp _ _ _ w γ -> ψ γ y.
 Proof.
   intros.
   pose proof (H γ H0) as [H3 H4].
@@ -196,7 +205,9 @@ Proof.
   injection p; intro j; rewrite j; exact q.
 Defined.
   
-Lemma trip_ro_prt_sem_typing_irrl : forall Γ e τ ϕ ψ (w1 w2 : Γ |- e : τ), (w1 |= {{ϕ}} e {{ψ}}) -> (w2 |= {{ϕ}} e {{ψ}}).
+Lemma trip_ro_prt_sem_typing_irrl : forall Γ e τ ϕ ψ (w1 w2 : Γ |- e : τ),
+    'γ : Γ |= w1 {{ϕ γ}} e {{y : τ | ψ γ y}}ᵖ ->
+         'γ : Γ |= w2 {{ϕ γ}} e {{y : τ | ψ γ y}}ᵖ.
 Proof.
   intros.
   intros γ m.
@@ -204,7 +215,9 @@ Proof.
   apply H; auto.
 Defined.
 
-Lemma trip_rw_prt_sem_typing_irrl : forall Γ Δ e τ ϕ ψ (w1 w2 : Γ ;;; Δ ||- e : τ), (w1 ||= {{ϕ}} e {{ψ}}) -> (w2 ||= {{ϕ}} e {{ψ}}).
+Lemma trip_rw_prt_sem_typing_irrl : forall Γ Δ e τ ϕ ψ (w1 w2 : Γ ;;; Δ ||- e : τ),
+    'γ : Γ ;;; 'δ :Δ ||= w1 {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵖ ->
+         'γ : Γ ;;; 'δ : Δ ||= w2 {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵖ.
 Proof.
   intros.
   intros γ m.
@@ -212,7 +225,9 @@ Proof.
   apply H; auto.
 Defined.
 
-Lemma trip_ro_tot_sem_typing_irrl : forall Γ e τ ϕ ψ (w1 w2 : Γ |- e : τ), (w1 |= [{ϕ}] e [{ψ}]) -> (w2 |= [{ϕ}] e [{ψ}]).
+Lemma trip_ro_tot_sem_typing_irrl : forall Γ e τ ϕ ψ (w1 w2 : Γ |- e : τ),
+        'γ : Γ |= w1 {{ϕ γ}} e {{y : τ | ψ γ y}}ᵗ ->
+         'γ : Γ |= w2 {{ϕ γ}} e {{y : τ | ψ γ y}}ᵗ.
 Proof.
   intros.
   intros γ m.
@@ -220,7 +235,9 @@ Proof.
   apply H; auto.
 Defined.
 
-Lemma trip_rw_tot_sem_typing_irrl : forall Γ Δ e τ ϕ ψ (w1 w2 : Γ ;;; Δ ||- e : τ), (w1 ||= [{ϕ}] e [{ψ}]) -> (w2 ||= [{ϕ}] e [{ψ}]).
+Lemma trip_rw_tot_sem_typing_irrl : forall Γ Δ e τ ϕ ψ (w1 w2 : Γ ;;; Δ ||- e : τ),
+    'γ : Γ ;;; 'δ :Δ ||= w1 {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵗ ->
+                   'γ : Γ ;;; 'δ : Δ ||= w2 {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵗ.
 Proof.
   intros.
   intros γ m.

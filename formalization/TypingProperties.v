@@ -21,10 +21,10 @@ Proof.
   inversion w.
   inversion H.
   simpl in H7.
-  apply (ro_assign_absurd Γ k e H7) .
-  contradict H6.
+  apply (ro_assign_absurd Γ k e H3) .
+  contradict H7.
   intro.
-  inversion H6.
+  inversion H7.
 Defined.
 
 Lemma assignable_push_back Γ Δ k τ (t : assignable Γ k τ) : assignable (Γ ++ Δ) k τ.
@@ -75,7 +75,7 @@ Reserved Notation " Γ ;;; Δ ||~ t : T " (at level 50, Δ, t, T at next level).
 
 Section RestrictedTyping.
 
-  Inductive r_has_type_ro : ro_ctx -> exp -> datatype -> Type :=
+  Inductive r_has_type_ro : ctx -> exp -> datatype -> Type :=
   (* from readwrite *)
   | r_has_type_ro_rw_Seq : forall Γ c1 c2 τ, Γ ;;; nil ||~ (c1 ;; c2) : τ -> Γ |~ (c1 ;; c2) : τ 
 
@@ -122,7 +122,7 @@ Section RestrictedTyping.
   (* limit *)
   | r_has_type_ro_Lim : forall Γ e, (DInteger :: Γ) |~ e : DReal -> Γ |~ Lim e : DReal
                                                                                    
-  with r_has_type_rw : rw_ctx -> exp -> datatype -> Type :=
+  with r_has_type_rw : ctx -> ctx -> exp -> datatype -> Type :=
   (* from readonly *)
   | r_has_type_rw_ro_Var :
     forall Γ Δ k τ,
@@ -148,7 +148,7 @@ Section RestrictedTyping.
       (Δ ++ Γ) |~ Lim e : DReal -> Γ ;;; Δ ||~ Lim e : DReal
 
   (* sequential *)
-  | r_has_type_rw_Seq : forall Γ Δ c1 c2 τ, Γ ;;; Δ ||~ c1 : DUnit -> Γ;;; Δ ||~ c2 : τ -> Γ ;;; Δ ||~ (Seq c1 c2) : τ 
+  | r_has_type_rw_Seq : forall Γ Δ c1 c2 τ, Γ ;;; Δ ||~ c1 : DUnit -> Γ ;;; Δ ||~ c2 : τ -> Γ ;;; Δ ||~ (Seq c1 c2) : τ 
                                                                                                                        
   (* assignment *)
   | r_has_type_rw_Assign : forall Γ Δ e τ k, assignable Δ τ k -> (Δ ++ Γ) |~ e : τ -> Γ ;;; Δ ||~ Assign k e : DUnit
@@ -171,7 +171,7 @@ Section RestrictedTyping.
   | r_has_type_rw_While : forall Γ Δ e c, (Δ ++ Γ) |~ e : DBoolean -> Γ ;;; Δ ||~ c : DUnit -> Γ ;;; Δ ||~ While e c : DUnit
                                                                                                                          
                                                                                                                          
-  where " Γ |~ c : τ " := (r_has_type_ro Γ c τ) and " Γ ;;; Δ ||~ c : τ " := (r_has_type_rw (mk_rw_ctx Γ Δ) c τ).
+  where " Γ |~ c : τ " := (r_has_type_ro Γ c τ) and " Γ ;;; Δ ||~ c : τ " := (r_has_type_rw  Γ Δ c τ).
 
 
   Fixpoint r_has_type_rw_move Γ Δ1 Δ2 e τ (w : (Δ2 ++ Γ) ;;; Δ1 ||~ e : τ) {struct w}: Γ ;;; (Δ1 ++ Δ2) ||~ e : τ.
@@ -191,8 +191,8 @@ Section RestrictedTyping.
     replace ((Δ1 ++ Δ2) ++ Γ) with (Δ1 ++ Δ2 ++ Γ) by apply app_assoc; auto.
     apply r_has_type_rw_ro_Lim; auto.
     replace ((Δ1 ++ Δ2) ++ Γ) with (Δ1 ++ Δ2 ++ Γ) by apply app_assoc; auto.
-    pose proof (r_has_type_rw_move _ _ _ _ _ H1).
-    pose proof (r_has_type_rw_move _ _ _ _ _ H4).
+    pose proof (r_has_type_rw_move _ _ _ _ _ H).
+    pose proof (r_has_type_rw_move _ _ _ _ _ H0).
     apply r_has_type_rw_Seq; auto.
     apply (r_has_type_rw_Assign _ _ _ τ0).
     apply assignable_push_back; auto.
@@ -211,8 +211,8 @@ Section RestrictedTyping.
     
     apply (r_has_type_rw_CaseList _ _ _ _); auto.
     replace ((Δ1 ++ Δ2) ++ Γ) with (Δ1 ++ Δ2 ++ Γ) by apply app_assoc; auto.
-    clear H H0 H2 H3 H1.
-    induction H4.
+    clear H H2 H3 H1.
+    induction H0.
     apply ForallT_nil.
     apply ForallT_cons.
     destruct p.
@@ -407,7 +407,7 @@ Section RestrictedTyping.
 End RestrictedTyping.
 
 Notation " Γ |~ c : τ " := (r_has_type_ro Γ c τ).
-Notation " Γ ;;; Δ ||~ c : τ " := (r_has_type_rw (mk_rw_ctx Γ Δ) c τ).
+Notation " Γ ;;; Δ ||~ c : τ " := (r_has_type_rw Γ Δ c τ).
 
 Section Unambiguity.
 
@@ -417,7 +417,7 @@ Section Unambiguity.
     +
       inversion w.
       inversion H.
-      apply (has_type_ro_r_has_type_ro _ _ _ H7).
+      apply (has_type_ro_r_has_type_ro _ _ _ H3).
       apply r_has_type_ro_rw_Seq.
       apply r_has_type_rw_Seq.
       apply has_type_rw_r_has_type_rw; auto.
@@ -437,8 +437,8 @@ Section Unambiguity.
       {
         apply r_has_type_ro_rw_CaseList.
         apply r_has_type_rw_CaseList; auto.
-        clear H5 H3 H4 H6 H7.
-        induction H8.
+        clear H5 H3 H6 H7 H8.
+        induction H4.
         apply ForallT_nil.
         apply ForallT_cons.
         destruct p.
@@ -1043,25 +1043,25 @@ Section InferTyping.
   
 End InferTyping.
 
-  (* Fixpoint has_type_rw_Assign Γ Δ e τ k (w : Γ ;;; Δ ||- (LET k := e)) :   : forall (Γ : list datatype) (Δ : ro_ctx) (e : exp) (τ : datatype) (k : nat), *)
-  (*                        assignable Δ τ k -> (Δ ++ Γ) |- e : τ -> Γ;;; Δ ||- (LET k := e) : UNIT *)
+  (* Fixpoint has_type_rw_Assign Γ Δ e τ k (w : Γ ;;; Δ ||- (LET k := e)) :   : forall (Γ : list datatype) (Δ : ctx) (e : exp) (τ : datatype) (k : nat), *)
+  (*                        assignable Δ τ k -> (Δ ++ Γ) |- e : τ -> Γ; Δ ||- (LET k := e) : UNIT *)
   (* Fixpoint has_type_rw_Newvar Γ c :  : forall (Γ Δ : list datatype) (e c : exp) (σ τ : datatype), *)
-  (*                        (Δ ++ Γ) |- e : σ -> Γ;;; (σ :: Δ) ||- c : τ -> Γ;;; Δ ||- (NEWVAR e IN c) : τ *)
+  (*                        (Δ ++ Γ) |- e : σ -> Γ; (σ :: Δ) ||- c : τ -> Γ; Δ ||- (NEWVAR e IN c) : τ *)
   (* Fixpoint has_type_rw_Cond Γ c :  : forall (Γ Δ : list datatype) (e c1 c2 : exp) (τ : datatype), *)
   (*                      (Δ ++ Γ) |- e : BOOL -> *)
-  (*                      Γ;;; Δ ||- c1 : τ -> Γ;;; Δ ||- c2 : τ -> Γ;;; Δ ||- (IF e THEN c1 ELSE c2 END) : τ *)
+  (*                      Γ; Δ ||- c1 : τ -> Γ; Δ ||- c2 : τ -> Γ; Δ ||- (IF e THEN c1 ELSE c2 END) : τ *)
   (* Fixpoint has_type_rw_Case Γ c :  : forall (Γ Δ : list datatype) (e1 c1 e2 c2 : exp) (τ : datatype), *)
   (*                      (Δ ++ Γ) |- e1 : BOOL -> *)
-  (*                      Γ;;; Δ ||- c1 : τ -> *)
+  (*                      Γ; Δ ||- c1 : τ -> *)
   (*                      (Δ ++ Γ) |- e2 : BOOL -> *)
-  (*                      Γ;;; Δ ||- c2 : τ -> Γ;;; Δ ||- (CASE e1 ==> c1 OR e2 ==> c2 END) : τ *)
+  (*                      Γ; Δ ||- c2 : τ -> Γ; Δ ||- (CASE e1 ==> c1 OR e2 ==> c2 END) : τ *)
   (* Fixpoint has_type_rw_CaseList Γ c :  : forall (Γ Δ : list datatype) (l : list (exp * exp)) (τ : datatype), *)
   (*                          1 <= length l -> *)
   (*                          ForallT *)
-  (*                            (fun ec : exp * exp => (((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;; Δ ||- snd ec : τ))%type) l -> *)
-  (*                          Γ;;; Δ ||- CaseList l : τ *)
+  (*                            (fun ec : exp * exp => (((Δ ++ Γ) |- fst ec : BOOL) * (Γ; Δ ||- snd ec : τ))%type) l -> *)
+  (*                          Γ; Δ ||- CaseList l : τ *)
   (* Fixpoint has_type_rw_While Γ c :  : forall (Γ Δ : list datatype) (e c : exp), *)
-  (*                       (Δ ++ Γ) |- e : BOOL -> Γ;;; Δ ||- c : UNIT -> Γ;;; Δ ||- (WHILE e DO c END) : UNIT. *)
+  (*                       (Δ ++ Γ) |- e : BOOL -> Γ; Δ ||- c : UNIT -> Γ; Δ ||- (WHILE e DO c END) : UNIT. *)
 
 Fixpoint r_has_type_ro_add_auxiliary Γ e τ (w : Γ |~ e : τ) Γ' {struct w}: (Γ ++ Γ') |~ e : τ
 with r_has_type_rw_add_auxiliary Γ Δ e τ (w : Γ ;;; Δ ||~ e : τ) Γ' {struct w} : (Γ ++ Γ') ;;; Δ ||~ e : τ.
@@ -1139,8 +1139,8 @@ Defined.
 
 
 Lemma has_type_rw_move
-     : forall (Γ : list datatype) (Δ1 : ro_ctx) (Δ2 : list datatype) (e : exp) (τ : datatype),
-    (Δ2 ++ Γ);;; Δ1 ||- e : τ -> Γ;;; (Δ1 ++ Δ2) ||- e : τ.
+     : forall (Γ : list datatype) (Δ1 : ctx) (Δ2 : list datatype) (e : exp) (τ : datatype),
+    (Δ2 ++ Γ) ;;; Δ1 ||- e : τ -> Γ ;;; (Δ1 ++ Δ2) ||- e : τ.
 Proof.
   intros.
   apply r_has_type_rw_has_type_rw.

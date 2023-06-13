@@ -159,41 +159,10 @@ Proof.
         ).
 Defined.
 
-Lemma pp_rw_new_var_prt_util {Γ Δ} {e c} {τ σ}
-      {ϕ} {ϕ'} {ψ : post} {θ} {θ'} {ψ' : post}:
-  (Δ ++ Γ) |-- {{ϕ'}} e {{y : σ | θ y}} ->
-  Γ ;;; (σ :: Δ) ||-- {{θ'}} c {{y : τ | ψ' y}} ->
-  ((fun x  => ϕ (tedious_sem_app Δ Γ x)) ->> ϕ') ->
-  ((fun x  => θ (fst (fst x)) (snd (fst x); snd x)) ->> θ') ->
-  (ψ' ->>> (fun y x => ψ y (snd (fst x), snd x))) ->
-  Γ ;;; Δ ||-- {{ϕ}} Newvar e c {{y : τ | ψ y}}.
-Proof.
-  intros [w1 p1] [w2 p2] h1 h2 h3.
-  exists (has_type_rw_Newvar _ _ _ _ _ _ w1 w2).
-  apply (rw_new_var_prt_util p1 p2 h1 h2 h3).
-Defined.
-
-Lemma pp_rw_new_var_tot_util {Γ Δ} {e c} {τ σ}
-      {ϕ} {ϕ'} {ψ : post} {θ} {θ'} {ψ' : post}:
-  (Δ ++ Γ) |-- [{ϕ'}] e [{y : σ | θ y}] ->
-  Γ ;;; (σ :: Δ) ||-- [{θ'}] c [{y : τ | ψ' y}] ->
-  ((fun x  => ϕ (tedious_sem_app Δ Γ x)) ->> ϕ') ->
-  ((fun x  => θ (fst (fst x)) (snd (fst x); snd x)) ->> θ') ->
-  (ψ' ->>> (fun y x => ψ y (snd (fst x), snd x))) ->
-  Γ ;;; Δ ||-- [{ϕ}] Newvar e c [{y : τ | ψ y}].
-Proof.
-  intros [w1 p1] [w2 p2] h1 h2 h3.
-  exists (has_type_rw_Newvar _ _ _ _ _ _ w1 w2).
-  apply (rw_new_var_tot_util p1 p2 h1 h2 h3).
-Defined.
-
-
-
-
 (* when we know where the limit converges to *)
 Lemma ro_lim_prt_util {Γ} {e}
-      {w : Γ |- Lim e : REAL}
-      {ϕ} {ψ} (f : sem_ctx Γ -> R) :
+  {w : Γ |- Lim e : REAL}
+  {ϕ} {ψ} (f : sem_ctx Γ -> R) :
   (has_type_ro_Lim_inverse Γ e w) |-
         [{fun x => ϕ (snd x)}]
           e
@@ -203,10 +172,10 @@ Lemma ro_lim_prt_util {Γ} {e}
 Proof.
   intros.
   pose proof
-       (ro_lim_prt _ _ _ _ _ w
-                   (fun y (x : sem_ctx Γ) => ϕ x /\ y = f x)
-                   X
-       ).
+    (ro_lim_prt _ _ _ _ _ w
+       (fun y (x : sem_ctx Γ) => ϕ x /\ y = f x)
+       X
+    ).
   assert ((forall γ, ϕ γ ->
                      exists y : R,
                        (fun y0 x => ϕ x /\ y0 = f x) y γ /\
@@ -279,118 +248,36 @@ Proof.
 Defined.
 
 
-Lemma pp_ro_pre_prt {Γ} {e} {τ} {ϕ ϕ'} {ψ} :
-  Γ |-- {{ϕ}} e {{y : τ | ψ y}} -> ϕ' ->> ϕ  -> Γ |-- {{ϕ'}} e {{y : τ | ψ y}}.
-Proof.
-  intros.
-  destruct X.
-  exists x.
-  apply (fun a => ro_imply_prt _ _ _ _ _ _ _ _ _ a p);
-    try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
-Defined.
-
-Lemma pp_ro_pre_tot {Γ} {e} {τ} {ϕ ϕ'} {ψ} :
-  Γ |-- [{ϕ}] e [{y : τ | ψ y}] -> ϕ' ->> ϕ -> Γ |-- [{ϕ'}] e [{y : τ | ψ y}].
-Proof.
-  intros.
-  destruct X.
-  exists x.
-  apply (fun a => ro_imply_tot _ _ _ _ _ _ _ _ _ a p);
-    try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
-Defined.
-
-Lemma pp_rw_pre_prt {Γ Δ} {e} {τ} {ϕ ϕ'} {ψ : sem_datatype τ -> sem_ctx Δ * sem_ctx Γ -> Prop} :
-  Γ ;;; Δ ||-- {{ϕ}} e {{y : τ | ψ y}} -> ϕ' ->> ϕ -> Γ ;;; Δ ||-- {{ϕ'}} e {{y : τ | ψ y}}.
-Proof.
-  intros.
-  destruct X.
-  exists x.
-  apply (fun a => rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p);
-    try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
-Defined.
-
-Lemma pp_rw_pre_tot {Γ Δ} {e} {τ} {ϕ ϕ'} {ψ : sem_datatype τ -> sem_ctx Δ * sem_ctx Γ -> Prop} :
-  Γ ;;; Δ ||-- [{ϕ}] e [{y : τ | ψ y}] -> ϕ' ->> ϕ ->  Γ ;;; Δ ||-- [{ϕ'}] e [{y : τ | ψ y}].
-Proof.
-  intros.
-  destruct X.
-  exists x.
-  apply (fun a => rw_imply_tot _ _ _ _ _ _ _ _ _ _ a p);
-    try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
-Defined.
-
-
-Lemma pp_ro_post_prt {Γ} {e} {τ} {ϕ} {ψ ψ'} :
-  Γ |-- {{ϕ}} e {{y : τ | ψ y}} -> ψ ->>> ψ' -> Γ |-- {{ϕ}} e {{y : τ | ψ' y}}.
-Proof.
-  intros.
-  destruct X.
-  exists x.
-  apply (fun a => ro_imply_prt _ _ _ _ _ _ _ _ _ a p);
-    try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
-Defined.
-
-Lemma pp_ro_post_tot {Γ} {e} {τ} {ϕ} {ψ ψ'} :
-  Γ |-- [{ϕ}] e [{y : τ | ψ y}] ->  ψ ->>> ψ' -> Γ |-- [{ϕ}] e [{y : τ | ψ' y}].
-Proof.
-  intros.
-  destruct X.
-  exists x.
-  apply (fun a => ro_imply_tot _ _ _ _ _ _ _ _ _ a p);
-    try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
-Defined.
-
-Lemma pp_rw_post_prt {Γ Δ} {e} {τ} {ϕ} {ψ ψ' : sem_datatype τ -> sem_ctx Δ * sem_ctx Γ -> Prop} :
-  Γ ;;; Δ ||-- {{ϕ}} e {{y : τ | ψ y}} ->  ψ ->>> ψ' -> Γ ;;; Δ ||-- {{ϕ}} e {{y : τ | ψ' y}}.
-Proof.
-  intros.
-  destruct X.
-  exists x.
-  apply (fun a => rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p);
-    try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
-Defined.
-
-Lemma pp_rw_post_tot {Γ Δ} {e} {τ} {ϕ} {ψ ψ' : sem_datatype τ -> sem_ctx Δ * sem_ctx Γ -> Prop} :
-  Γ ;;; Δ ||-- [{ϕ}] e [{y : τ | ψ y}] -> ψ ->>> ψ' -> Γ ;;; Δ ||-- [{ϕ}] e [{y : τ | ψ' y}].
-Proof.
-  intros.
-  destruct X.
-  exists x.
-  apply (fun a => rw_imply_tot _ _ _ _ _ _ _ _ _ _ a p);
-    try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
-Defined.
-
 
 
 Lemma pp_ro_rw_prt_back {Γ} {e} {τ} {ϕ} {ψ} :
-  Γ ;;; nil ||-- {{fun x => ϕ (snd x)}} e {{y : τ| fun x => ψ y (snd x)}} ->
-  Γ |-- {{ϕ}} e {{y : τ | ψ y}}.
+  [γ : Γ] ; [_ : nil] ||- {{ϕ γ}} e {{y : τ | ψ y γ}}ᵖ ->
+  [γ : Γ] |- {{ϕ γ}} e {{y : τ | ψ y γ}}ᵖ.
 Proof.
   intros.
   destruct X.
   exists (has_type_ro_rw _ _ _ x).
   apply (ro_rw_prt_util ).  
   apply (fun a => rw_imply_prt _ _ _ _ _ _ _ _ _ _ a p);
-    try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    try (intros [h1 h1'] h2; auto); try (intros h1 [h2 h2'] h3; auto).
 Defined.
 
 Lemma pp_ro_rw_tot_back {Γ} {e} {τ} {ϕ} {ψ} :
-  Γ ;;; nil ||-- [{fun x => ϕ (snd x)}] e [{y : τ| fun x => ψ y (snd x)}] ->
-  Γ |-- [{ϕ}] e [{y : τ | ψ y}].
+  [γ : Γ] ; [_ : nil] ||- {{ϕ γ}} e {{y : τ | ψ y γ}}ᵗ ->
+  [γ : Γ] |- {{ϕ γ}} e {{y : τ | ψ y γ}}ᵗ.
 Proof.
   intros.
   destruct X.
   exists (has_type_ro_rw _ _ _ x).
   apply (ro_rw_tot_util ).  
   apply (fun a => rw_imply_tot _ _ _ _ _ _ _ _ _ _ a p);
-    try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    try (intros [h1 h1'] h2; auto); try (intros h1 [h2 h2'] h3; auto).
 Defined.
-
 
 Lemma pp_ro_var_prt_back {Γ} {k} {τ} {ϕ} {ψ} :
   forall w : Γ |- VAR k : τ, 
     ϕ ->> (fun x => ψ (ro_access Γ k τ w x) x) ->
-    Γ |-- {{ϕ}} VAR k {{y : τ | ψ y}}.
+    [γ : Γ] |- {{ϕ γ}} VAR k {{y : τ | ψ y γ}}ᵖ.
 Proof.
   intros.
   exists w.
@@ -402,7 +289,7 @@ Defined.
 Lemma pp_ro_var_tot_back {Γ} {k} {τ} {ϕ} {ψ} :
   forall w : Γ |- VAR k : τ, 
     ϕ ->> (fun x => ψ (ro_access Γ k τ w x) x) ->
-    Γ |-- [{ϕ}] VAR k [{y : τ | ψ y}].
+    [γ : Γ] |- {{ϕ γ}} VAR k {{y : τ | ψ y γ}}ᵗ.
 Proof.
   intros.
   exists w.
@@ -413,7 +300,7 @@ Defined.
 
 
 Lemma pp_ro_skip_prt_back {Γ} {ϕ} {ψ} :
-  ϕ ->> ψ tt -> Γ |-- {{ϕ}} SKIP {{y : UNIT | ψ y}}.
+  ϕ ->> ψ tt -> [γ : Γ] |- {{ϕ γ}} SKIP {{y : UNIT | ψ y γ}}ᵖ.
 Proof.
   intros.
   exists (has_type_ro_Skip Γ).
@@ -423,7 +310,7 @@ Proof.
 Defined.
 
 Lemma pp_ro_skip_tot_back {Γ} {ϕ} {ψ} :
-  ϕ ->> ψ tt -> Γ |-- [{ϕ}] SKIP [{y : UNIT | ψ y}].
+  ϕ ->> ψ tt -> [γ : Γ] |- {{ϕ γ}} SKIP {{y : UNIT | ψ y γ}}ᵗ.
 Proof.
   intros.
   exists (has_type_ro_Skip Γ).
@@ -433,7 +320,7 @@ Proof.
 Defined.
 
 Lemma pp_ro_true_prt_back {Γ} {ϕ} {ψ} :
-  ϕ ->> ψ true -> Γ |-- {{ϕ}} TRUE {{y : BOOL | ψ y}}.
+  ϕ ->> ψ true -> [γ : Γ] |- {{ϕ γ}} TRUE {{y : BOOL | ψ y γ}}ᵖ.
 Proof.
   intros.
   exists (has_type_ro_True Γ).
@@ -443,7 +330,7 @@ Proof.
 Defined.
 
 Lemma pp_ro_true_tot_back {Γ} {ϕ} {ψ} :
-  ϕ ->> ψ true -> Γ |-- [{ϕ}] TRUE [{y : BOOL | ψ y}].
+  ϕ ->> ψ true -> [γ : Γ] |- {{ϕ γ}} TRUE {{y : BOOL | ψ y γ}}ᵗ.
 Proof.
   intros.
   exists (has_type_ro_True Γ).
@@ -453,7 +340,7 @@ Proof.
 Defined.
 
 Lemma pp_ro_false_prt_back {Γ} {ϕ} {ψ} :
-  ϕ ->> ψ false -> Γ |-- {{ϕ}} FALSE {{y : BOOL | ψ y}}.
+  ϕ ->> ψ false -> [γ : Γ] |- {{ϕ γ}} FALSE {{y : BOOL | ψ y γ}}ᵖ.
 Proof.
   intros.
   exists (has_type_ro_False Γ).
@@ -463,7 +350,7 @@ Proof.
 Defined.
 
 Lemma pp_ro_false_tot_back {Γ} {ϕ} {ψ} :
-  ϕ ->> ψ false -> Γ |-- [{ϕ}] FALSE [{y : BOOL | ψ y}].
+  ϕ ->> ψ false -> [γ : Γ] |- {{ϕ γ}} FALSE {{y : BOOL | ψ y γ}}ᵗ.
 Proof.
   intros.
   exists (has_type_ro_False Γ).
@@ -473,7 +360,7 @@ Proof.
 Defined.
 
 Lemma pp_ro_int_prt_back {Γ} {k} {ϕ} {ψ} :
-  ϕ ->> ψ k -> Γ |-- {{ϕ}} INT k {{y : INTEGER | ψ y}}.
+  ϕ ->> ψ k -> [γ : Γ] |- {{ϕ γ}} INT k {{y : INTEGER | ψ y γ}}ᵖ.
 Proof.
   intros.
   exists (has_type_ro_Int Γ k).
@@ -483,7 +370,7 @@ Proof.
 Defined.
 
 Lemma pp_ro_int_tot_back {Γ} {k} {ϕ} {ψ} :
-  ϕ ->> ψ k -> Γ |-- [{ϕ}] INT k [{y : INTEGER | ψ y}].
+  ϕ ->> ψ k -> [γ : Γ] |- {{ϕ γ}} INT k {{y : INTEGER | ψ y γ}}ᵗ.
 Proof.
   intros.
   exists (has_type_ro_Int Γ k).
@@ -494,8 +381,8 @@ Defined.
 
 
 Lemma pp_ro_recip_prt_back {Γ} {e} {ϕ} {ψ} :
-  Γ |-- {{ϕ}} e {{y : REAL | ψ (/ y) }} ->
-  Γ |-- {{ϕ}} ;/; e {{y : REAL | ψ y}}.
+  [γ : Γ] |- {{ϕ γ}} e {{y : REAL | ψ (/ y) γ }}ᵖ ->
+  [γ : Γ] |- {{ϕ γ}} ;/; e {{y : REAL | ψ y γ}}ᵖ.
 Proof.
   intros [w p].
   exists (has_type_ro_OpRrecip _ _ w).
@@ -504,8 +391,8 @@ Proof.
 Defined.
 
 Lemma pp_ro_recip_tot_back {Γ} {e} {ϕ} {ψ} :
-  Γ |-- [{ϕ}] e [{y : REAL | ψ (/ y) /\\ (fun _ => y <> 0 %R)}] ->
-  Γ |-- [{ϕ}] ;/; e [{y : REAL | ψ y}].
+  [γ : Γ] |- {{ϕ γ}} e {{y : REAL | ψ (/ y) γ /\ y <> 0 %R}}ᵗ ->
+  [γ : Γ] |- {{ϕ γ}} ;/; e {{y : REAL | ψ y γ}}ᵗ.
 Proof.
   intros [w p].
   exists (has_type_ro_OpRrecip _ _ w).
@@ -516,39 +403,37 @@ Proof.
   exact j.
 Defined.
 
-
-
 Lemma pp_ro_lim_prt_util_known_limit {Γ} {e} {ϕ : sem_ctx Γ -> Prop} {ψ} (f : sem_ctx Γ -> R) :
-  (INTEGER :: Γ) |-- [{fun x => ϕ (snd x)}] e  [{y : REAL | fun x => Rabs (y - f(snd x)) < pow2 (- fst x)}] ->
+  [(z, γ) : INTEGER :: Γ] |- {{ϕ γ}} e  {{y : REAL | Rabs (y - f γ) < pow2 (- z)}}ᵗ ->
   ((fun y (x : sem_ctx Γ) => ϕ x /\ y = f x) ->>> ψ) ->
-  Γ |-- {{ϕ}} Lim e {{y : REAL | ψ y}}.
+  [γ : Γ] |- {{ϕ γ}} Lim e {{y : REAL | ψ y γ}}ᵖ.
 Proof.
   intros.
   destruct X.
   exists (has_type_ro_Lim _ _ x).
   apply (ro_lim_prt_util f).
   apply (fun a => ro_imply_tot _ _ _ _ _ _ _ _ _ a p);
-    try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    try (intros [h1 h1'] h2; auto); try (intros h1 [h2 h2'] h3; auto).
   exact H.
 Defined.
 
 Lemma pp_ro_lim_tot_util_known_limit {Γ} {e} {ϕ : sem_ctx Γ -> Prop} {ψ} (f : sem_ctx Γ -> R) :
-  (INTEGER :: Γ) |-- [{fun x => ϕ (snd x)}] e  [{y : REAL | fun x => Rabs (y - f(snd x)) < pow2 (- fst x)}] ->
+  [(z, γ) : INTEGER :: Γ] |- {{ϕ γ}} e  {{y : REAL | Rabs (y - f γ) < pow2 (- z)}}ᵗ ->
   ((fun y (x : sem_ctx Γ) => ϕ x /\ y = f x) ->>> ψ) ->
-  Γ |-- [{ϕ}] Lim e [{y : REAL | ψ y}].
+  [γ : Γ] |- {{ϕ γ}} Lim e {{y : REAL | ψ y γ}}ᵗ.
 Proof.
   intros.
   destruct X.
   exists (has_type_ro_Lim _ _ x).
   apply (ro_lim_tot_util f).
   apply (fun a => ro_imply_tot _ _ _ _ _ _ _ _ _ a p);
-    try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    try (intros [h1 h1'] h2; auto); try (intros h1 [h2 h2'] h3; auto).
   exact H.
 Defined.
 
 Lemma pp_rw_ro_prt_back {Γ Δ} {e} {τ} {ϕ} {ψ} : 
-  (Δ ++ Γ) |-- {{fun x => ϕ (fst_app x, snd_app x)}} e {{y : τ | fun x => ψ y (fst_app x, snd_app x)}} -> 
-  Γ ;;; Δ ||-- {{ϕ}} e {{y : τ | ψ y}}.
+  [x : Δ ++ Γ] |- {{ϕ (fst_app x, snd_app x)}} e {{y : τ | ψ y (fst_app x, snd_app x)}}ᵖ -> 
+  [γ : Γ] ; [δ : Δ] ||- {{ϕ (δ, γ)}} e {{y : τ | ψ y (δ, γ)}}ᵖ.
 Proof.
   intros [w p].
   exists (has_type_rw_ro _ _ _ _ w).
@@ -566,8 +451,8 @@ Proof.
 Defined.
 
 Lemma pp_rw_ro_tot_back {Γ Δ} {e} {τ} {ϕ} {ψ} : 
-  (Δ ++ Γ) |-- [{fun x => ϕ (fst_app x, snd_app x)}] e [{y : τ | fun x => ψ y (fst_app x, snd_app x)}] -> 
-  Γ ;;; Δ ||-- [{ϕ}] e [{y : τ | ψ y}].
+  [x : Δ ++ Γ] |- {{ϕ (fst_app x, snd_app x)}} e {{y : τ | ψ y (fst_app x, snd_app x)}}ᵗ -> 
+  [γ : Γ] ; [δ : Δ] ||- {{ϕ (δ, γ)}} e {{y : τ | ψ y (δ, γ)}}ᵗ.
 Proof.
   intros [w p].
   exists (has_type_rw_ro _ _ _ _ w).
@@ -586,7 +471,7 @@ Defined.
 
 
 Lemma pp_ro_tot_pose_readonly {Γ} {e} {τ} {ϕ} {ψ} θ : 
-  Γ |-- [{ϕ}] e [{y : τ | ψ y}] -> Γ |-- [{(ϕ /\\ θ)}] e [{y : τ | (ψ /\\\ (fun _ : sem_datatype τ => θ)) y}].
+  [γ : Γ] |- {{ϕ γ}} e {{y : τ | ψ y γ}}ᵗ -> [γ : Γ] |- {{(ϕ γ /\ θ γ)}} e {{y : τ | (ψ y γ /\ θ γ) }}ᵗ.
 Proof.
   intros [w p].
   exists w.
@@ -594,23 +479,22 @@ Proof.
 Defined.
 
 Lemma pp_ro_prt_pose_readonly {Γ} {e} {τ} {ϕ} {ψ} θ : 
-  Γ |-- {{ϕ}} e {{y : τ | ψ y}} -> Γ |-- {{(ϕ /\\ θ)}} e {{y : τ | (ψ /\\\ (fun _ : sem_datatype τ => θ)) y}}.
+  [γ : Γ] |- {{ϕ γ}} e {{y : τ | ψ y γ}}ᵖ -> [γ : Γ] |- {{(ϕ γ /\ θ γ)}} e {{y : τ | (ψ y γ /\ θ γ) }}ᵖ.
 Proof.
   intros [w p].
   exists w.
   apply (admissible_ro_prt_pose_readonly _ _ _ _ _ _ _ p).
 Defined.
 
-
  Lemma pp_rw_while_tot_back {Γ Δ} {e c} {ϕ} {θ} {ψ} {ϕ'} {ψ'}:
-    (Δ ++ Γ) |-- [{rw_to_ro_pre ϕ}] e [{y : BOOL | θ y}] ->
-    Γ ;;; Δ ||-- [{ro_to_rw_pre (θ true)}] c [{y : UNIT | ϕ }] -> 
-    (Γ ++ Δ) ;;; Δ ||-- [{(fun x =>  ro_to_rw_pre (θ true) (fst x, fst_app (snd x)) /\ fst x = snd_app (snd x))}] c [{y : UNIT | ψ }] ->
+    [x : Δ ++ Γ] |- {{ϕ (fst_app x, snd_app x)}} e {{y : BOOL | θ y x}}ᵗ ->
+    [γ : Γ] ; [δ : Δ] ||- {{θ true (δ ; γ)}} c {{y : UNIT | ϕ (δ, γ)}}ᵗ -> 
+    [γ' : Γ ++ Δ] ; [δ : Δ] ||- {{θ true (δ; fst_app γ') /\ δ = snd_app γ'}} c {{y : UNIT | ψ (δ, γ') }}ᵗ ->
     (forall δ γ,
         ϕ (δ, γ) -> ~ (exists f : nat -> sem_ctx Δ, f 0%nat = δ /\ (forall n : nat, ψ (f (S n), (γ; f n))))) ->
     ϕ' ->> ϕ ->
     (fun _ => ϕ /\\ ro_to_rw_pre (θ false)) ->>> ψ' ->    
-    Γ ;;; Δ ||-- [{ϕ'}] While e c [{y : UNIT | ψ' y}].
+    [γ : Γ] ; [δ : Δ] ||- {{ϕ' (δ, γ)}} While e c {{y : UNIT | ψ' y (δ, γ)}}ᵗ.
   Proof.
     intros p1 p2 p3 h h1 h2.
     apply (fun a => pp_rw_imply_tot a h1 h2).
@@ -621,7 +505,7 @@ Defined.
   
 
 
-Lemma pp_ro_tot_prt {Γ} {e} {τ} {ϕ} {ψ} : Γ |-- [{ϕ}] e [{y : τ | ψ y}] -> Γ |-- {{ϕ}} e {{y : τ | ψ y}}.
+Lemma pp_ro_tot_prt {Γ} {e} {τ} {ϕ} {ψ} :  [γ : Γ] |- {{ϕ γ}} e {{y : τ | ψ y γ}}ᵗ -> [γ : Γ] |- {{ϕ γ}} e {{y : τ | ψ y γ}}ᵖ.
 Proof.
   intros [w h].
   exists w.
@@ -629,7 +513,7 @@ Proof.
   exact h.
 Defined.
 
-Lemma pp_rw_tot_prt {Γ Δ} {e} {τ} {ϕ} {ψ} : Γ ;;; Δ ||-- [{ϕ}] e [{y : τ | ψ y}] -> Γ ;;; Δ ||-- {{ϕ}} e {{y : τ | ψ y}}.
+Lemma pp_rw_tot_prt {Γ Δ} {e} {τ} {ϕ} {ψ} : [γ : Γ] ; [δ : Δ] ||- {{ϕ (δ, γ)}} e {{y : τ | ψ y (δ, γ)}}ᵗ ->[γ : Γ] ; [δ : Δ] ||- {{ϕ (δ, γ)}} e {{y : τ | ψ y (δ, γ)}}ᵖ.
 Proof.
 Proof.
   intros [w h].
@@ -639,14 +523,11 @@ Proof.
 Defined.
 
 
-
-
-
 Lemma pp_rw_assign_tot_util {Γ Δ} {k} {e} τ {ϕ} {θ} {ψ : post} :
   forall (a : assignable Δ τ k),
-    (Δ ++ Γ) |-- [{rw_to_ro_pre  ϕ}] e [{y : τ | θ y}] ->
+    [x : Δ ++ Γ] |- {{ϕ (fst_app x, snd_app x)}} e {{y : τ | θ y x}}ᵗ ->
     (forall x γ δ, ϕ (δ, γ) -> θ x (δ; γ) -> ψ tt (update k x δ a, γ)) ->
-    Γ;;; Δ ||-- [{ϕ}] (LET k := e) [{y : UNIT | ψ y}].
+    [γ : Γ] ; [δ : Δ] ||- {{ϕ (δ, γ)}} (LET k := e) {{y : UNIT | ψ y (δ, γ)}}ᵗ.
 Proof.
   intros.
   apply (pp_rw_assign_tot a
@@ -654,6 +535,9 @@ Proof.
   apply (pp_ro_tot_pose_readonly (rw_to_ro_pre ϕ)) in X.
   apply (pp_ro_imply_tot X).
   intros h1 h2; split; auto.
+  unfold rw_to_ro_pre.
+  rewrite tedious_equiv_4.
+  auto.
   intros h1 h2 [h3 h4]; split; auto.
   intros.
   apply H; destruct H0; auto.
@@ -664,14 +548,28 @@ Defined.
 
 
 
+  Lemma pp_rw_imply_tot {Γ Δ} {e} {τ} {ϕ ϕ'} {ψ ψ' : sem_datatype τ -> sem_ctx Δ * sem_ctx Γ -> Prop} :
+    [γ : Γ] ; [δ : Δ] ||- {{ϕ (δ, γ)}} e {{y : τ | ψ y (δ, γ)}}ᵗ -> ϕ' ->> ϕ -> ψ ->>> ψ' ->
+              [γ' : Γ] ; [δ' : Δ] ||- {{ϕ' (δ', γ')}} e {{y : τ | ψ' y (δ', γ')}}ᵗ.
+  Proof.
+    intros.
+    destruct X.
+    exists x.
+    apply (fun a => rw_imply_tot _ _ _ _ _ _ _ _ _ _ a p);
+      try (intros h1 h2; auto); try (intros h1 h2 h3; auto).
+    destruct h1; apply H; auto.
+    intro.
+    destruct h2; apply H0; auto.
+  Defined.
+  
 Lemma pp_rw_new_var_tot_util2 {Γ Δ} {e c} {τ} σ {ϕ}
          (θ : sem_datatype σ -> sem_ctx (Δ ++ Γ) -> Prop)
          {ψ : post} :
-  (Δ ++ Γ) |-- [{rw_to_ro_pre ϕ}] e [{y : σ | θ y}] ->
-  Γ;;; (σ :: Δ) ||-- [{fun x => θ (fst (fst x)) (snd (fst x); snd x) /\ ϕ (snd (fst x), snd x)}]
+  [x : Δ ++ Γ] |- {{ϕ (fst_app x, snd_app x)}} e {{y : σ | θ y x}}ᵗ ->
+                  [γ : Γ] ; [(x, δ ) : σ :: Δ] ||- {{θ x (δ; γ) /\ ϕ (δ,γ) }}
    c
-   [{y : τ | fun x => ψ y (snd (fst x), snd x)}] ->
-  Γ;;; Δ ||-- [{ϕ}] (NEWVAR e IN c) [{y : τ | ψ y}].
+   {{y : τ | ψ y (δ, γ)}}ᵗ ->
+  [γ : Γ] ; [δ : Δ] ||- {{ϕ (δ, γ)}} (NEWVAR e IN c) {{y : τ | ψ y (δ, γ)}}ᵗ.
 Proof.
   intros.
   apply (pp_rw_new_var_tot
@@ -680,8 +578,25 @@ Proof.
   apply (pp_ro_tot_pose_readonly (rw_to_ro_pre ϕ)) in X.
   apply (pp_ro_imply_tot X).
   intros h1 h2; split; auto.
+  unfold rw_to_ro_pre.
+  rewrite tedious_equiv_4.
+  auto.
+
   intros h1 h2 [h3 h4]; split; auto.
-  apply (pp_rw_imply_tot X0).
+  Set Printing All.
+  pose proof (pp_rw_imply_tot
+                (Γ := Γ)
+                (e := c)
+                (τ := τ)
+                (ϕ := fun '( '(x, δ), γ) =>  (θ x (δ; γ) /\ ϕ (δ, γ)))
+                (ψ := fun y '((x, δ), γ) =>  ψ y (δ, γ))
+                (ϕ' := fun '((z, δ), γ) => (θ z (δ; γ) /\ rw_to_ro_pre ϕ (δ; γ)))
+                (ψ' := fun y '((z, δ), γ) =>  ψ y (δ, γ))).
+                
+                (Δ := σ :: Δ)
+                              (ϕ' := (fun ( => θ (
+
+           X0).
   intros h1 [h2 h3]; split; auto.
   unfold rw_to_ro_pre in h3.
   rewrite tedious_equiv_0 in h3.
@@ -690,10 +605,10 @@ Proof.
 Defined.
 
 Lemma pp_rw_cond_tot_util {Γ Δ} {τ} {e c1 c2} {ϕ} θ {ψ}
-     : (Δ ++ Γ) |-- [{rw_to_ro_pre ϕ}] e [{y : BOOL | θ y}] ->
-       Γ;;; Δ ||-- [{ϕ /\\ ro_to_rw_pre (θ true)}] c1 [{y : τ | ψ y}] ->
-       Γ;;; Δ ||-- [{ϕ /\\ ro_to_rw_pre (θ false)}] c2 [{y : τ | ψ y}] ->
-       Γ;;; Δ ||-- [{ϕ}] (IF e THEN c1 ELSE c2 END) [{y : τ | ψ y}].
+     : (Δ ++ Γ) |-- {{rw_to_ro_pre ϕ}}ᵗ e {{y : BOOL | θ y}}ᵗ ->
+       Γ;;; Δ ||-- {{ϕ /\\ ro_to_rw_pre (θ true)}}ᵗ c1 {{y : τ | ψ y γ}}ᵗ ->
+       Γ;;; Δ ||-- {{ϕ /\\ ro_to_rw_pre (θ false)}}ᵗ c2 {{y : τ | ψ y γ}}ᵗ ->
+       Γ;;; Δ ||-- {{ϕ}}ᵗ (IF e THEN c1 ELSE c2 END) {{y : τ | ψ y γ}}ᵗ.
 Proof.
   intros.
   apply (pp_rw_cond_tot (θ := fun y x => rw_to_ro_pre ϕ x /\ θ y x)) .
@@ -716,10 +631,10 @@ Proof.
 Defined.
 
 Lemma pp_ro_real_comp_lt_tot_util {Γ} {e1 e2} {ϕ} ψ1 ψ2 {ψ} :
-  Γ |-- [{ϕ}] e1 [{y : REAL | ψ1 y}] ->
-  Γ |-- [{ϕ}] e2 [{y : REAL | ψ2 y}] ->
+  [γ : Γ] |- {{ϕ}}ᵗ e1 {{y : REAL | ψ1 y}}ᵗ ->
+  [γ : Γ] |- {{ϕ}}ᵗ e2 {{y : REAL | ψ2 y}}ᵗ ->
   (forall y1 y2 x, (ϕ x /\ ψ1 y1 x /\ ψ2 y2 x) -> (y1 <> y2 /\ ψ (Rltb'' y1 y2) x)) ->
-  Γ |-- [{ϕ}] e1 ;<; e2 [{y : BOOL | ψ y}].
+  [γ : Γ] |- {{ϕ}}ᵗ e1 ;<; e2 {{y : BOOL | ψ y γ}}ᵗ.
 Proof.
   intros.
   apply
