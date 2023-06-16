@@ -49,7 +49,7 @@ Ltac auto_imp :=
 
        
 Ltac proves_simple_arithmetical :=
-  match goal with
+  lazymatch goal with
   | |- proves_ro_prt_pp ?Γ ?e ?τ ?ϕ ?ψ =>
       
       let v1 := fresh "tmp" in
@@ -67,8 +67,8 @@ Ltac proves_simple_arithmetical :=
       assert (Γ |- e : τ) as v3 by auto_typing;
 
       pose proof (simple_arithmetical_prt Γ e τ v3 v1) as v4;
-      
-      apply (pp_ro_prt_pose_readonly ϕ) in v4;
+      idtac ϕ;
+      apply (pp_ro_prt_pose_readonly (Γ := Γ) (τ := τ) ϕ) in v4;
 
       simpl in v4;
       
@@ -77,8 +77,12 @@ Ltac proves_simple_arithmetical :=
       try (auto_imp; fail);
       rewrite <- v2; clear v2;
       easy_rewrite_uip;
+      reduce_tedious;
+      intros y x;
+      
+      reduce_tedious;
 
-      intros y x [val pre];
+      intros [v p];
 
       repeat (
           try (destruct has_type_ro_OpZplus_inverse);
@@ -120,14 +124,16 @@ Ltac proves_simple_arithmetical :=
 
       pose proof (simple_arithmetical_tot _ v1 _ _  v3) as v4;
       
-      apply (pp_ro_tot_pose_readonly (Γ := Γ) ϕ) in v4;
+      apply (pp_ro_tot_pose_readonly (Γ := Γ)  (τ := τ) ϕ) in v4;
 
       simpl in v4;
       
       apply (pp_ro_imply_tot v4); clear v4;
       rewrite <- v2; clear v2; easy_rewrite_uip;
       [
-        intros x p;
+        intro x;
+        reduce_tedious;
+        intro p;
         split;
         [
           repeat (
@@ -152,7 +158,9 @@ Ltac proves_simple_arithmetical :=
           auto          
         ]
       |               
-        intros y x [v p];
+        intros y x;
+        reduce_tedious;
+        intros [v p];
 
         repeat (
             try (destruct has_type_ro_OpZplus_inverse);
