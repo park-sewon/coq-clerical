@@ -50,31 +50,7 @@ Section Rules.
 
 (* This file defines the proof rules for specifications. *)
 
-
-
-(* Fixpoint ro_access  Γ k τ (w: Γ |- Var k : τ) : sem_ctx Γ -> sem_datatype τ. *)
-(* Proof. *)
-(*   inversion w. *)
-(*   inversion H. *)
-(*   simpl in H7. *)
-(*   exact (ro_access _ _ _ H7). *)
-(*   intro. *)
-(*   simpl in X. *)
-(*   destruct X. *)
-(*   exact s. *)
-(*   intro. *)
-(*   apply (ro_access _ _ _ H1). *)
-(*   destruct X. *)
-(*   exact s0. *)
-(* Defined. *)
-
-Definition rw_to_ro_pre {Γ Δ} (ϕ : sem_ctx Δ * sem_ctx Γ -> Prop) :=
-                        fun δγ => ϕ (tedious_sem_app _ _ δγ).
-
-Definition ro_to_rw_pre {Γ Δ} (ϕ : sem_ctx (Δ ++ Γ) -> Prop) : sem_ctx Δ * sem_ctx Γ -> Prop := fun δγ => ϕ (tedious_prod_sem Δ Γ δγ) .
-
 Definition post {X Y : Type} := X -> Y -> Prop.
-
 Definition rwpost {X Y Z : Type} := X -> Y -> Z -> Prop.
 Definition rwpre {X Y : Type} := X -> Y -> Prop.
 
@@ -88,12 +64,12 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
     ' x : Γ |- w {{ P x }} e {{y : τ | Q x y}}ᵖ -> 
     Q ->>> Q' -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    ' x : Γ |- w' {{ P x }} e {{y : τ | Q x y}}ᵖ
+    ' x : Γ |- w' {{ P' x }} e {{y : τ | Q' x y}}ᵖ
 
 | ro_exfalso_prt : forall Γ e τ (w : Γ |- e : τ) Q,
     
     (*——————————-——————————-——————————-——————————-——————————-*)    
-    ' x : Γ |- w {{False}} e {{y : τ | Q y x }}ᵖ
+    ' x : Γ |- w {{False}} e {{y : τ | Q x y }}ᵖ
 
 | ro_conj_prt : forall Γ e τ (w : Γ |- e : τ) P Q1 Q2,
     
@@ -108,7 +84,7 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
     ' x : Γ |- w {{ P1 x }} e {{y : τ | Q x y}}ᵖ -> 
     ' x : Γ |- w {{ P2 x }} e {{y : τ | Q x y}}ᵖ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    ' x : Γ |- w {{ P1 x /\ P2 x }} e {{y : τ | Q x y}}ᵖ  
+    ' x : Γ |- w {{ P1 x \/ P2 x }} e {{y : τ | Q x y}}ᵖ  
 
 (** variables and constants *)
 | ro_var_prt : forall Γ k τ (w : Γ |- VAR k : τ) Q,
@@ -170,7 +146,7 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
 
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵖ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵖ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zplus y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zplus y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 :+: e2  {{y : INTEGER | ψ γ y}}ᵖ
 
@@ -178,7 +154,7 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
     
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵖ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵖ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zmult y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zmult y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 :*: e2  {{y : INTEGER | ψ γ y}}ᵖ
 
@@ -186,7 +162,7 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
     
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵖ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵖ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zminus y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zminus y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 :-: e2  {{y : INTEGER | ψ γ y}}ᵖ
 
@@ -195,7 +171,7 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
     
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : REAL | ψ1 γ y}}ᵖ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : REAL | ψ2 γ y}}ᵖ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rplus y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rplus y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 ;+; e2  {{y : REAL | ψ γ y}}ᵖ
 
@@ -203,7 +179,7 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
     
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : REAL | ψ1 γ y}}ᵖ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : REAL | ψ2 γ y}}ᵖ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rmult y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rmult y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 ;*; e2  {{y : REAL | ψ γ y}}ᵖ
 
@@ -211,7 +187,7 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
 
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : REAL | ψ1 γ y}}ᵖ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : REAL | ψ2 γ y}}ᵖ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rminus y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rminus y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 ;-; e2  {{y : REAL | ψ γ y}}ᵖ
 
@@ -228,7 +204,7 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
 
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵖ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵖ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ  γ (Z.eqb y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> ψ  γ (Z.eqb y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 :=: e2  {{y : BOOL | ψ γ y}}ᵖ
 
@@ -236,7 +212,7 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
 
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵖ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵖ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ  γ (Z.ltb y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> ψ  γ (Z.ltb y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 :<: e2  {{y : BOOL | ψ γ y}}ᵖ
 
@@ -245,7 +221,7 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
     
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : REAL | ψ1 γ y}}ᵖ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : REAL | ψ2 γ y}}ᵖ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rltb'' y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> y1 <> y2 -> ψ γ (Rltb'' y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 ;<; e2  {{y : BOOL | ψ γ y}}ᵖ
 
@@ -255,7 +231,7 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
     ' (x, γ) : (INTEGER :: Γ) |- w {{ ϕ γ }} e {{y : REAL | θ (x, γ) y}}ᵗ -> 
 
          
-         (forall γ : sem_ctx Γ, ϕ γ -> exists y, ψ γ y /\ forall x z, θ (x, γ) z -> (Rabs (z - y)%R < powerRZ 2 (- x))%R) ->
+         (forall γ : sem_ctx Γ, ϕ γ -> exists y, ψ γ y /\ forall x z, θ (x, γ) z -> (Rabs (z - y)%R < pow2 (- x))%R) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} Lim e  {{y : REAL | ψ γ y}}ᵖ
                                                         
@@ -268,12 +244,12 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
     ' x : Γ |- w {{ P x }} e {{y : τ | Q x y}}ᵗ -> 
     Q ->>> Q' -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    ' x : Γ |- w' {{ P x }} e {{y : τ | Q x y}}ᵗ
+    ' x : Γ |- w' {{ P' x }} e {{y : τ | Q' x y}}ᵗ
 
 | ro_exfalso_tot : forall Γ e τ (w : Γ |- e : τ) Q,
     
     (*——————————-——————————-——————————-——————————-——————————-*)    
-    ' x : Γ |- w {{False}} e {{y : τ | Q y x }}ᵗ
+    ' x : Γ |- w {{False}} e {{y : τ | Q x y }}ᵗ
 
 | ro_conj_tot : forall Γ e τ (w : Γ |- e : τ) P Q1 Q2,
     
@@ -288,7 +264,7 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
     ' x : Γ |- w {{ P1 x }} e {{y : τ | Q x y}}ᵗ -> 
     ' x : Γ |- w {{ P2 x }} e {{y : τ | Q x y}}ᵗ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
-    ' x : Γ |- w {{ P1 x /\ P2 x }} e {{y : τ | Q x y}}ᵗ  
+    ' x : Γ |- w {{ P1 x \/ P2 x }} e {{y : τ | Q x y}}ᵗ  
 
 (** variables and constants *)
 | ro_var_tot : forall Γ k τ (w : Γ |- VAR k : τ) Q,
@@ -350,7 +326,7 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
 
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵗ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵗ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zplus y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zplus y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 :+: e2  {{y : INTEGER | ψ γ y}}ᵗ
 
@@ -358,7 +334,7 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
     
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵗ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵗ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zmult y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zmult y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 :*: e2  {{y : INTEGER | ψ γ y}}ᵗ
 
@@ -366,7 +342,7 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
     
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵗ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵗ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zminus y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Zminus y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 :-: e2  {{y : INTEGER | ψ γ y}}ᵗ
 
@@ -375,7 +351,7 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
     
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : REAL | ψ1 γ y}}ᵗ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : REAL | ψ2 γ y}}ᵗ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rplus y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rplus y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 ;+; e2  {{y : REAL | ψ γ y}}ᵗ
 
@@ -383,7 +359,7 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
     
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : REAL | ψ1 γ y}}ᵗ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : REAL | ψ2 γ y}}ᵗ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rmult y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rmult y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 ;*; e2  {{y : REAL | ψ γ y}}ᵗ
 
@@ -391,7 +367,7 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
 
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : REAL | ψ1 γ y}}ᵗ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : REAL | ψ2 γ y}}ᵗ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rminus y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> ψ γ (Rminus y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 ;-; e2  {{y : REAL | ψ γ y}}ᵗ
 
@@ -399,7 +375,7 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
 | ro_recip_tot : forall Γ e (w : Γ |- e : REAL) ϕ θ (w' : Γ |- ;/; e : REAL) (ψ : post),
 
     ' γ : Γ |- w {{ ϕ γ }} e {{y : REAL | θ γ y}}ᵗ -> 
-     (forall γ x, θ γ x /\ x <> 0%R -> ψ γ (/x)%R) -> 
+     (forall γ x, θ γ x -> x <> 0%R /\ ψ γ (/x)%R) -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} ;/; e  {{y : REAL | ψ γ y}}ᵗ
 
@@ -408,7 +384,7 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
 
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵗ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵗ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ  γ (Z.eqb y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> ψ  γ (Z.eqb y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 :=: e2  {{y : BOOL | ψ γ y}}ᵗ
 
@@ -416,7 +392,7 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
 
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : INTEGER | ψ1 γ y}}ᵗ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : INTEGER | ψ2 γ y}}ᵗ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> ψ  γ (Z.ltb y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> ψ  γ (Z.ltb y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 :<: e2  {{y : BOOL | ψ γ y}}ᵗ
 
@@ -425,7 +401,7 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
     
     ' γ : Γ |- w1 {{ ϕ γ }} e1 {{y : REAL | ψ1 γ y}}ᵗ -> 
     ' γ : Γ |- w2 {{ ϕ γ }} e2 {{y : REAL | ψ2 γ y}}ᵗ -> 
-    (forall y1 y2 γ, ψ1 γ y1 -> ψ2 γ y2 -> (y1 <> y2)%R /\ ψ γ (Rltb'' y1 y2)) ->
+    (forall γ y1 y2, ψ1 γ y1 -> ψ2 γ y2 -> (y1 <> y2)%R /\ ψ γ (Rltb'' y1 y2)) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} e1 ;<; e2  {{y : BOOL | ψ γ y}}ᵗ
 
@@ -435,7 +411,7 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
     ' (x, γ) : (INTEGER :: Γ) |- w {{ ϕ γ }} e {{y : REAL | θ (x, γ) y}}ᵗ -> 
 
          
-         (forall γ : sem_ctx Γ, ϕ γ -> exists y, ψ γ y /\ forall x z, θ (x, γ) z -> (Rabs (z - y)%R < powerRZ 2 (- x))%R) ->
+         (forall γ : sem_ctx Γ, ϕ γ -> exists y, ψ γ y /\ forall x z, θ (x, γ) z -> (Rabs (z - y)%R < pow2 (- x))%R) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     ' γ : Γ |- w' {{ ϕ γ }} Lim e  {{y : REAL | ψ γ y}}ᵗ
                                                         
@@ -478,12 +454,6 @@ with proves_rw_prt : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_prt w -> T
     (*——————————-——————————-——————————-——————————-——————————-*)
     'γ : Γ ;;; 'δ : Δ ||- w' {{ϕ (δ ; γ)}} e {{y : τ | ψ (δ ; γ) y}}ᵖ
 
-(* (** restricting auxiliary variables *) *)
-(* | rw_proj_prt : forall Γ Δ Γ' e τ (w : Γ ;;; Δ ||- e : τ) (w' : (Γ ++ Γ') ;;; Δ ||- e : τ) ϕ ψ,  *)
-(*     w' ||- {{ϕ}} e {{ψ}} -> *)
-(*     (*——————————-——————————-——————————-——————————-——————————-*) *)
-(*     w ||- {{fun δγ => exists γ', ϕ (fst δγ, (snd δγ ; γ'))}} e {{y | fun δγ => exists γ', ψ y (fst δγ, (snd δγ ; γ'))}} *)
-
 (** operational proof rules  *)                            
 | rw_sequence_prt : forall Γ Δ c1 c2 τ (w1 : Γ ;;; Δ ||- c1 : DUnit) (w2 : Γ ;;; Δ ||- c2 : τ) ϕ θ ψ (w' : Γ ;;; Δ ||- (c1 ;; c2) : τ),
     
@@ -494,15 +464,15 @@ with proves_rw_prt : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_prt w -> T
 
 | rw_new_var_prt : forall Γ Δ e c τ σ (w1 : (Δ ++ Γ) |- e : σ) (w2 : Γ ;;; (σ :: Δ) ||- c : τ) ϕ ψ θ (w' : Γ ;;; Δ ||- (NEWVAR e IN c) : τ),
 
-    'x : (Δ ++ Γ) |- w1 {{ϕ (snd_app x) (fst_app x)}} e {{y : σ | θ (snd_app x) (fst_app x) y}}ᵖ -> 
-    'γ : Γ ;;; '(x, δ) : (σ :: Δ) ||- w2 {{θ γ δ x}} c {{y : τ | ψ γ δ y}}ᵖ -> 
+    'x : (Δ ++ Γ) |- w1 {{ϕ (snd_app x) (fst_app x)}} e {{y : σ | θ x y}}ᵖ -> 
+    'γ : Γ ;;; '(x, δ) : (σ :: Δ) ||- w2 {{θ (δ ; γ) x}} c {{y : τ | ψ γ δ y}}ᵖ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
     'γ : Γ ;;; 'δ : Δ ||- w' {{ϕ γ δ}} NEWVAR e IN c {{y : τ | ψ γ δ y}}ᵖ
 
 | rw_assign_prt : forall Γ Δ e k τ (w : (Δ ++ Γ) |- e : τ) ϕ θ (ψ : rwpost) (w' : Γ ;;; Δ ||- (LET k := e) : UNIT),
 
     'x : (Δ ++ Γ) |- w {{ϕ (snd_app x) (fst_app x)}} e {{y : τ | θ x y}}ᵖ -> 
-    (forall x γ δ, θ (δ; γ) x -> ψ γ (update' w w' δ x) tt) ->
+    (forall γ δ x, θ (δ; γ) x -> ψ γ (update' w w' δ x) tt) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     'γ : Γ ;;; 'δ : Δ ||- w' {{ϕ γ δ}} LET k := e {{y : UNIT | ψ γ δ y}}ᵖ
 
@@ -523,7 +493,7 @@ with proves_rw_prt : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_prt w -> T
     (fun ec (wty_l : ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ))  (θ : sem_ctx (Δ ++ Γ) -> bool ->  Prop)  =>
          
        ('x : (Δ ++ Γ) |- (fst wty_l) {{ϕ (snd_app x) (fst_app x)}} fst ec {{y : BOOL | θ x y}}ᵖ)
-       * ('γ : Γ ;;; 'δ : Δ ||- (snd wty_l) {{θ (δ ; γ) true}} snd ec {{y : τ | ψ γ δ y}}ᵗ)
+       * ('γ : Γ ;;; 'δ : Δ ||- (snd wty_l) {{θ (δ ; γ) true}} snd ec {{y : τ | ψ γ δ y}}ᵖ)
     )%type l wty_l θ ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     'γ : Γ ;;; 'δ : Δ ||- wty {{ϕ γ δ}} CaseList l {{y : τ | ψ γ δ y}}ᵖ
@@ -575,12 +545,6 @@ with proves_rw_tot : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_tot w -> T
     (*——————————-——————————-——————————-——————————-——————————-*)
     'γ : Γ ;;; 'δ : Δ ||- w' {{ϕ (δ ; γ)}} e {{y : τ | ψ (δ ; γ) y}}ᵗ
 
-(* (** restricting auxiliary variables *) *)
-(* | rw_proj_tot : forall Γ Δ Γ' e τ (w : Γ ;;; Δ ||- e : τ) (w' : (Γ ++ Γ') ;;; Δ ||- e : τ) ϕ ψ,  *)
-(*     w' ||- {{ϕ}} e {{ψ}} -> *)
-(*     (*——————————-——————————-——————————-——————————-——————————-*) *)
-(*     w ||- {{fun δγ => exists γ', ϕ (fst δγ, (snd δγ ; γ'))}} e {{y | fun δγ => exists γ', ψ y (fst δγ, (snd δγ ; γ'))}} *)
-
 (** operational proof rules  *)                            
 | rw_sequence_tot : forall Γ Δ c1 c2 τ (w1 : Γ ;;; Δ ||- c1 : DUnit) (w2 : Γ ;;; Δ ||- c2 : τ) ϕ θ ψ (w' : Γ ;;; Δ ||- (c1 ;; c2) : τ),
     
@@ -591,15 +555,15 @@ with proves_rw_tot : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_tot w -> T
 
 | rw_new_var_tot : forall Γ Δ e c τ σ (w1 : (Δ ++ Γ) |- e : σ) (w2 : Γ ;;; (σ :: Δ) ||- c : τ) ϕ ψ θ (w' : Γ ;;; Δ ||- (NEWVAR e IN c) : τ),
 
-    'x : (Δ ++ Γ) |- w1 {{ϕ (snd_app x) (fst_app x)}} e {{y : σ | θ (snd_app x) (fst_app x) y}}ᵗ -> 
-    'γ : Γ ;;; '(x, δ) : (σ :: Δ) ||- w2 {{θ γ δ x}} c {{y : τ | ψ γ δ y}}ᵗ -> 
+    'x : (Δ ++ Γ) |- w1 {{ϕ (snd_app x) (fst_app x)}} e {{y : σ | θ x y}}ᵗ -> 
+    'γ : Γ ;;; '(x, δ) : (σ :: Δ) ||- w2 {{θ (δ ; γ) x}} c {{y : τ | ψ γ δ y}}ᵗ -> 
     (*——————————-——————————-——————————-——————————-——————————-*)
     'γ : Γ ;;; 'δ : Δ ||- w' {{ϕ γ δ}} NEWVAR e IN c {{y : τ | ψ γ δ y}}ᵗ
 
 | rw_assign_tot : forall Γ Δ e k τ (w : (Δ ++ Γ) |- e : τ) ϕ θ (ψ : rwpost) (w' : Γ ;;; Δ ||- (LET k := e) : UNIT),
 
     'x : (Δ ++ Γ) |- w {{ϕ (snd_app x) (fst_app x)}} e {{y : τ | θ x y}}ᵗ -> 
-    (forall x γ δ, θ (δ; γ) x -> ψ γ (update' w w' δ x) tt) ->
+    (forall γ δ x, θ (δ; γ) x -> ψ γ (update' w w' δ x) tt) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
     'γ : Γ ;;; 'δ : Δ ||- w' {{ϕ γ δ}} LET k := e {{y : UNIT | ψ γ δ y}}ᵗ
 
@@ -631,7 +595,7 @@ with proves_rw_tot : forall Γ Δ c τ (w : Γ ;;; Δ ||- c : τ), rw_tot w -> T
                                                (wty_c : (Γ ++ Δ) ;;; Δ ||- c : UNIT) (wty_c' : Γ ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT) ϕ θ ψ,
      'x : (Δ ++ Γ) |- wty_e {{ϕ (snd_app x) (fst_app x)}} e {{y : BOOL | θ x y}}ᵗ -> 
     'γ : Γ ;;; 'δ : Δ ||- wty_c' {{θ (δ ; γ) true}} c {{y : UNIT | ϕ γ δ}}ᵗ ->
-    'x : (Γ ++ Δ) ;;; 'δ : Δ ||- wty_c {{θ (δ ; (fst_app x)) true}} c {{y : UNIT | ψ x δ}}ᵗ ->
+    'x : (Γ ++ Δ) ;;; 'δ : Δ ||- wty_c {{θ (δ ; (fst_app x)) true /\ δ = snd_app x}} c {{y : UNIT | ψ x δ}}ᵗ ->
              (forall δ γ, ϕ γ δ  ->  
                            ~exists f : nat -> sem_ctx Δ,
                                f O = δ /\ forall n, ψ (γ ; f n) (f (S n))) ->
@@ -648,16 +612,28 @@ where
 
 End Rules.
 
-Notation " ' x : Γ |- w {{ ϕ }} e {{ y : τ | ψ }}ᵖ "
+Notation " [ x : Γ ] |- w {{ ϕ }} e {{ y : τ | ψ }}ᵖ "
   := (proves_ro_prt Γ e τ w (mk_ro_prt w (fun x => ϕ) (fun x y => ψ)))
-       (at level 50,  Γ, w, ϕ, e, y, τ, ψ at next level, x pattern).
-Notation " ' x : Γ |- w {{ ϕ }} e {{ y : τ | ψ }}ᵗ "
+       (at level 50,  Γ, w, ϕ, e, y, τ, ψ at next level, x pattern) : clerical_scope.
+Notation " [ x : Γ ] |- w {{ ϕ }} e {{ y : τ | ψ }}ᵗ "
   := (proves_ro_tot Γ e τ w (mk_ro_tot w (fun x => ϕ) (fun x y => ψ)))
-       (at level 50,  Γ, w, ϕ, e, y, τ, ψ at next level, x pattern).
-Notation " ' x : Γ ;;; ' y : Δ ||- w {{ P }} e {{ z : τ | Q }}ᵖ "
-  := (proves_rw_prt Γ Δ e τ w (mk_rw_prt w (fun x y => P) (fun x y z => Q)))
-       (at level 50,  Γ,  Δ, w, P, e, z, τ, Q at next level, x pattern, y pattern).
-Notation " ' x : Γ ;;; ' y : Δ ||- w {{ P }} e {{ z : τ | Q }}ᵗ "
-  := (proves_rw_tot Γ Δ e τ w (mk_rw_tot w (fun x y => P) (fun x y z => Q)))
-       (at level 50,  Γ,  Δ, w, P, e, z, τ, Q at next level, x pattern, y pattern).
+       (at level 50,  Γ, w, ϕ, e, y, τ, ψ at next level, x pattern) : clerical_scope.
+Notation " [ x ':' Γ  ';;;'  y ':' Δ ] '||-' w '{{' ϕ '}}' e '{{' z ':' τ '|' ψ '}}ᵖ' "
+  := (proves_rw_prt Γ Δ e τ w (mk_rw_prt w (fun x y => ϕ) (fun x y z => ψ)))
+       (at level 50,  Γ,  Δ, w, ϕ, e, z, τ, ψ at next level, x pattern, y pattern) : clerical_scope.
+Notation " [ x ':' Γ  ';;;'   y ':' Δ ]  '||-' w '{{' ϕ '}}' e '{{' z ':' τ '|' ψ '}}ᵗ' "
+  := (proves_rw_tot Γ Δ e τ w (mk_rw_tot w (fun x y => ϕ) (fun x y z => ψ)))
+       (at level 50,  Γ,  Δ, w, ϕ, e, z, τ, ψ at next level, x pattern, y pattern) : clerical_scope.
 
+(* Notation " ' x ':' Γ '|=' w '{{' ϕ '}}' e '{{' y ':' τ '|' ψ '}}ᵖ' "  *)
+(*   := (sem_ro_prt (@mk_ro_prt Γ e τ w (fun x => ϕ) (fun x y => ψ))) *)
+(*        (at level 50, Γ, w, ϕ, e, y, τ, ψ at next level, x pattern) : clerical_soundness_scope. *)
+(* Notation "' x ':' Γ  '|=' w '{{' ϕ '}}' e '{{' y ':' τ '|' ψ '}}ᵗ' " *)
+(*   := (sem_ro_tot (@mk_ro_tot Γ e τ w (fun x => ϕ) (fun x y => ψ))) *)
+(*        (at level 50, Γ, w, ϕ, e, y, τ, ψ at next level, x pattern) : clerical_soundness_scope. *)
+(* Notation " ' x ':' Γ  ';;;'  ' y ':' Δ  '||=' w '{{' ϕ '}}' e '{{' z ':' τ '|' ψ '}}ᵖ' " *)
+(*   := (sem_rw_prt (@mk_rw_prt Γ Δ e τ w (fun x y => ϕ) (fun x y z => ψ))) *)
+(*        (at level 50, Γ, w, ϕ, e, z, τ, ψ at next level, x pattern, y pattern) : clerical_soundness_scope. *)
+(* Notation " ' x ':' Γ  ';;;'  ' y ':' Δ  '||=' w '{{' ϕ '}}' e '{{' z ':' τ '|' ψ '}}ᵗ' " *)
+(*   := (sem_rw_tot (@mk_rw_tot Γ Δ e τ w (fun x y => ϕ) (fun x y z => ψ))) *)
+(*        (at level 50, Γ, w, ϕ, e, z, τ, ψ at next level, x pattern, y pattern) : clerical_soundness_scope. *)

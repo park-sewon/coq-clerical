@@ -88,7 +88,7 @@ Proof.
 Defined.
 
 Fixpoint simple_arithmetical_prt Γ e τ (w : Γ |- e : τ) (p : simple_arithmetical e) :
-  Γ |-- {{fun _ => True}} e {{y : τ | fun x => y = simple_arithmetical_value_prt e p Γ τ w x}}.
+  [x : Γ] |- {{True}} e {{y : τ | y = simple_arithmetical_value_prt e p Γ τ w x}}ᵖ.
 Proof.
   dependent destruction p; simpl.
   {
@@ -101,8 +101,8 @@ Proof.
     case_eq ( (has_type_ro_OpZplus_inverse _ _ _ w)). intros w1 w2 e.    
     apply (
         pp_ro_int_op_plus_prt
-          (fun y x => y = ( (simple_arithmetical_value_prt _ p1 _ _ w1) x))
-          (fun y x => y = ( (simple_arithmetical_value_prt _ p2 _ _ w2) x))
+          (fun x y => y = ( (simple_arithmetical_value_prt _ p1 _ _ w1) x))
+          (fun x y => y = ( (simple_arithmetical_value_prt _ p2 _ _ w2) x))
       ).
     pose proof (simple_arithmetical_prt _ _ _ w1 p1).
     apply (pp_ro_imply_prt X);
@@ -121,8 +121,8 @@ Proof.
     destruct (eq_sym (has_type_ro_OpZminus_infer _ _ _ _ w)).
     case_eq ( (has_type_ro_OpZminus_inverse _ _ _ w)); intros w1 w2 e.    
     apply (pp_ro_int_op_minus_prt
-             (fun y x => y = simple_arithmetical_value_prt e1 p1 Γ INTEGER w1 x)
-             (fun y x => y = simple_arithmetical_value_prt e2 p2 Γ INTEGER w2 x)
+             (fun x y => y = simple_arithmetical_value_prt e1 p1 Γ INTEGER w1 x)
+             (fun x y => y = simple_arithmetical_value_prt e2 p2 Γ INTEGER w2 x)
           ).
     apply simple_arithmetical_prt.
     apply simple_arithmetical_prt.
@@ -138,8 +138,8 @@ Proof.
     destruct (eq_sym (has_type_ro_OpZmult_infer _ _ _ _ w)).
     case_eq ( (has_type_ro_OpZmult_inverse _ _ _ w)); intros w1 w2 e.    
     apply (pp_ro_int_op_mult_prt
-             (fun y x => y = simple_arithmetical_value_prt e1 p1 Γ INTEGER w1 x)
-             (fun y x => y = simple_arithmetical_value_prt e2 p2 Γ INTEGER w2 x)
+             (fun x y => y = simple_arithmetical_value_prt e1 p1 Γ INTEGER w1 x)
+             (fun x y => y = simple_arithmetical_value_prt e2 p2 Γ INTEGER w2 x)
           ).
     apply simple_arithmetical_prt.
     apply simple_arithmetical_prt.
@@ -155,8 +155,8 @@ Proof.
     destruct (eq_sym (has_type_ro_OpZlt_infer _ _ _ _ w)).
     case_eq ( (has_type_ro_OpZlt_inverse _ _ _ w)); intros w1 w2 e.    
     apply (pp_ro_int_comp_lt_prt
-             (fun y x => y = simple_arithmetical_value_prt e1 p1 Γ INTEGER w1 x)
-             (fun y x => y = simple_arithmetical_value_prt e2 p2 Γ INTEGER w2 x)
+             (fun x y => y = simple_arithmetical_value_prt e1 p1 Γ INTEGER w1 x)
+             (fun x y => y = simple_arithmetical_value_prt e2 p2 Γ INTEGER w2 x)
           ).
     apply simple_arithmetical_prt.
     apply simple_arithmetical_prt.
@@ -172,8 +172,8 @@ Proof.
     destruct (eq_sym (has_type_ro_OpZeq_infer _ _ _ _ w)).
     case_eq ( (has_type_ro_OpZeq_inverse _ _ _ w)) ; intros w1 w2 e.    
     apply (pp_ro_int_comp_eq_prt
-             (fun y x => y = simple_arithmetical_value_prt e1 p1 Γ INTEGER w1 x)
-             (fun y x => y = simple_arithmetical_value_prt e2 p2 Γ INTEGER w2 x)
+             (fun x y => y = simple_arithmetical_value_prt e1 p1 Γ INTEGER w1 x)
+             (fun x y => y = simple_arithmetical_value_prt e2 p2 Γ INTEGER w2 x)
           ).
     apply simple_arithmetical_prt.
     apply simple_arithmetical_prt.
@@ -189,8 +189,8 @@ Proof.
     destruct (eq_sym (has_type_ro_OpRplus_infer _ _ _ _ w)).
     case_eq ( (has_type_ro_OpRplus_inverse _ _ _ w)); intros w1 w2 e.    
     apply (pp_ro_real_op_plus_prt
-             (fun y x => y = simple_arithmetical_value_prt e1 p1 Γ REAL w1 x)
-             (fun y x => y = simple_arithmetical_value_prt e2 p2 Γ REAL w2 x)
+             (fun x y => y = simple_arithmetical_value_prt e1 p1 Γ REAL w1 x)
+             (fun x y => y = simple_arithmetical_value_prt e2 p2 Γ REAL w2 x)
           ).
     apply simple_arithmetical_prt.
     apply simple_arithmetical_prt.
@@ -206,8 +206,8 @@ Proof.
     destruct (eq_sym (has_type_ro_OpRminus_infer _ _ _ _ w)).
     case_eq ( (has_type_ro_OpRminus_inverse _ _ _ w)) ; intros w1 w2 e.    
     apply (pp_ro_real_op_minus_prt
-             (fun y x => y = simple_arithmetical_value_prt e1 p1 Γ REAL w1 x)
-             (fun y x => y = simple_arithmetical_value_prt e2 p2 Γ REAL w2 x)
+             (fun x y => y = simple_arithmetical_value_prt e1 p1 Γ REAL w1 x)
+             (fun x y => y = simple_arithmetical_value_prt e2 p2 Γ REAL w2 x)
           ).
     apply simple_arithmetical_prt.
     apply simple_arithmetical_prt.
@@ -223,8 +223,8 @@ Proof.
     destruct (eq_sym (has_type_ro_OpRmult_infer _ _ _ _ w)).
     case_eq ( (has_type_ro_OpRmult_inverse _ _ _ w)) ; intros w1 w2 e.    
     apply (pp_ro_real_op_mult_prt
-             (fun y x => y = simple_arithmetical_value_prt e1 p1 Γ REAL w1 x)
-             (fun y x => y = simple_arithmetical_value_prt e2 p2 Γ REAL w2 x)
+             (fun x y => y = simple_arithmetical_value_prt e1 p1 Γ REAL w1 x)
+             (fun x y => y = simple_arithmetical_value_prt e2 p2 Γ REAL w2 x)
           ).
     apply simple_arithmetical_prt.
     apply simple_arithmetical_prt.
@@ -240,8 +240,8 @@ Proof.
     destruct (eq_sym (has_type_ro_OpRlt_infer _ _ _ _ w)).
     case_eq ( (has_type_ro_OpRlt_inverse _ _ _ w)) ; intros w1 w2 e.    
     apply (pp_ro_real_comp_lt_prt
-             (fun y x => y = simple_arithmetical_value_prt e1 p1 Γ REAL w1 x)
-             (fun y x => y = simple_arithmetical_value_prt e2 p2 Γ REAL w2 x)
+             (fun x y => y = simple_arithmetical_value_prt e1 p1 Γ REAL w1 x)
+             (fun x y => y = simple_arithmetical_value_prt e2 p2 Γ REAL w2 x)
           ).
     apply simple_arithmetical_prt.
     apply simple_arithmetical_prt.
@@ -423,7 +423,7 @@ Proof.
 Defined.
 
 Fixpoint simple_arithmetical_tot e (p : simple_arithmetical e) Γ τ (w : Γ |- e : τ) :
-  Γ |-- [{fst (simple_arithmetical_value_tot _ p _ _ w)}] e [{y : τ | fun x => y = snd (simple_arithmetical_value_tot _ p _ _ w) x}].
+  [x : Γ] |- {{fst (simple_arithmetical_value_tot _ p _ _ w) x}} e {{y : τ | y = snd (simple_arithmetical_value_tot _ p _ _ w) x}}ᵗ.
 Proof.
   dependent destruction p; simpl.
   {
@@ -437,8 +437,8 @@ Proof.
     destruct ( (has_type_ro_OpZplus_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_int_op_plus_tot
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
       ).
     pose proof (simple_arithmetical_tot _ p1 _ _ w1).
     apply (pp_ro_imply_tot X);
@@ -456,8 +456,8 @@ Proof.
     destruct ( (has_type_ro_OpZminus_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_int_op_minus_tot
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
       ).
     pose proof (simple_arithmetical_tot _ p1 _ _ w1).
     apply (pp_ro_imply_tot X);
@@ -475,8 +475,8 @@ Proof.
     destruct ( (has_type_ro_OpZmult_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_int_op_mult_tot
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
       ).
     pose proof (simple_arithmetical_tot _ p1 _ _ w1).
     apply (pp_ro_imply_tot X);
@@ -494,8 +494,8 @@ Proof.
     destruct ( (has_type_ro_OpZlt_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_int_comp_lt_tot
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
       ).
     pose proof (simple_arithmetical_tot _ p1 _ _ w1).
     apply (pp_ro_imply_tot X);
@@ -513,8 +513,8 @@ Proof.
     destruct ( (has_type_ro_OpZeq_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_int_comp_eq_tot
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
       ).
     pose proof (simple_arithmetical_tot _ p1 _ _ w1).
     apply (pp_ro_imply_tot X);
@@ -532,8 +532,8 @@ Proof.
     destruct ( (has_type_ro_OpRplus_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_real_op_plus_tot
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
       ).
     pose proof (simple_arithmetical_tot _ p1 _ _ w1).
     apply (pp_ro_imply_tot X);
@@ -551,8 +551,8 @@ Proof.
     destruct ( (has_type_ro_OpRminus_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_real_op_minus_tot
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
       ).
     pose proof (simple_arithmetical_tot _ p1 _ _ w1).
     apply (pp_ro_imply_tot X);
@@ -570,8 +570,8 @@ Proof.
     destruct ( (has_type_ro_OpRmult_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_real_op_mult_tot
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
       ).
     pose proof (simple_arithmetical_tot _ p1 _ _ w1).
     apply (pp_ro_imply_tot X);
@@ -589,8 +589,8 @@ Proof.
     destruct ( (has_type_ro_OpRlt_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_real_comp_lt_tot
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x) /\  y <> (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
-          (fun y x => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x) /\  y <> (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun x y => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
       ).
 
     pose proof (simple_arithmetical_tot _ p1 _ _ w1).

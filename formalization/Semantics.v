@@ -229,9 +229,31 @@ Section TediousList.
     destruct x.
     apply tedious_equiv_1.
   Defined.
+  
+  Lemma tedious_equiv_4_fst : forall Δ x, @snd_app nil Δ x = x. 
+  Proof.
+    intros.
+    simpl in x.
+    unfold snd_app; simpl; auto.
+  Defined.
 
+
+  
 End TediousList.
 Notation " ( γ ; δ ) " := (tedious_prod_sem _ _  (γ, δ)).
+  Ltac reduce_tedious_tactic h :=
+    match type of h with
+    | ltac_No_arg =>
+        repeat (simpl; try rewrite <- tedious_equiv_2; try rewrite tedious_equiv_fst; try rewrite tedious_equiv_snd;
+                try rewrite tedious_equiv_2_fst; try rewrite tedious_equiv_2_snd; try rewrite tedious_equiv_4_fst)
+    | _ =>
+        repeat (simpl in h; try rewrite <- tedious_equiv_2 in h; try rewrite tedious_equiv_fst in h; try rewrite tedious_equiv_snd in h; try rewrite tedious_equiv_2_fst in h; try rewrite tedious_equiv_2_snd in h; try rewrite tedious_equiv_4_fst in h)
+    end.
+Tactic Notation "reduce_tedious" constr(x1) :=
+  reduce_tedious_tactic x1 .
+
+Tactic Notation "reduce_tedious" :=
+  reduce_tedious_tactic ltac_no_arg.
 
 Section AccessState.
   Fixpoint ro_access  Γ k τ (w: Γ |- Var k : τ) : sem_ctx Γ -> sem_datatype τ.

@@ -14,8 +14,7 @@ Ltac decide_simple_arithmetic e X Xdefi :=
   intros X v; [simpl in v; injection v; intro Xdefi; clear v |simpl in v; discriminate v].
 
 Ltac unfold_stuffs :=
-  unfold rw_to_ro_pre;
-  unfold ro_to_rw_pre.
+  reduce_tedious.
   
 Ltac auto_imp :=
   match goal with
