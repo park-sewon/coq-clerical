@@ -14,21 +14,20 @@ Definition clerical_bounded k δ :=
 
 Lemma clerical_bounded_correct :
   forall Γ k δ (wk : Γ |- VAR k : REAL) (wδ : Γ |- VAR δ : REAL),
-    Γ |--
-      [{fun x => 0 < (ro_access Γ δ REAL wδ x)}]
+    [x : Γ] |-
+      {{0 < ro_access Γ δ REAL wδ x}}
       clerical_bounded k δ 
-      [{y : BOOL | fun x =>
-                     (y = true -> Rabs (ro_access Γ k REAL wk x) < (ro_access Γ δ REAL wδ x)) /\
-                       (y = false -> (ro_access Γ δ REAL wδ x) / 2 < Rabs (ro_access Γ k REAL wk x))    
-        }].
+      {{y : BOOL | (y = true -> Rabs (ro_access Γ k REAL wk x) < (ro_access Γ δ REAL wδ x))
+                   /\
+                   (y = false -> (ro_access Γ δ REAL wδ x) / 2 < Rabs (ro_access Γ k REAL wk x)) }}ᵗ.    
 Proof.
   intros.
   apply (pp_ro_rw_tot_back).
   apply (pp_rw_case_tot
-           (θ1 := (fun b x => b = true ->
+           (θ1 := (fun x b => b = true ->
                               Rabs (ro_access _ _ _ wk (snd_app x)) <
                                 (ro_access _ _ _ wδ (snd_app x))))
-           (θ2 := (fun b x => b = true ->
+           (θ2 := (fun x b => b = true ->
                               (ro_access _ _ _ wδ (snd_app x)) / 2 < 
                                 Rabs (ro_access _ _ _ wk (snd_app x))))           
            (ϕ1 := (fun x => 
@@ -39,8 +38,8 @@ Proof.
                        Rabs (ro_access _ _ _ wk (snd_app x))))); simpl.
   {
     apply (pp_ro_real_comp_lt_prt
-             (fun y x => y = Rabs (ro_access _ _ _ wk x))
-             (fun y x => y = (ro_access _ _ _ wδ x))).
+             (fun x y => y = Rabs (ro_access _ _ _ wk x))
+             (fun x y => y = (ro_access _ _ _ wδ x))).
     {
       apply (pp_ro_imply_prt
                (pp_ro_tot_prt
@@ -63,8 +62,8 @@ Proof.
 
   {   
     apply (pp_ro_real_comp_lt_prt
-             (fun y x => y = (ro_access _ _ _ wδ x) / 2 )
-             (fun y x => y = Rabs (ro_access _ _ _ wk x))).
+             (fun x y => y = (ro_access _ _ _ wδ x) / 2 )
+             (fun x y => y = Rabs (ro_access _ _ _ wk x))).
     proves_simple_arithmetical.
     rewrite val.
     rewrite Rmult_1_r.
@@ -89,11 +88,8 @@ Proof.
 
   {
     proves_simple_arithmetical. 
-    unfold ro_to_rw_pre in pre.
     split; intro h.
     pose proof (pre (eq_refl _)).
-    unfold snd_app in H; simpl in H.
-    unfold snd_app; simpl.
     exact H.
     rewrite val in h; contradict h; discriminate.
   }
@@ -102,17 +98,14 @@ Proof.
     proves_simple_arithmetical. 
     split; intro h.
     rewrite val in h; contradict h; discriminate.
-    unfold ro_to_rw_pre in pre.
     pose proof (pre (eq_refl _)).
-    unfold snd_app in H; simpl in H.
-    unfold snd_app; simpl.
     exact H.    
   }
 
   {
     apply (pp_ro_real_comp_lt_tot
-             (fun y x => y = Rabs (ro_access _ _ _ wk x) /\ Rabs (ro_access _ _ _ wk x) < (ro_access _ _ _ wδ x))
-             (fun y x => y = (ro_access _ _ _ wδ x))).
+             (fun x y => y = Rabs (ro_access _ _ _ wk x) /\ Rabs (ro_access _ _ _ wk x) < (ro_access _ _ _ wδ x))
+             (fun x y => y = (ro_access _ _ _ wδ x))).
     {
       apply (pp_ro_imply_tot
                (pp_ro_tot_pose_readonly
@@ -136,8 +129,8 @@ Proof.
 
   {
     apply (pp_ro_real_comp_lt_tot
-             (fun y x => y = (ro_access _ _ _ wδ x)/2 /\ (ro_access _ _ _ wδ x)/2 <Rabs (ro_access _ _ _ wk x))
-             (fun y x => y = Rabs (ro_access _ _ _ wk x))).
+             (fun x y => y = (ro_access _ _ _ wδ x)/2 /\ (ro_access _ _ _ wδ x)/2 <Rabs (ro_access _ _ _ wk x))
+             (fun x y => y = Rabs (ro_access _ _ _ wk x))).
     {
       proves_simple_arithmetical.
       split; auto.
@@ -167,9 +160,7 @@ Proof.
 
   {
     intros.
-    unfold rw_to_ro_pre in H.
     simpl in H.
-    unfold snd_app; simpl.
     apply or_comm.
     apply overlap_splitting.
     lra.

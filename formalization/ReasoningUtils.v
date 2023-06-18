@@ -486,7 +486,7 @@ Proof.
   apply (admissible_ro_prt_pose_readonly _ _ _ _ _ _ _ p).
 Defined.
 
-Lemma pp_rw_while_tot_back {Γ Δ} {e c} {ϕ} {θ} {ψ} {ϕ' : rwpre} {ψ' : rwpost}:
+Lemma pp_rw_while_tot_back {Γ Δ} {e c} ϕ θ ψ {ϕ' : rwpre} {ψ' : rwpost}:
     [x : Δ ++ Γ] |- {{ϕ (snd_app x) (fst_app x)}} e {{y : BOOL | θ x y}}ᵗ ->
     [γ : Γ ;;; δ : Δ] ||- {{θ (δ ; γ) true}} c {{y : UNIT | ϕ γ δ}}ᵗ ->  
     [γ' : (Γ ++ Δ) ;;; δ : Δ] ||- {{θ (δ; fst_app γ') true /\ δ = snd_app γ'}} c {{y : UNIT | ψ γ' δ  }}ᵗ -> 
@@ -609,3 +609,44 @@ Proof.
   repeat split; destruct H1 as [h1 h2]; auto.
 Defined.
 
+
+Lemma pp_rw_while_tot_back_util {Γ Δ} {e c} ϕ θ ψ {ϕ' : rwpre} {ψ' : rwpost}:
+    [x : Δ ++ Γ] |- {{ϕ (snd_app x) (fst_app x)}} e {{y : BOOL | θ x y}}ᵗ ->
+    [γ : Γ ;;; δ : Δ] ||- {{ϕ γ δ /\ θ (δ ; γ) true}} c {{y : UNIT | ϕ γ δ}}ᵗ ->  
+    [γ' : (Γ ++ Δ) ;;; δ : Δ] ||- {{ϕ (fst_app γ') δ /\ θ (δ; fst_app γ') true /\ δ = snd_app γ'}} c {{y : UNIT | ψ γ' δ  }}ᵗ -> 
+    (forall δ γ,
+        ϕ γ δ -> ~ (exists f : nat -> sem_ctx Δ, f 0%nat = δ /\ (forall n : nat, ψ (γ; f n) ( f (S n))))) -> 
+    (forall x y, ϕ' x y -> ϕ x y) ->
+    (forall x y z, ϕ x y /\ θ (y ; x) false -> ψ' x y z) ->    
+    [γ : Γ ;;; δ : Δ] ||- {{ϕ' γ δ}} While e c {{y : UNIT | ψ' γ δ y }}ᵗ.
+  Proof.
+    intros p1 p2 p3 h h1 h2.
+    apply (pp_rw_while_tot_back ϕ (fun x y => θ x y /\ ϕ (snd_app x) (fst_app x)) ψ).
+    
+    
+    apply (pp_ro_tot_pose_readonly (fun x => ϕ (snd_app x) (fst_app x))) in p1.
+    apply (pp_ro_imply_tot p1).
+    intros x1 x2; auto.
+    intros x1 x2; auto.
+
+    apply (pp_rw_imply_tot p2).
+    intros.
+    reduce_tedious H; auto.
+    destruct H; auto.
+    intros; auto.
+
+    apply (pp_rw_imply_tot p3).
+    intros.
+    reduce_tedious H; auto.
+    destruct H.
+    destruct H.
+    auto.
+    intros; auto.
+    intros; auto.
+    intros; auto.
+    intros; auto.
+    apply h2; auto.
+    destruct H; auto.
+    destruct H0.
+    split; auto.
+  Defined.

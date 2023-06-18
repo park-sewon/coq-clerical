@@ -67,7 +67,7 @@ Ltac proves_simple_arithmetical :=
       assert (Γ |- e : τ) as v3 by auto_typing;
 
       pose proof (simple_arithmetical_prt Γ e τ v3 v1) as v4;
-      idtac ϕ;
+
       apply (pp_ro_prt_pose_readonly (Γ := Γ) (τ := τ) ϕ) in v4;
 
       simpl in v4;
