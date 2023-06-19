@@ -216,9 +216,9 @@ Proof.
   rewrite H2; apply H0.
   auto.
 Defined.
-       
-  
-Ltac proves_asisgn_simple_arithemtical t :=
+
+
+Ltac proves_assign_simple_arithemtical t :=
   match goal with
   | |- proves_rw_tot_pp ?Γ ?Δ (Assign ?k ?e) ?τ ?ϕ ?ψ =>
       let a := fresh "a" in

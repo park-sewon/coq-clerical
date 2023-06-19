@@ -197,7 +197,7 @@ Proof.
                               δ = pow2 (- m) /\ q = sin_q (S n) x /\ A = sin_A n x}})).
       {
         (* j := j + 1 *)
-        proves_asisgn_simple_arithemtical INTEGER.
+        proves_assign_simple_arithemtical INTEGER.
         intros [m γ] [q [A [j [δ t]]]].
         reduce_update.
         reduce_ro_access.
@@ -217,7 +217,7 @@ Proof.
                         δ = pow2 (- m) /\ q = sin_q (S n) x /\ A = sin_A (S n) x}})).
       {
         (* A := A + q *)
-        proves_asisgn_simple_arithemtical REAL.
+        proves_assign_simple_arithemtical REAL.
         intros [m γ] [q [A [j [δ t]]]] [l [p1 [p2 [p3 p4]]]].
         reduce_update.
         reduce_ro_access.
@@ -230,7 +230,7 @@ Proof.
 
       {
         (* q := - q * x * x / (2 j + 2) (2 j  + 3)  *)
-        proves_asisgn_simple_arithemtical REAL.
+        proves_assign_simple_arithemtical REAL.
 
         Require Import Lia.
 
@@ -322,7 +322,7 @@ Proof.
                                    exists n : nat, Z.of_nat n = j' /\ j = (j' + 1)%Z /\ pow2 (- m - 1) < Rabs (sin_q (S n) x)}})).
     {
       (* j := j + 1 *)
-      proves_asisgn_simple_arithemtical INTEGER.
+      proves_assign_simple_arithemtical INTEGER.
       intros [m γ'] [q [A [n [δ t]]]].
       simpl.
       reduce_ro_access.
@@ -352,7 +352,7 @@ Proof.
                      exists n : nat, Z.of_nat n = j' /\ j = (j' + 1)%Z /\ pow2 (- m - 1) < Rabs (sin_q (S n) x)}})).
     {
       (* A := A + q *)
-      proves_asisgn_simple_arithemtical REAL.
+      proves_assign_simple_arithemtical REAL.
       intros [m γ'] [q [A [n [δ t]]]].
       reduce_ro_access.
       reduce_update.
@@ -365,7 +365,7 @@ Proof.
     {
       (* q := - q * x * x / (2 j + 2) (2 j  + 3)  *)
       pose proof (has_type_ro_add_auxiliary _ _ _ w (REAL :: REAL :: INTEGER :: REAL :: nil)).
-      proves_asisgn_simple_arithemtical REAL.
+      proves_assign_simple_arithemtical REAL.
 
       {
         intros [q [A [n [δ [m γ']]]]].
