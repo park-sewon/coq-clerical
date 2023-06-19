@@ -80,14 +80,6 @@ Definition clerical_sine k :=
       END ;; VAR 1
     ).
 
-
-(* Ltac pp_rw_assign_tot_tactic θ := *)
-(*   lazy_match goal with *)
-(*   | |- proves_rw_tot_pp ?Γ ?Δ (Assign ?k ?e) ?τ ?ϕ ?ψ => *)
-(*       let v1 := fresh "tmp" in *)
-(*       let v2 := fresh "tmp" in *)
-      
-
       
 Lemma clerical_sine_correct :
   forall Γ k (w : Γ |- VAR k : REAL),
@@ -205,30 +197,17 @@ Proof.
                               δ = pow2 (- m) /\ q = sin_q (S n) x /\ A = sin_A n x}})).
       {
         (* j := j + 1 *)
-        assert (assignable (REAL :: REAL :: INTEGER :: REAL :: nil) INTEGER 2) as a by repeat constructor.
-        apply (pp_rw_assign_tot_util _ 
-               (θ := [(q, (A, (j, (δ, (m, γ))))) : ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ))]
-                     |- {{y : INTEGER | y = (j + 1)%Z}})
-               a
-              ).    
-        
-        proves_simple_arithmetical.
-        rewrite val.
-        reduce_ro_access.
-        destruct y as [q [A [j [δ [m γ]]]]].      
-        simpl; auto.
-        intros j' [m γ] [q [A [n [δ t]]]] h1 h2.
-        simpl in h2.
-        simpl in h1.
-        destruct h1.
+        proves_asisgn_simple_arithemtical INTEGER.
+        intros [m γ] [q [A [j [δ t]]]].
         reduce_update.
-        destruct H as [l [p1 [p2 [p3 p4]]]].
+        reduce_ro_access.
+        intros [[l [p1 [p2 [p3 p4]]]] [h1 h2]].
         exists l.
         repeat split; auto.
-        rewrite h2.
-        ring_simplify.
-        auto.
+        rewrite p1.
+        ring.
       }
+      
       apply (pp_rw_sequence_tot
              (θ := [(m, γ) : (INTEGER :: Γ) ;;; (q, (A, (j, (δ, _)))) : (REAL :: REAL :: INTEGER :: REAL :: nil)] ||-
                    {{_ : UNIT | 
@@ -238,369 +217,183 @@ Proof.
                         δ = pow2 (- m) /\ q = sin_q (S n) x /\ A = sin_A (S n) x}})).
       {
         (* A := A + q *)
-        assert (assignable (REAL :: REAL :: INTEGER :: REAL :: nil) REAL 1) as a by repeat constructor.
-        apply (pp_rw_assign_tot_util _
-               (θ := [(q, (A, (j, (δ, (m, γ))))) : ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ))] |-
-                       {{y : REAL | y = (A + q)%R}})
-                 a
-              ).    
-        proves_simple_arithmetical.
-
-        rewrite val.
-        reduce_ro_access.
-        unfold fst_app; simpl; auto.
-        destruct x as [q [A [j [δ [m γ]]]]].      
-        simpl; auto.
-
-
-        intros j' [m γ] [q [A [n [δ t]]]] [l [p1 [p2 [p3 p4]]]] h2.
-        simpl in p1, p2, p3, p4, h2.
-        exists l.
+        proves_asisgn_simple_arithemtical REAL.
+        intros [m γ] [q [A [j [δ t]]]] [l [p1 [p2 [p3 p4]]]].
         reduce_update.
+        reduce_ro_access.
+        exists l.
         repeat split; auto.
-        rewrite h2.
         rewrite <- p3.
         rewrite <- p4.
         ring.
       }
 
-      (* q := - q * x * x / (2 j + 2) (2 j  + 3)  *)
-      assert (assignable (REAL :: REAL :: INTEGER :: REAL :: nil) REAL 0) as a
-          by repeat constructor.
-      apply (pp_rw_assign_tot_util REAL
-               (θ := (fun y
-                          (δγ : sem_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ)))
-                      => 
-                        let q := fst (fst_app δγ) in
-                        let x := ro_access Γ k REAL w (snd (snd_app δγ)) in
-                        let j := fst (snd (snd (fst_app δγ))) in
-                        y = - q * x * x / (IZR (2 * j + 2))%Z / (IZR (2 * j + 3))%Z))
-               a
-            ).
+      {
+        (* q := - q * x * x / (2 j + 2) (2 j  + 3)  *)
+        proves_asisgn_simple_arithemtical REAL.
 
-      proves_simple_arithmetical.
-      reduce_ro_access.
-      destruct x as [q [A [j [δ [m γ]]]]].      
-      simpl.
-      repeat split; auto.
-      apply not_0_IZR.
-      destruct pre.
-      simpl in H.
-      destruct H.
-      assert (0 < j)%Z.
-      pose proof (Zle_0_nat x).
-      rewrite H in H1.
-      Require Import Lia.
-      lia.
-      replace (match j with
-               | 0 => 0
-               | Z.pos y' => Z.pos y'~0
-               | Z.neg y' => Z.neg y'~0
-               end + 2)%Z with (2 * j + 2)%Z by auto.
-      lia.
-      apply not_0_IZR.
-      destruct pre.
-      simpl in H.
-      destruct H.
-      assert (0 < j)%Z.
-      pose proof (Zle_0_nat x).
-      rewrite H in H1.
-      Require Import Lia.
-      lia.
-      replace (match j with
-               | 0 => 0
-               | Z.pos y' => Z.pos y'~0
-               | Z.neg y' => Z.neg y'~0
-               end + 3)%Z with (2 * j + 3)%Z by auto.
-      lia.
-      
-      rewrite val.
-      reduce_ro_access.
-      destruct x as [q [A [j [δ [m γ]]]]].      
-      simpl.
-      rewrite (ro_access_typing_irrl _ _ _   (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse h4)))))  w).
-      rewrite (ro_access_typing_irrl _ _ _   (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse h6)))))  w).
-      unfold Rdiv.
-      ring.
+        Require Import Lia.
 
-      
-      intros q' [m γ] [q [A [j δ]]] [l [p1 [p2 [p3 p4]]]] h2.
-      simpl in p1, p2, p3, p4, h2.
-      reduce_update.
-      exists (S l).
-      simpl.
-      repeat split; auto.
-      Require Import Lia.
-      lia.
-      rewrite h2.
-      destruct δ; auto.
-
-      simpl.
-      rewrite <- p3.
-      unfold Rdiv.
-      replace ( IZR (match j with
-                     | 0 => 0
-                     | Z.pos y' => Z.pos y'~0
-                     | Z.neg y' => Z.neg y'~0
-                     end + 2)%Z)
-        with (match (l + S (l + 0) + 2)%nat with
-              | 0%nat => 1
-              | S _ => INR (l + S (l + 0) + 2) + 1
-              end).
-      
-      replace (IZR (match j with
-                    | 0 => 0
-                    | Z.pos y' => Z.pos y'~0
-                    | Z.neg y' => Z.neg y'~0
-                    end + 3)%Z)
-        with
+        {
+          (* safety condition for evaluating the assigned expression *)
+          intros [q [A [j [δ [m γ]]]]] [l [p1 [p2 [p3 p4]]]].
+          reduce_ro_access.
+          repeat split; auto.
+          (* prove 2 j + 2 ≠ 0 *)
+          enough (IZR (2 * j + 2) <> 0) by auto.
+          apply not_0_IZR.
+          pose proof (Zle_0_nat l).
+          assert (0 < j)%Z by lia.
+          lia.
+          
+          (* prove 2 j + 3 ≠ 0 *)
+          enough (IZR (2 * j + 3) <> 0) by auto.
+          apply not_0_IZR.
+          pose proof (Zle_0_nat l).
+          assert (0 < j)%Z by lia.
+          lia.
+        }
         
-        (match (l + S (l + 0) + 3)%nat with
-         | 0%nat => 1
-         | S _ => INR (l + S (l + 0) + 3) + 1
-         end).
-      ring.
-      replace ((match j with
-             | 0 => 0
-             | Z.pos y' => Z.pos y'~0
-             | Z.neg y' => Z.neg y'~0
-             end + 3)%Z) with (2 * j + 3)%Z by auto. 
-      replace (l + S (l + 0) + 3)%nat with (S (2 + l + S (l + 0)))%nat by ring.
-      rewrite INR_IZR_INZ.
-      replace (Z.of_nat (S (2 + l + S (l + 0)))) with (2 * (Z.of_nat l) + 4)%Z.
-      rewrite p1.
-      rewrite plus_IZR. 
-      rewrite plus_IZR. 
-      rewrite mult_IZR.
-      rewrite mult_IZR.
-      rewrite minus_IZR. 
-      ring.
-      replace (S (2 + l + S (l + 0))) with (l + l + 4)%nat by ring.      
-      repeat rewrite Nat2Z.inj_add.
-      ring.
-      replace ((match j with
-             | 0 => 0
-             | Z.pos y' => Z.pos y'~0
-             | Z.neg y' => Z.neg y'~0
-             end + 2)%Z) with (2 * j + 2)%Z by auto. 
-      replace (l + S (l + 0) + 2)%nat with (S (1 + l + S (l + 0)))%nat by ring.
-      rewrite INR_IZR_INZ.
-      replace (Z.of_nat (S (1 + l + S (l + 0)))) with (2 * (Z.of_nat l) + 3)%Z.
-      rewrite p1.
-      rewrite plus_IZR. 
-      rewrite plus_IZR. 
-      rewrite mult_IZR.
-      rewrite mult_IZR.
-      rewrite minus_IZR. 
-      ring.
-      replace (S (1 + l + S (l + 0))) with (l + l + 3)%nat by ring.      
-      repeat rewrite Nat2Z.inj_add.
-      ring.
+        {
+          (* condition for the assigned value *)
+          intros [m γ] [q [A [j [δ t]]]] [l [p1 [p2 [p3 p4]]]].
+          reduce_update.
+          reduce_ro_access.
+          exists (S l).
+          repeat split; auto.
+          lia.
+          rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse h4))))) w).
+          rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse h6))))) w).
+          rewrite p3.
+          simpl.
+          field_simplify.
+          repeat apply lp.
+          repeat rewrite Rmult_assoc.
+          repeat apply lp.
+          replace ((l + S (l + 0) + 3)%nat) with (S (l + S (l + 0) + 2)%nat) by ring.
+          replace (l + S (l + 0) + 2)%nat with (S (l + S (l + 0) + 1)%nat) by ring.
+          replace 1 with (INR 1) by auto.
+          repeat rewrite INR_IZR_INZ.
+          repeat rewrite <- plus_IZR.
+          repeat rewrite <- mult_IZR.
+          apply lp.
+          replace (match j with
+                   | 0 => 0
+                   | Z.pos y' => Z.pos y'~0
+                   | Z.neg y' => Z.neg y'~0
+                   end )%Z with (2 * j)%Z by auto.
+          lia.
+
+          repeat split.
+          apply not_0_INR; lia.
+          apply not_0_INR; lia.
+          replace ((l + S (l + 0) + 3)%nat) with (S (l + S (l + 0) + 2)%nat) by ring.
+          replace 1 with (INR 1) by auto.
+          rewrite <- plus_INR.
+          apply not_0_INR; lia.
+          replace ((l + S (l + 0) + 2)%nat) with (S (l + S (l + 0) + 1)%nat) by ring.
+          replace 1 with (INR 1) by auto.
+          rewrite <- plus_INR.
+          apply not_0_INR; lia.
+        
+          assert (0 < j)%Z.
+          pose proof (Zle_0_nat l).
+          lia.
+          repeat split; auto.
+          enough (IZR (2 * j + 3) <> 0) by auto.        
+          apply not_0_IZR.
+          lia.
+          enough (IZR (2 * j + 2) <> 0) by auto.        
+          apply not_0_IZR.
+          lia.
+          apply not_0_INR; lia.
+          apply not_0_INR; lia.
+        }
+      }
   }
   {
     (* proving variant *)
     apply (pp_rw_sequence_tot
-             (Γ := (INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: REAL :: nil)
-             (Δ :=  REAL :: REAL :: INTEGER :: REAL :: nil)
              (θ :=
-                (fun _ (δγδ : sem_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ctx ((INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: REAL :: nil)) =>
-       let m := fst (fst_app (snd δγδ)) in
-       let x := ro_access Γ k REAL w (snd (fst_app (snd δγδ))) in
-       let j := fst (snd (snd (fst δγδ))) in
-       let j' := fst (snd (snd (snd_app (snd δγδ)))) in
-       exists n : nat, Z.of_nat n = j' /\ j = (j' + 1)%Z /\ pow2 (- m - 1) < Rabs (sin_q (S n) x)))).
-      {
-        (* j := j + 1 *)
-        assert (assignable (REAL :: REAL :: INTEGER :: REAL :: nil) INTEGER 2) as a
-            by repeat constructor.
-        apply (pp_rw_assign_tot_util INTEGER
-                 (θ := (fun y
-                            (δγ : sem_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (_)))
-                        => 
-                          let j := fst (snd (snd (fst_app δγ))) in
-                          y = j + 1)%Z)
-                 a
-              ).    
-        
-        proves_simple_arithmetical.
-        rewrite val.
-        reduce_ro_access.
-        unfold fst_app; simpl; auto.
-        destruct x as [q [A [j [δ [m γ]]]]].      
-        simpl; auto.
-        intros j' [m γ] [q [A [n [δ t]]]] h1 h2.
-        simpl in h2.
-        unfold ro_to_rw_pre in h1.
-        destruct h1.
-        simpl in H0.
-        simpl in H.
-        destruct H.
-        destruct H.
-        simpl in H.
-        exists ( x).
-        simpl.
-        rewrite <- H0.
-        reduce_update.
-        repeat split; auto.
-        destruct H; auto.
-        destruct H1.
-        simpl in H1.
-        rewrite tedious_equiv_2_fst.
-        simpl.
-        destruct H.
-        destruct H3.
-        destruct H4.
-        rewrite tedious_equiv_2_fst in H4.
-        simpl in H4.
-        rewrite <- H4.
-        rewrite tedious_equiv_2_fst in H3.
-        simpl in H3.
-        rewrite H3 in H1.
-        pose proof (H1 eq_refl).
-        replace (-m - 1)%Z with (-m + -1)%Z by auto.
-        rewrite pow2_add.
-        simpl.
-        replace (2 * 1) with 2 by ring.
-        exact H6.
-      }
-
-      
-      apply (pp_rw_sequence_tot
-               (Γ := (INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: REAL :: nil)
-               (Δ :=  REAL :: REAL :: INTEGER :: REAL :: nil)
-               (θ :=
-                  (fun _ (δγδ : sem_ctx (REAL :: REAL :: INTEGER :: REAL :: nil) * sem_ctx ((INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: REAL :: nil)) =>
-                     let m := fst (fst_app (snd δγδ)) in
-                     let x := ro_access Γ k REAL w (snd (fst_app (snd δγδ))) in
-                     let j := fst (snd (snd (fst δγδ))) in
-                     let j' := fst (snd (snd (snd_app (snd δγδ)))) in
-                     exists n : nat, Z.of_nat n = j' /\ j = (j' + 1)%Z /\ pow2 (- m - 1) < Rabs (sin_q (S n) x)))).
-      {
-        (* A := A + q *)
-        assert (assignable (REAL :: REAL :: INTEGER :: REAL :: nil) REAL 1) as a
-            by repeat constructor.
-        apply (pp_rw_assign_tot_util REAL
-                 (θ := (fun y
-                            (δγ : sem_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ ++ _)))
-                        => 
-                          let q := fst (fst_app δγ) in
-                          let A := fst (snd (fst_app δγ)) in
-                          y = A + q)%R)
-                 a
-              ).
-        
-        proves_simple_arithmetical.
-
-        rewrite val.
-        reduce_ro_access.
-        unfold fst_app; simpl; auto.
-        destruct x as [q [A [j [δ [m γ]]]]].      
-        simpl; auto.
-        intros j' [m γ] [q [A [n [δ t]]]] h1 h2.
-        simpl in h2.
-        unfold ro_to_rw_pre in h1.
-        destruct h1.
-        simpl in H.
-        destruct H.
-        destruct H0.
-        exists ( x).
-        simpl.
-        rewrite <- H0.
-        reduce_update.
-        repeat split; auto.
-      }
-
-      (* q := - q * x * x / (2 j + 2) (2 j  + 3)  *)
-      assert (assignable (REAL :: REAL :: INTEGER :: REAL :: nil) REAL 0) as a
-          by repeat constructor.
-    apply (pp_rw_assign_tot_util REAL
-                                 (θ := (fun y
-                                            (δγ : sem_ctx ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ ((INTEGER :: Γ) ++ _)))
-                                        => 
-                                          let q := fst (fst_app δγ) in
-                                          let x := ro_access Γ k REAL w (snd (fst_app (snd_app δγ))) in
-                                          let j := fst (snd (snd (fst_app δγ))) in
-                                          y = - q * x * x / (IZR (2 * j + 2))%Z / (IZR (2 * j + 3))%Z))
-                                 a
-          ).
-    simpl.
-
-    pose proof (has_type_ro_add_auxiliary _ _ _ w''' (REAL :: REAL :: INTEGER :: REAL :: nil)).
-    pose proof (has_type_ro_add_auxiliary _ _ _ w (REAL :: REAL :: INTEGER :: REAL :: nil)).
-    proves_simple_arithmetical.
-
-    reduce_ro_access.      
-    destruct x as [q [A [j [δ [m γ]]]]].      
-    simpl.
-    
-    repeat split; auto.
-    apply not_0_IZR.
-    destruct pre.
-
-    simpl in H1.
-    destruct H1.
-    destruct H2.
-    rewrite <- H1 in H2.
-
-    assert (0 < j)%Z.
-    pose proof (Zle_0_nat x).
-    rewrite H2.
-    lia.
-    replace (match j with
-             | 0 => 0
-             | Z.pos y' => Z.pos y'~0
-             | Z.neg y' => Z.neg y'~0
-             end + 2)%Z with (2 * j + 2)%Z by auto.
-    lia.
-
-    apply not_0_IZR.
-    destruct pre.
-
-    simpl in H1.
-    destruct H1.
-    destruct H2.
-    rewrite <- H1 in H2.
-
-    assert (0 < j)%Z.
-    pose proof (Zle_0_nat x).
-    rewrite H2.
-    lia.
-    replace (match j with
-             | 0 => 0
-             | Z.pos y' => Z.pos y'~0
-             | Z.neg y' => Z.neg y'~0
-             end + 3)%Z with (2 * j + 3)%Z by auto.
-    lia.
-
-      rewrite val.
+                [(m, γ') : ((INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: REAL :: nil) ;;;
+                        (q, (A, (j, (δ, _)))) : (REAL :: REAL :: INTEGER :: REAL :: nil)]
+                  ||- {{_ : UNIT | let j' := fst (snd (snd (snd_app γ'))) in
+                                   let x := ro_access Γ k REAL w (fst_app γ') in
+                                   exists n : nat, Z.of_nat n = j' /\ j = (j' + 1)%Z /\ pow2 (- m - 1) < Rabs (sin_q (S n) x)}})).
+    {
+      (* j := j + 1 *)
+      proves_asisgn_simple_arithemtical INTEGER.
+      intros [m γ'] [q [A [n [δ t]]]].
+      simpl.
       reduce_ro_access.
-      destruct x as [q [A [j [δ [m γ]]]]].      
-      simpl.
-      rewrite (tedious_equiv_2 γ).
-      rewrite <- (ro_access_app _ _ _ _ w _ _ (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse h6)))))).
-      rewrite <- (ro_access_app _ _ _ _ w _ _ (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse h4)))))).
-      unfold Rdiv.
-      simpl.
-      repeat rewrite tedious_equiv_2_snd.
-      simpl.      
-      rewrite tedious_equiv_2_fst.
-      simpl.
-      rewrite tedious_equiv_fst.
-      ring.
-
-      intros j' [m γ] [q [A [n [δ t]]]] h1 h2.
-      simpl in h2.
-      unfold ro_to_rw_pre in h1.
-      destruct h1.
-      simpl in H.
-      destruct H.
-      destruct H0.
-      exists ( x).
-      simpl.
-      rewrite <- H0.
       reduce_update.
+      reduce_tedious.
+      intros [[l [p1 [p2 [p3 p4]]]]  [[h1 _] h2]].
+      exists l.
+      rewrite <- h2.
+      simpl; repeat split; auto.
+      rewrite <- p3.
+      pose proof (h1 eq_refl) as h1.
+      rewrite p2 in h1.
+      replace (-m - 1)%Z with (-m + -1)%Z by auto.
+      rewrite pow2_add.
+      simpl.
+      replace (2 * 1) with 2 by ring.
+      exact h1.
+    }
+    
+      
+    apply (pp_rw_sequence_tot
+               (θ :=
+                [(m, γ') : ((INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: REAL :: nil) ;;;
+                        (q, (A, (j, (δ, _)))) : (REAL :: REAL :: INTEGER :: REAL :: nil)]
+                  ||- {{_ : UNIT | let j' := fst (snd (snd (snd_app γ'))) in
+                                   let x := ro_access Γ k REAL w (fst_app γ') in
+                     exists n : nat, Z.of_nat n = j' /\ j = (j' + 1)%Z /\ pow2 (- m - 1) < Rabs (sin_q (S n) x)}})).
+    {
+      (* A := A + q *)
+      proves_asisgn_simple_arithemtical REAL.
+      intros [m γ'] [q [A [n [δ t]]]].
+      reduce_ro_access.
+      reduce_update.
+      intros [l [p1 [p2 p3]]].
+      exists l.
+      rewrite <- p2.
+      rewrite <- p1.
+      simpl; repeat split; auto.
+    }
+    {
+      (* q := - q * x * x / (2 j + 2) (2 j  + 3)  *)
+      pose proof (has_type_ro_add_auxiliary _ _ _ w (REAL :: REAL :: INTEGER :: REAL :: nil)).
+      proves_asisgn_simple_arithemtical REAL.
+
+      {
+        intros [q [A [n [δ [m γ']]]]].
+        reduce_ro_access.
+        intros [l [p1 [p2 p3]]].
+        repeat split; auto.
+        enough (IZR (2 * n + 2) <> 0) by auto.
+        apply not_0_IZR.
+        pose proof (Zle_0_nat l).
+        assert (0 < n)%Z by lia.
+        lia.
+        
+        (* prove 2 j + 3 ≠ 0 *)
+        enough (IZR (2 * n + 3) <> 0) by auto.
+        apply not_0_IZR.
+        pose proof (Zle_0_nat l).
+        assert (0 < n)%Z by lia.
+        lia.
+      }
+      
+      intros [m γ'] [q [A [n [δ t]]]].
+      reduce_update.
+      intros [l [p1 [p2 p3]]].
+      exists l.
       repeat split; auto.
+    }
   }
+  
 
   {
     (* ψ is well-founded *)
@@ -618,22 +411,20 @@ Proof.
       simpl.
       auto.
       pose proof (H1 n).
-      destruct H2.
-      simpl in H2.
-      destruct H2.
-      destruct H3.
-      rewrite <- H2 in H3.
+      unfold ψ in H2.
       destruct γ.
-      repeat rewrite tedious_equiv_2_snd in H2.
-      
       simpl in H2.
-      rewrite tedious_equiv_snd in H2.
-      simpl in H2.
+      destruct (x (S n)) as [A' [q' [j' [δ' tt]]]].    
+      destruct H2.
+      destruct H2.
+      rewrite <- H2 in H3.
+      reduce_tedious H2.
       rewrite H2 in H3.
       simpl in IHn.
       rewrite IHn in H3.
       rewrite Nat2Z.inj_succ.
       simpl.
+      destruct H3.
       rewrite H3.      
       ring. 
     }
@@ -646,21 +437,12 @@ Proof.
     simpl in hj.
     pose proof (H1 (l)%nat).
     simpl in H.
+    destruct (x (S l)) as [A' [q' [j' [δ' tt]]]].    
+    reduce_tedious H.
     destruct H.
-    simpl in H.
     destruct H.
     destruct H3.
-    repeat rewrite tedious_equiv_2_fst in H4.
-    simpl in H4.
-    rewrite tedious_equiv_fst in H4.
     simpl in h.
-    repeat rewrite tedious_equiv_2_snd in H3.
-    simpl in H3.
-    rewrite tedious_equiv_snd in H3.
-    simpl in H3.
-    repeat rewrite tedious_equiv_2_snd in H.
-    simpl in H.
-    rewrite tedious_equiv_snd in H.
     rewrite H2 in H.
     rewrite <- hj in H.
     rewrite <- Nat2Z.inj_add in H.
@@ -675,37 +457,32 @@ Proof.
     (* enterring the loop; initial conditoin *)
     intros x.
     intros.
+    destruct x.
+    destruct y as [A' [q' [j' [δ' tt]]]].    
+    simpl.
     exists O.
-
-    destruct x as [[q [A [n [δ t]]]] [m γ]].
     simpl.
     simpl in H.
-    reduce_ro_access.
     reduce_ro_access H.
     rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inverse
                                             (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse w''')))) w) in H.
-rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse w''))) w) in H.
+    rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse (has_type_ro_Var_S_inverse w''))) w) in H.
     
     destruct H as [h1 [h2 [h3 h4]]].
     repeat split; auto.
+    destruct h4; auto.
   }
 
   {
     (* after exiting the loop *)
 
     
-    intros h1 [[q [A [n [δ t]]]] [m γ]] [h2 h3].
-    unfold ro_to_rw_pre in h3.
+    intros [m γ] [q [A [n [δ t]]]] _ [h1 h2]. 
     simpl.
-    destruct h3 as [h3 [_ h5]].
-    pose proof (h5 eq_refl); clear h5.
-    simpl in H.
-    simpl in h3.
-    repeat rewrite tedious_equiv_2_fst, tedious_equiv_2_snd in h3.
-    simpl in h3.
-    destruct h3 as [l t1].
-    simpl in t1.
-    destruct t1 as [t1 [t2 [t3 t4]]].
+    destruct h2 as [_ h3].
+    pose proof (h3 eq_refl); clear h3.
+    simpl in h1.
+    destruct h1 as [l [t1 [t2 [t3 t4]]]].
     rewrite t4.
     pose proof (Rtheorem l (ro_access Γ k REAL w γ)).
     simpl in H0.
@@ -721,7 +498,7 @@ rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inverse (has_type_ro_Var
   proves_simple_arithmetical.
   rewrite val.
   clear val.
-  destruct x as [q [A [n [δ [m γ]]]]].
+  destruct y as [q [A [n [δ [m γ]]]]].
   simpl.
   simpl in pre.
   reduce_ro_access.
