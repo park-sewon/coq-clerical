@@ -37,8 +37,8 @@ Proof.
   apply (h4 _ m' _ eq_refl).
 Qed.
 
-Fixpoint Var_sem_ro_access_equiv k Γ τ (w : Γ |- Var k : τ) γ {struct w}: 
-    sem_ro_exp _ _ _ w γ = pdom_unit (ro_access _ _ _ w γ).
+Fixpoint Var_sem_var_access_equiv k Γ τ (w : Γ |- Var k : τ) γ {struct w}: 
+    sem_ro_exp _ _ _ w γ = pdom_unit (var_access _ _ _ w γ).
 Proof.
   intros.
   dependent induction w.
@@ -47,7 +47,7 @@ Proof.
   rewrite pdom_lift_comp.
   simpl.
   rewrite pdom_lift_id.
-  apply Var_sem_ro_access_equiv.
+  apply Var_sem_var_access_equiv.
   easy_rewrite_uip.
   destruct γ; simpl.
   apply eq_refl.
@@ -56,22 +56,22 @@ Proof.
   simpl.
   auto.
   rewrite H.
-  rewrite Var_sem_ro_access_equiv.
+  rewrite Var_sem_var_access_equiv.
   destruct γ.
-  rewrite ro_access_Var_S.
+  rewrite var_access_Var_S.
   apply lp.
-  apply ro_access_typing_irrl.
+  apply var_access_typing_irrl.
 Defined.
 
   
 Fixpoint proves_ro_prt_Var_sound  k Γ τ (w : Γ |- Var k : τ) ϕ {struct w} :
-    [| x : Γ|] |=  w {{ϕ x (ro_access Γ k τ w x)}} Var k {{y : τ | ϕ x y}}ᵖ.
+    [| x : Γ|] |=  w {{ϕ x (var_access Γ k τ w x)}} Var k {{y : τ | ϕ x y}}ᵖ.
 Proof.
   intros γ m.
-  rewrite Var_sem_ro_access_equiv.
+  rewrite Var_sem_var_access_equiv.
   simpl.
   split.
-  apply (pdom_is_neg_empty_by_evidence _ (total (ro_access Γ k τ w γ))).
+  apply (pdom_is_neg_empty_by_evidence _ (total (var_access Γ k τ w γ))).
   simpl; auto.
   intros p1 p2 p3 p4.
   rewrite p4 in p2.
@@ -82,16 +82,16 @@ Proof.
 Defined.
 
 Fixpoint proves_ro_tot_Var_sound  k Γ τ (w : Γ |- Var k : τ) ϕ {struct w} :
-    [|γ : Γ|] |= w {{ϕ γ (ro_access Γ k τ w γ)}} Var k {{y : τ | ϕ γ y}}ᵗ.
+    [|γ : Γ|] |= w {{ϕ γ (var_access Γ k τ w γ)}} Var k {{y : τ | ϕ γ y}}ᵗ.
 Proof.
   intros γ m.
-  rewrite Var_sem_ro_access_equiv.
+  rewrite Var_sem_var_access_equiv.
   simpl.
   split.
-  apply (pdom_is_neg_empty_by_evidence _ (total (ro_access Γ k τ w γ))).
+  apply (pdom_is_neg_empty_by_evidence _ (total (var_access Γ k τ w γ))).
   simpl; auto.
   intros p1 p2.
-  exists (ro_access _ _ _ w γ); split; auto.  
+  exists (var_access _ _ _ w γ); split; auto.  
 Defined.
 
 Lemma proves_rw_prt_Assign_sound
@@ -828,7 +828,7 @@ Proof.
       (* | ro_var_prt : forall Γ k τ (w : Γ |- VAR k : τ) Q, *)
       
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
-      (*     w |- {{fun γ => Q (ro_access Γ k τ w γ) γ}} VAR k {{Q}} *)
+      (*     w |- {{fun γ => Q (var_access Γ k τ w γ) γ}} VAR k {{Q}} *)
 
       apply proves_ro_prt_Var_sound.
       
@@ -1711,7 +1711,7 @@ Proof.
       (* | ro_var_tot : forall Γ k τ (w : Γ |- VAR k : τ) Q, *)
       
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
-      (*     w |- [{fun γ => Q (ro_access Γ k τ w γ) γ}] VAR k [{Q}] *)
+      (*     w |- [{fun γ => Q (var_access Γ k τ w γ) γ}] VAR k [{Q}] *)
       apply proves_ro_tot_Var_sound.
 
     ++

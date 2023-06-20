@@ -1,6 +1,6 @@
 From Clerical Require Import Preliminaries.Preliminaries.
 From Clerical Require Import Powerdomain.Powerdomain.
-From Clerical Require Import Syntax Typing TypingProperties Semantics ReasoningPrettyprinting ReasoningUtils.
+From Clerical Require Import Syntax Typing TypingProperties Semantics ReasoningTyPaired ReasoningUtils.
 Require Import Coq.Program.Equality.
 Require Import ZArith Reals.
 
@@ -27,7 +27,7 @@ Inductive simple_arithmetical : forall e, Type :=
 Fixpoint simple_arithmetical_value_prt e (p : simple_arithmetical e) Γ τ (w : Γ |- e :τ) : sem_ctx Γ -> sem_datatype τ.
 Proof.
   dependent destruction p.
-  exact (ro_access _ _ _ w).
+  exact (var_access _ _ _ w).
 
   induction (eq_sym (has_type_ro_OpZplus_infer _ _ _ _ w)).
   pose proof (has_type_ro_OpZplus_inverse _ _ _ w) as [w1 w2].  
@@ -325,7 +325,7 @@ Fixpoint simple_arithmetical_value_tot e (p : simple_arithmetical e) Γ τ (w : 
   (sem_ctx Γ -> Prop) * (sem_ctx Γ -> sem_datatype τ).
 Proof.
   dependent destruction p.
-  exact (fun _ => True, ro_access _ _ _ w).
+  exact (fun _ => True, var_access _ _ _ w).
 
   destruct (eq_sym (has_type_ro_OpZplus_infer _ _ _ _ w)).
   destruct ( (has_type_ro_OpZplus_inverse _ _ _ w)) as [w1 w2].    

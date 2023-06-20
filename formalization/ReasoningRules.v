@@ -12,7 +12,6 @@ Require Import Clerical.SemanticsProperties.
 Require Import Clerical.Specification.
 
 
-
 Definition ro_asrt_imp {Γ} (P Q : sem_ctx Γ -> Prop) : Prop :=
   forall γ, P γ -> Q γ.
 
@@ -90,7 +89,7 @@ Inductive proves_ro_prt : forall Γ e τ (w : Γ |- e : τ), ro_prt w -> Type :=
 | ro_var_prt : forall Γ k τ (w : Γ |- VAR k : τ) Q,
     
     (*——————————-——————————-——————————-——————————-——————————-*)
-    ' x : Γ |- w {{ Q x (ro_access Γ k τ w x) }} VAR k {{y : τ | Q x y}}ᵖ
+    ' x : Γ |- w {{ Q x (var_access Γ k τ w x) }} VAR k {{y : τ | Q x y}}ᵖ
 
 | ro_skip_prt : forall Γ (w : Γ |- SKIP : UNIT) Q,
     
@@ -270,7 +269,7 @@ with proves_ro_tot : forall Γ e τ (w : Γ |- e : τ), ro_tot w -> Type :=
 | ro_var_tot : forall Γ k τ (w : Γ |- VAR k : τ) Q,
     
     (*——————————-——————————-——————————-——————————-——————————-*)
-    ' x : Γ |- w {{ Q x (ro_access Γ k τ w x) }} VAR k {{y : τ | Q x y}}ᵗ
+    ' x : Γ |- w {{ Q x (var_access Γ k τ w x) }} VAR k {{y : τ | Q x y}}ᵗ
 
 | ro_skip_tot : forall Γ (w : Γ |- SKIP : UNIT) Q,
     

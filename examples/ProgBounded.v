@@ -15,31 +15,31 @@ Definition clerical_bounded k δ :=
 Lemma clerical_bounded_correct :
   forall Γ k δ (wk : Γ |- VAR k : REAL) (wδ : Γ |- VAR δ : REAL),
     [x : Γ] |-
-      {{0 < ro_access Γ δ REAL wδ x}}
+      {{0 < var_access Γ δ REAL wδ x}}
       clerical_bounded k δ 
-      {{y : BOOL | (y = true -> Rabs (ro_access Γ k REAL wk x) < (ro_access Γ δ REAL wδ x))
+      {{y : BOOL | (y = true -> Rabs (var_access Γ k REAL wk x) < (var_access Γ δ REAL wδ x))
                    /\
-                   (y = false -> (ro_access Γ δ REAL wδ x) / 2 < Rabs (ro_access Γ k REAL wk x)) }}ᵗ.    
+                   (y = false -> (var_access Γ δ REAL wδ x) / 2 < Rabs (var_access Γ k REAL wk x)) }}ᵗ.    
 Proof.
   intros.
   apply (pp_ro_rw_tot_back).
   apply (pp_rw_case_tot
            (θ1 := (fun x b => b = true ->
-                              Rabs (ro_access _ _ _ wk (snd_app x)) <
-                                (ro_access _ _ _ wδ (snd_app x))))
+                              Rabs (var_access _ _ _ wk (snd_app x)) <
+                                (var_access _ _ _ wδ (snd_app x))))
            (θ2 := (fun x b => b = true ->
-                              (ro_access _ _ _ wδ (snd_app x)) / 2 < 
-                                Rabs (ro_access _ _ _ wk (snd_app x))))           
+                              (var_access _ _ _ wδ (snd_app x)) / 2 < 
+                                Rabs (var_access _ _ _ wk (snd_app x))))           
            (ϕ1 := (fun x => 
-                      Rabs (ro_access _ _ _ wk (snd_app x)) <
-                        (ro_access _ _ _ wδ (snd_app x))))
+                      Rabs (var_access _ _ _ wk (snd_app x)) <
+                        (var_access _ _ _ wδ (snd_app x))))
            (ϕ2 := (fun x => 
-                     (ro_access _ _ _ wδ (snd_app x)) / 2 < 
-                       Rabs (ro_access _ _ _ wk (snd_app x))))); simpl.
+                     (var_access _ _ _ wδ (snd_app x)) / 2 < 
+                       Rabs (var_access _ _ _ wk (snd_app x))))); simpl.
   {
     apply (pp_ro_real_comp_lt_prt
-             (fun x y => y = Rabs (ro_access _ _ _ wk x))
-             (fun x y => y = (ro_access _ _ _ wδ x))).
+             (fun x y => y = Rabs (var_access _ _ _ wk x))
+             (fun x y => y = (var_access _ _ _ wδ x))).
     {
       apply (pp_ro_imply_prt
                (pp_ro_tot_prt
@@ -50,7 +50,7 @@ Proof.
 
     proves_simple_arithmetical.
     rewrite val.
-    apply (ro_access_typing_irrl _ _ _ tmp1 wδ).
+    apply (var_access_typing_irrl _ _ _ tmp1 wδ).
 
     intros.
     apply (proj1 (Rltb''_prop _ _)) in H2.
@@ -62,12 +62,12 @@ Proof.
 
   {   
     apply (pp_ro_real_comp_lt_prt
-             (fun x y => y = (ro_access _ _ _ wδ x) / 2 )
-             (fun x y => y = Rabs (ro_access _ _ _ wk x))).
+             (fun x y => y = (var_access _ _ _ wδ x) / 2 )
+             (fun x y => y = Rabs (var_access _ _ _ wk x))).
     proves_simple_arithmetical.
     rewrite val.
     rewrite Rmult_1_r.
-    rewrite (ro_access_typing_irrl _ _ _ h wδ).
+    rewrite (var_access_typing_irrl _ _ _ h wδ).
     reflexivity.
 
     {
@@ -104,12 +104,12 @@ Proof.
 
   {
     apply (pp_ro_real_comp_lt_tot
-             (fun x y => y = Rabs (ro_access _ _ _ wk x) /\ Rabs (ro_access _ _ _ wk x) < (ro_access _ _ _ wδ x))
-             (fun x y => y = (ro_access _ _ _ wδ x))).
+             (fun x y => y = Rabs (var_access _ _ _ wk x) /\ Rabs (var_access _ _ _ wk x) < (var_access _ _ _ wδ x))
+             (fun x y => y = (var_access _ _ _ wδ x))).
     {
       apply (pp_ro_imply_tot
                (pp_ro_tot_pose_readonly
-                  (fun x => Rabs (ro_access _ _ _ wk x) < (ro_access _ _ _ wδ x)) 
+                  (fun x => Rabs (var_access _ _ _ wk x) < (var_access _ _ _ wδ x)) 
                   (clerical_abs_correct _ _ wk))).
       intros h1 h2; split; auto.
       intros h1 h2 h3; auto.
@@ -117,7 +117,7 @@ Proof.
 
     proves_simple_arithmetical.
     rewrite val.
-    apply (ro_access_typing_irrl _ _ _ tmp1 wδ).
+    apply (var_access_typing_irrl _ _ _ tmp1 wδ).
     intros.
     destruct H.
     rewrite <- H in H1; rewrite <- H0 in H1.
@@ -129,20 +129,20 @@ Proof.
 
   {
     apply (pp_ro_real_comp_lt_tot
-             (fun x y => y = (ro_access _ _ _ wδ x)/2 /\ (ro_access _ _ _ wδ x)/2 <Rabs (ro_access _ _ _ wk x))
-             (fun x y => y = Rabs (ro_access _ _ _ wk x))).
+             (fun x y => y = (var_access _ _ _ wδ x)/2 /\ (var_access _ _ _ wδ x)/2 <Rabs (var_access _ _ _ wk x))
+             (fun x y => y = Rabs (var_access _ _ _ wk x))).
     {
       proves_simple_arithmetical.
       split; auto.
       rewrite val.
       rewrite Rmult_1_r.
-      rewrite (ro_access_typing_irrl _ _ _ h wδ).
+      rewrite (var_access_typing_irrl _ _ _ h wδ).
       reflexivity.
     }
     
     apply (pp_ro_imply_tot
              (pp_ro_tot_pose_readonly
-                (fun x => (ro_access _ _ _ wδ x)/2 <Rabs (ro_access _ _ _ wk x)) 
+                (fun x => (var_access _ _ _ wδ x)/2 <Rabs (var_access _ _ _ wk x)) 
                 (clerical_abs_correct _ _ wk))).
     intros h1 h2; split; auto.
     intros h1 h2 h3; auto.

@@ -14,22 +14,22 @@ Definition clerical_abs k :=
 
 Lemma clerical_abs_correct :
   forall Γ k (w : Γ |- VAR k : REAL),
-    [x : Γ] |- {{True}} clerical_abs k {{y : REAL | y = Rabs (ro_access Γ k REAL w x) }}ᵗ.
+    [x : Γ] |- {{True}} clerical_abs k {{y : REAL | y = Rabs (var_access Γ k REAL w x) }}ᵗ.
 Proof.
   intros.
-  apply (pp_ro_lim_tot_util_known_limit (fun x =>  Rabs (ro_access Γ k REAL w x)));
+  apply (pp_ro_lim_tot_util_known_limit (fun x =>  Rabs (var_access Γ k REAL w x)));
     try (intros h1 h2 [_ h3]; auto; fail).
   apply (pp_ro_rw_tot_back).
   apply (pp_rw_case_tot
            (Γ := (INTEGER :: Γ))
-           (θ1 := (fun x b => b = true -> (ro_access _ _ _ w (snd (snd_app x))) <
+           (θ1 := (fun x b => b = true -> (var_access _ _ _ w (snd (snd_app x))) <
                                       pow2 (- ((fst (snd_app x))) - 1)%Z))
-           (θ2 := (fun x b => b = true -> - (ro_access _ _ _ w (snd (snd_app x))) <
+           (θ2 := (fun x b => b = true -> - (var_access _ _ _ w (snd (snd_app x))) <
                                       pow2 (- ((fst (snd_app x))) - 1)%Z))
            
-           (ϕ1 := (fun x =>  (ro_access _ _ _ w (snd (snd_app x))) <
+           (ϕ1 := (fun x =>  (var_access _ _ _ w (snd (snd_app x))) <
                          pow2 (- ((fst (snd_app x))) - 1)%Z))
-           (ϕ2 := (fun x =>  - pow2 (- ((fst (snd_app x))) - 1)%Z < (ro_access _ _ _ w (snd (snd_app x)))))
+           (ϕ2 := (fun x =>  - pow2 (- ((fst (snd_app x))) - 1)%Z < (var_access _ _ _ w (snd (snd_app x)))))
         ); simpl.
 
   {
@@ -41,8 +41,8 @@ Proof.
     apply (proj1 (Rltb''_prop _ _)) in val.
     destruct y.
     simpl.
-    reduce_ro_access val.
-    rewrite (ro_access_typing_irrl _ _ _ w (has_type_ro_Var_S_inverse h)).
+    reduce_var_access val.
+    rewrite (var_access_typing_irrl _ _ _ w (has_type_ro_Var_S_inverse h)).
     exact val.
   }
   
@@ -55,8 +55,8 @@ Proof.
     apply (proj1 (Rltb''_prop _ _)) in val.
     destruct y.
     simpl.
-    reduce_ro_access val.
-    rewrite (ro_access_typing_irrl _ _ _ w (has_type_ro_Var_S_inverse h0)).
+    reduce_var_access val.
+    rewrite (var_access_typing_irrl _ _ _ w (has_type_ro_Var_S_inverse h0)).
     lra.
   }
 
@@ -66,20 +66,20 @@ Proof.
     destruct y.  
     pose proof (pre eq_refl).
     rewrite val.
-    reduce_ro_access.
+    reduce_var_access.
     simpl in H.
     rewrite <- Rabs_Ropp.
-    rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inverse h0) w).
-    replace ((- (0 - ro_access Γ k REAL w s - Rabs (ro_access Γ k REAL w s)))) with
-      (ro_access Γ k REAL w s + Rabs (ro_access Γ k REAL w s)) by ring.
-    pose proof (Rabs_plus_Rabs_Rabs (ro_access _ _ _ w s)) as [p q].
-    destruct (Rle_or_lt (ro_access _ _ _ w s) 0).
+    rewrite (var_access_typing_irrl _ _ _ (has_type_ro_Var_S_inverse h0) w).
+    replace ((- (0 - var_access Γ k REAL w s - Rabs (var_access Γ k REAL w s)))) with
+      (var_access Γ k REAL w s + Rabs (var_access Γ k REAL w s)) by ring.
+    pose proof (Rabs_plus_Rabs_Rabs (var_access _ _ _ w s)) as [p q].
+    destruct (Rle_or_lt (var_access _ _ _ w s) 0).
     rewrite (q H0).
     apply pow2_positive.
     rewrite (p H0).
     pose proof (Rplus_lt_compat _ _ _ _ H H).
-    replace (ro_access Γ k REAL w s + ro_access Γ k REAL w s) with
-      (2 * ro_access Γ k REAL w s) in H1 by ring.
+    replace (var_access Γ k REAL w s + var_access Γ k REAL w s) with
+      (2 * var_access Γ k REAL w s) in H1 by ring.
     rewrite <- pow2_add_one in H1.
     replace (- z - 1 + 1)%Z with (-z)%Z in H1 by ring. 
     exact H1.
@@ -92,17 +92,17 @@ Proof.
     destruct y.
     pose proof (pre eq_refl).
     rewrite val.
-    reduce_ro_access.
+    reduce_var_access.
     simpl in H.
-    rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inverse tmp1) w).
-    pose proof (Rabs_minus_Rabs_Rabs (ro_access _ _ _ w s)) as [p q].
-    destruct (Rle_or_lt (ro_access _ _ _ w s) 0).
+    rewrite (var_access_typing_irrl _ _ _ (has_type_ro_Var_S_inverse tmp1) w).
+    pose proof (Rabs_minus_Rabs_Rabs (var_access _ _ _ w s)) as [p q].
+    destruct (Rle_or_lt (var_access _ _ _ w s) 0).
     rewrite (q H0).
     pose proof (Rplus_lt_compat _ _ _ _ H H).
     rewrite <- pow2_add_one in H1.
     replace (- z - 1 + 1)%Z with (-z)%Z in H1 by ring. 
-    replace (- ro_access Γ k REAL w s +  - ro_access Γ k REAL w s) with
-      (- 2 * ro_access Γ k REAL w s) in H1 by ring.
+    replace (- var_access Γ k REAL w s +  - var_access Γ k REAL w s) with
+      (- 2 * var_access Γ k REAL w s) in H1 by ring.
     exact H1.
     rewrite (p H0).
     apply pow2_positive.
@@ -113,17 +113,17 @@ Proof.
     proves_simple_arithmetical.
     repeat split; auto.
     destruct x.  
-    rewrite ro_access_Var_S, ro_access_Var_0.
+    rewrite var_access_Var_S, var_access_Var_0.
     simpl in pre.
-    rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h) w).
+    rewrite (var_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h) w).
     auto with real.
 
     rewrite val.
     apply (proj2 (Rltb''_prop _ _)).
     destruct y.
-    rewrite ro_access_Var_S, ro_access_Var_0.
+    rewrite var_access_Var_S, var_access_Var_0.
     simpl in pre.
-    rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h) w).
+    rewrite (var_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h) w).
     exact pre.
   }
 
@@ -133,9 +133,9 @@ Proof.
     proves_simple_arithmetical.
     repeat split; auto.
     destruct x.  
-    rewrite ro_access_Var_S, ro_access_Var_0.
+    rewrite var_access_Var_S, var_access_Var_0.
     simpl in pre.
-    rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h0) w).
+    rewrite (var_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h0) w).
     unfold Rminus.
     rewrite Rplus_0_l.
     auto with real.
@@ -143,9 +143,9 @@ Proof.
     rewrite val.
     apply (proj2 (Rltb''_prop _ _)).
     destruct y.
-    rewrite ro_access_Var_S, ro_access_Var_0.
+    rewrite var_access_Var_S, var_access_Var_0.
     simpl in pre.
-    rewrite (ro_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h0) w).
+    rewrite (var_access_typing_irrl _ _ _ (has_type_ro_Var_S_inv Γ k INTEGER REAL h0) w).
     unfold Rminus.
     rewrite Rplus_0_l.
     auto with real.

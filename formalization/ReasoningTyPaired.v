@@ -32,7 +32,6 @@ Notation "[ x :  Γ  ;;;  z : Δ ] ||- {{ ϕ }} e {{ y : τ | ψ }}ᵗ " :=
 
 
 
-
 (* Lemma ro_prt_change_wty {Γ} {e} {τ} {w : Γ |- e : τ} (w' : Γ |- e : τ) {ϕ} {ψ} (p : w |- {{ϕ}} e {{ψ}}) : w' |- {{ϕ}} e {{ψ}}. *)
 (* Proof. *)
 (*   apply (fun a => ro_imply_prt _ _ _ _ _ _ _ _ _ a p); *)
@@ -167,7 +166,7 @@ Section VariablesAndConstants.
 
   Lemma pp_ro_var_prt {Γ} {k} {τ} {ψ} :
     forall w : Γ |- VAR k : τ, 
-      [γ : Γ] |- {{(ψ γ (ro_access Γ k τ w γ))}} VAR k {{y : τ | ψ γ y }}ᵖ.
+      [γ : Γ] |- {{(ψ γ (var_access Γ k τ w γ))}} VAR k {{y : τ | ψ γ y }}ᵖ.
   Proof.
     intros.
     exists w.
@@ -178,7 +177,7 @@ Section VariablesAndConstants.
 
   Lemma pp_ro_var_tot {Γ} {k} {τ} {ψ} :
     forall w : Γ |- VAR k : τ, 
-      [γ : Γ] |- {{(ψ γ (ro_access Γ k τ w γ))}} VAR k {{y : τ | ψ γ y}}ᵗ.
+      [γ : Γ] |- {{(ψ γ (var_access Γ k τ w γ))}} VAR k {{y : τ | ψ γ y}}ᵗ.
   Proof.
     intros.
     exists w.
@@ -594,7 +593,7 @@ Section Commands.
   Lemma pp_rw_new_var_tot {Γ Δ} {e} {c} {τ σ} {ϕ} {θ} {ψ}:
     [ x : (Δ ++ Γ) ] |- {{ϕ (snd_app x) (fst_app x)}} e {{y : σ | θ x y}}ᵗ -> 
     [ γ : Γ  ;;; (z, δ) : σ :: Δ] ||- {{θ (δ ; γ) z}} c {{y : τ | ψ γ δ y}}ᵗ -> 
-    [γ : Γ ;;; δ : Δ] ||- {{ϕ γ δ}} NEWVAR e IN c {{y : τ | ψ γ δ y}}ᵗ.
+    [γ : Γ ;;; δ : Δ] ||- {{ϕ γ δ}} (NEWVAR e IN c) {{y : τ | ψ γ δ y}}ᵗ.
   Proof.
     intros [w1 p1] [w2 p2].
     simpl in p2.

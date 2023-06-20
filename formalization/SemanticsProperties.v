@@ -21,7 +21,6 @@ From Clerical Require Import Semantics.
 
    To prove it, again we define a semantics to restricted typing rules, proving the properties on the restricted semantics and transfer the result back.
  *)
-
 Fixpoint r_sem_ro_exp (Γ : ctx) (e : exp) (τ : datatype) (D : Γ |~ e : τ) {struct D} : sem_ctx Γ -> pdom (sem_datatype τ)
 with r_sem_rw_exp (Γ Δ : ctx) (c : exp) (τ : datatype) (D : Γ ;;; Δ ||~ c : τ) {struct D} : sem_ctx Γ -> sem_ctx Δ -> pdom (sem_ctx Δ * sem_datatype τ).
 Proof.
@@ -1879,19 +1878,19 @@ Proof.
 Defined.
 
 
-Lemma reduce_ro_access_0 : forall Γ τ (w : (τ :: Γ) |- Var 0 : τ) x,
-    ro_access _ _ _ w x = fst x.
+Lemma reduce_var_access_0 : forall Γ τ (w : (τ :: Γ) |- Var 0 : τ) x,
+    var_access _ _ _ w x = fst x.
 Proof.
   intros.
-  rewrite (ro_access_typing_irrl _ _ _ w (has_type_ro_Var_0 _ _)).
+  rewrite (var_access_typing_irrl _ _ _ w (has_type_ro_Var_0 _ _)).
   destruct x; auto.
 Defined.
 
-Lemma reduce_ro_access_S : forall Γ τ σ n (w : (σ :: Γ) |- Var (S n) : τ) x,
-    ro_access _ _ _ w x = ro_access _ _ _ (has_type_ro_Var_S_inverse w) (snd x).
+Lemma reduce_var_access_S : forall Γ τ σ n (w : (σ :: Γ) |- Var (S n) : τ) x,
+    var_access _ _ _ w x = var_access _ _ _ (has_type_ro_Var_S_inverse w) (snd x).
 Proof.
   intros.
-  rewrite (ro_access_typing_irrl _ _ _ w (has_type_ro_Var_S _ _ _ _ (has_type_ro_Var_S_inverse w))).
+  rewrite (var_access_typing_irrl _ _ _ w (has_type_ro_Var_S _ _ _ _ (has_type_ro_Var_S_inverse w))).
   destruct x; auto.
 Defined.
 

@@ -1,20 +1,19 @@
 From Clerical.Preliminaries Require Import Preliminaries.
 From Clerical Require Import Syntax Typing TypingProperties Semantics SemanticsProperties.
 
-
-Ltac reduce_ro_access_tactic h :=
+Ltac reduce_var_access_tactic h :=
   match type of h with
   | ltac_No_arg =>
-      repeat (simpl; try rewrite reduce_ro_access_S; try rewrite reduce_ro_access_0)
+      repeat (simpl; try rewrite reduce_var_access_S; try rewrite reduce_var_access_0)
   | _ =>
-      repeat (simpl in h; try rewrite reduce_ro_access_S in h; try rewrite reduce_ro_access_0 in h)
+      repeat (simpl in h; try rewrite reduce_var_access_S in h; try rewrite reduce_var_access_0 in h)
   end.
 
-Tactic Notation "reduce_ro_access" constr(x1) :=
-  reduce_ro_access_tactic x1 .
+Tactic Notation "reduce_var_access" constr(x1) :=
+  reduce_var_access_tactic x1 .
                     
-Tactic Notation "reduce_ro_access" :=
-  reduce_ro_access_tactic ltac_no_arg.
+Tactic Notation "reduce_var_access" :=
+  reduce_var_access_tactic ltac_no_arg.
   
 
 

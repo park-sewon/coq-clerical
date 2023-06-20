@@ -93,8 +93,19 @@ Open Scope clerical_soundness_scope.
 (* Now let us prove some properties *)
 
 
-(* Notation "[| x ':' Γ |]  '|-' '{{' ϕ '}}' e '{{' y ':' τ '|' ψ '}}ᵖ' " := *)
-(*   (proves_ro_prt_pp Γ e τ (fun x => ϕ) (fun y x => ψ)) (at level 50, Γ, ϕ, e, y, τ, ψ at next level, x pattern) : clerical_scope. *)
+
+Notation " [ x : Γ ] |- {{ y : τ | ϕ }} "
+  := (fun x : sem_ctx Γ => fun y : sem_datatype τ => ϕ)
+       (at level 50,  Γ, ϕ, y, τ at next level, x pattern) : clerical_scope.
+Notation " [ x : Γ ;;; y : Δ ] ||- {{ z : τ | ϕ }} "
+  := (fun x : sem_ctx Γ => fun y : sem_ctx Δ => fun z : sem_datatype τ => ϕ)
+       (at level 50,  Γ, Δ, ϕ, z, τ at next level, x pattern, y pattern) : clerical_scope.
+Notation " [ x : Γ ] |- {{ ϕ }} "
+  := (fun x : sem_ctx Γ => ϕ)
+       (at level 50,  Γ, ϕ at next level, x pattern) : clerical_scope.
+Notation " [ x : Γ ;;; y : Δ ] ||- {{ ϕ }} "
+  := (fun x : sem_ctx Γ => fun y : sem_ctx Δ => ϕ)
+       (at level 50,  Γ, Δ, ϕ at next level, x pattern, y pattern) : clerical_scope.
 
 
 Lemma sem_ro_prt_excludes_bot_is_tot : forall Γ e τ ϕ ψ (w : Γ |- e : τ), 

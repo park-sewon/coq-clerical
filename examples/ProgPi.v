@@ -60,7 +60,7 @@ Proof.
       destruct y as [u [l [j [p t]]]].
       simpl in pre.
       rewrite val.
-      reduce_ro_access.
+      reduce_var_access.
       lia.      
     }
 
@@ -79,7 +79,7 @@ Proof.
         proves_simple_arithmetical.
         rewrite val.
         destruct y as [u [l [j [p t]]]].
-        reduce_ro_access.
+        reduce_var_access.
         replace (2 * 1) with 2 by ring.
         unfold Rdiv.
         ring.
@@ -107,7 +107,7 @@ Proof.
           intros h1 h2 h3; auto.
           rewrite h3.
           destruct h1.
-          reduce_ro_access.
+          reduce_var_access.
           reduce_tedious.          
           reflexivity.
 
@@ -154,7 +154,7 @@ Proof.
 
           intros [γ tmp1]  [x [u [l [k tmp2]]]] [[h1 [h2 h3]] [h4 _]].
           reduce_update.
-          reduce_ro_access.
+          reduce_var_access.
           destruct h2 as [p1 [p2 p3]].
           assert (l < u) by lra.
           pose proof (midpoint_in_interval l u H).
@@ -179,7 +179,7 @@ Proof.
 
           intros [γ tmp1]  [x [u [l [k tmp2]]]] [[h1 [h2 h3]] [_ h4]].
           reduce_update.
-          reduce_ro_access.
+          reduce_var_access.
           destruct h2 as [p1 [p2 p3]].
           assert (l < u) by lra.
           pose proof (midpoint_in_interval l u H).
@@ -203,7 +203,7 @@ Proof.
         (* after the local variable creatation, increase the counter *)
         proves_assign_simple_arithemtical INTEGER.
         intros [γ tmp1]  [u [l [k tmp2]]] h1.
-        reduce_update; reduce_ro_access; auto.
+        reduce_update; reduce_var_access; auto.
       }
     }
     {
@@ -222,7 +222,7 @@ Proof.
         proves_simple_arithmetical.
         rewrite val.
         destruct y as [u [l [k [p [u' [l' [k' t]]]]]]].
-        reduce_ro_access.
+        reduce_var_access.
         lra.
       }
 
@@ -248,7 +248,7 @@ Proof.
           intros h1 h2 h3.
           rewrite h3.
           destruct h1.
-          reduce_ro_access.
+          reduce_var_access.
           reduce_tedious.
           reflexivity.
 
@@ -321,7 +321,7 @@ Proof.
 
         intros [p [u' [l' [j' t]]]]  [u [l [k t']]] [h1 h2].
         reduce_update.
-        reduce_ro_access.
+        reduce_var_access.
         rewrite <- h2; split; auto.
       }
 
@@ -415,7 +415,7 @@ Proof.
     rewrite <- Rabs_Ropp.
     replace (- (x - PI)) with (PI - x) by ring.
     rewrite val.
-    reduce_ro_access.
+    reduce_var_access.
     replace (2 * 1) with 2 by ring.
     exact pre.
   }

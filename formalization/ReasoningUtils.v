@@ -12,7 +12,7 @@ Require Import Clerical.SemanticsProperties.
 Require Import Clerical.Specification.
 Require Import Clerical.ReasoningRules.
 Require Import Clerical.ReasoningAdmissible.
-Require Import Clerical.ReasoningPrettyprinting.
+Require Import Clerical.ReasoningTyPaired.
 
 Require Import List.
 
@@ -282,7 +282,7 @@ Defined.
 
 Lemma pp_ro_var_prt_back {Γ} {k} {τ} {ϕ} {ψ} :
   forall w : Γ |- VAR k : τ, 
-    ϕ ->> (fun x => ψ x (ro_access Γ k τ w x)) ->
+    ϕ ->> (fun x => ψ x (var_access Γ k τ w x)) ->
     [γ : Γ] |- {{ϕ γ}} VAR k {{y : τ | ψ γ y}}ᵖ.
 Proof.
   intros.
@@ -294,7 +294,7 @@ Defined.
 
 Lemma pp_ro_var_tot_back {Γ} {k} {τ} {ϕ} {ψ} :
   forall w : Γ |- VAR k : τ, 
-    ϕ ->> (fun x => ψ x (ro_access Γ k τ w x)) ->
+    ϕ ->> (fun x => ψ x (var_access Γ k τ w x)) ->
     [γ : Γ] |- {{ϕ γ}} VAR k {{y : τ | ψ γ y}}ᵗ.
 Proof.
   intros.

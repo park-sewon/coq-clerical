@@ -31,9 +31,9 @@ Using our prove rules, in the same file, we prove the correctness of the express
 ```coq
 Lemma clerical_abs_correct :
   forall Γ k (w : Γ |- VAR k : REAL),
-    [γ : Γ] |-  {{True}} clerical_abs k {{y : REAL | y = Rabs (ro_access Γ k REAL w γ) }}ᵗ.	  
+    [γ : Γ] |-  {{True}} clerical_abs k {{y : REAL | y = Rabs (var_access Γ k REAL w γ) }}ᵗ.	  
 ```
-Here, `ro_access Γ k REAL w x` denotes accessing the variable `k` of a state `γ : sem_ctx Γ`.
+Here, `var_access Γ k REAL w x` denotes accessing the variable `k` of a state `γ : sem_ctx Γ`.
 The triple denotes the total correctness of `clerical_abs k` in the sense that for any state `γ` satisfying `True`,
 the expression `clerical_abs k` always terminates yielding a value `y : REAL` such that 
 `y = |Variable k|`. 
@@ -136,8 +136,21 @@ for
 ```
 a pair of a well-typedness derivation `w` and the original triple where `w`is the evidence.
 
-In [Clerical.ReasoningPrettyprinting](./formalization/ReasoningPrettyprinting.v),
-the new triples are defined and the prove rules are proved.
+In [Clerical.ReasoningTyPaired](./formalization/ReasoningTyPaired.v),
+the new triples are defined and the prove rules are proved. 
+The rules for ty___p___e-paired tri___p___les has ___pp___ prefix. For example, the original rule for `SKIP` in [Clerical.ReasoningRules](./formalization/ReasoningRules.v)
+```coq
+ro_skip_prt : forall Γ (w : Γ |- SKIP : UNIT) ψ,
+    
+  (*——————————-——————————-——————————-——————————-——————————-*)
+  [x : Γ] |- w {{ψ x tt}} SKIP {{y : UNIT | ψ x y}}ᵖ
+```
+has its counterpart 
+```coq 
+Lemma pp_ro_skip_prt {Γ} {ψ} :
+[γ : Γ] |- {{ψ γ tt}} SKIP {{y : UNIT | ψ γ y}}ᵖ.
+```
+as a lemma in [Clerical.ReasoningTyPaired](./formalization/ReasoningTyPaired.v).
 
 In [Clerical.ReasoningUtils](./formalization/ReasoningUtils.v), various utility functions in applying proof rules are defined. 
 

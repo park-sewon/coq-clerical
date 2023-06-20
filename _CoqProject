@@ -24,7 +24,7 @@ formalization/ReasoningRules.v
 formalization/ReasoningSoundness.v
 formalization/ReasoningAdmissible.v
 formalization/ReasoningUtils.v
-formalization/ReasoningPrettyprinting.v
+formalization/ReasoningTyPaired.v
 
 formalization/Utils/ReducingTactic.v
 formalization/Utils/TypingTactic.v

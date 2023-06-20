@@ -256,23 +256,23 @@ Tactic Notation "reduce_tedious" :=
   reduce_tedious_tactic ltac_no_arg.
 
 Section AccessState.
-  Fixpoint ro_access  Γ k τ (w: Γ |- Var k : τ) : sem_ctx Γ -> sem_datatype τ.
+  Fixpoint var_access  Γ k τ (w: Γ |- Var k : τ) : sem_ctx Γ -> sem_datatype τ.
   Proof.
     inversion w.
     inversion H.
     simpl in H7.
-    exact (ro_access _ _ _ H3).
+    exact (var_access _ _ _ H3).
     intro.
     simpl in X.
     destruct X.
     exact s.
     intro.
-    apply (ro_access _ _ _ H1).
+    apply (var_access _ _ _ H1).
     destruct X.
     exact s0.
   Defined.
 
-  Fixpoint p_ro_access  Γ k τ (w : r_has_type_ro Γ (Var k) τ) : sem_ctx Γ -> sem_datatype τ.
+  Fixpoint p_var_access  Γ k τ (w : r_has_type_ro Γ (Var k) τ) : sem_ctx Γ -> sem_datatype τ.
   Proof.
     inversion w.  
     intro.
@@ -280,22 +280,22 @@ Section AccessState.
     destruct X.
     exact s.
     intro.
-    apply (p_ro_access _ _ _ H1).
+    apply (p_var_access _ _ _ H1).
     destruct X.
     exact s0.
   Defined.
 
-  Fixpoint ro_access_Var_0 Γ τ (w : (τ :: Γ) |- Var 0 : τ) {struct w} : forall x (γ : sem_ctx Γ), ro_access (τ :: Γ) 0 τ w (x, γ) = x.
+  Fixpoint var_access_Var_0 Γ τ (w : (τ :: Γ) |- Var 0 : τ) {struct w} : forall x (γ : sem_ctx Γ), var_access (τ :: Γ) 0 τ w (x, γ) = x.
   Proof.
     intros.
     dependent destruction w.
     dependent destruction h.
-    assert (ro_access (τ :: Γ) 0 τ (has_type_ro_rw (τ :: Γ) (VAR 0) τ (has_type_rw_ro (τ :: Γ) nil (VAR 0) τ h)) (x, γ) = ro_access _ _ _ h (x, γ)).
+    assert (var_access (τ :: Γ) 0 τ (has_type_ro_rw (τ :: Γ) (VAR 0) τ (has_type_rw_ro (τ :: Γ) nil (VAR 0) τ h)) (x, γ) = var_access _ _ _ h (x, γ)).
     auto.
     rewrite H.
-    apply ro_access_Var_0.
+    apply var_access_Var_0.
     simpl.
-    clear ro_access_Var_0.
+    clear var_access_Var_0.
     auto.  
   Defined.
 
@@ -307,13 +307,13 @@ Section AccessState.
     exact w.
   Defined.
 
-  Fixpoint ro_access_Var_S Γ k τ σ (w : (τ :: Γ) |- Var (S k) : σ) {struct w} : forall x (γ : sem_ctx Γ),
-      ro_access (τ :: Γ) (S k) σ w (x, γ) = ro_access Γ k σ (has_type_ro_Var_S_inv _ _ _ _ w) γ .
+  Fixpoint var_access_Var_S Γ k τ σ (w : (τ :: Γ) |- Var (S k) : σ) {struct w} : forall x (γ : sem_ctx Γ),
+      var_access (τ :: Γ) (S k) σ w (x, γ) = var_access Γ k σ (has_type_ro_Var_S_inv _ _ _ _ w) γ .
   Proof.
     intros.
     dependent destruction w.
     dependent destruction h.
-    assert (ro_access (τ :: Γ) (S k) τ0 (has_type_ro_rw (τ :: Γ) (VAR S k) τ0 (has_type_rw_ro (τ :: Γ) nil (VAR S k) τ0 h)) (x, γ) = ro_access _ _ _ h (x, γ)).
+    assert (var_access (τ :: Γ) (S k) τ0 (has_type_ro_rw (τ :: Γ) (VAR S k) τ0 (has_type_rw_ro (τ :: Γ) nil (VAR S k) τ0 h)) (x, γ) = var_access _ _ _ h (x, γ)).
     auto.
     rewrite H.
     assert ((has_type_ro_Var_S_inv Γ k τ τ0 (has_type_ro_rw (τ :: Γ) (VAR S k) τ0 (has_type_rw_ro (τ :: Γ) nil (VAR S k) τ0 h))) = (has_type_ro_Var_S_inv Γ k τ τ0 h)).
@@ -321,13 +321,13 @@ Section AccessState.
     easy_rewrite_uip.
     reflexivity.
     rewrite H0.
-    apply ro_access_Var_S.
+    apply var_access_Var_S.
     simpl.
     easy_rewrite_uip.
     reflexivity.
   Defined.
 
-  Lemma ro_access_typing_irrl k : forall Γ τ (w1 : Γ |- Var k : τ) (w2 : Γ |- Var k : τ) γ, ro_access Γ k τ w1 γ = ro_access Γ k τ w2 γ.
+  Lemma var_access_typing_irrl k : forall Γ τ (w1 : Γ |- Var k : τ) (w2 : Γ |- Var k : τ) γ, var_access Γ k τ w1 γ = var_access Γ k τ w2 γ.
   Proof.
     dependent induction k; intros.
     destruct Γ.
@@ -340,8 +340,8 @@ Section AccessState.
     destruct γ.
     pose proof (has_type_ro_unambiguous _ _ _ _ w1 (has_type_ro_Var_0 Γ d)).
     induction H.
-    rewrite (ro_access_Var_0 Γ τ w1 ).
-    rewrite (ro_access_Var_0 Γ τ w2 ).
+    rewrite (var_access_Var_0 Γ τ w1 ).
+    rewrite (var_access_Var_0 Γ τ w2 ).
     auto.
     destruct Γ.
     contradict w1.
@@ -351,30 +351,30 @@ Section AccessState.
     auto.
     simpl in γ.
     destruct γ.
-    rewrite ro_access_Var_S.
-    rewrite ro_access_Var_S.
+    rewrite var_access_Var_S.
+    rewrite var_access_Var_S.
     apply (IHk _ _ (has_type_ro_Var_S_inv Γ k d τ w1) (has_type_ro_Var_S_inv Γ k d τ w2)).
   Defined.
 
-  Fixpoint ro_access_app  Γ γ k τ w Δ δ w':
-    ro_access Γ k τ w γ = ro_access (Γ ++ Δ) k τ w' (γ ; δ).
+  Fixpoint var_access_app  Γ γ k τ w Δ δ w':
+    var_access Γ k τ w γ = var_access (Γ ++ Δ) k τ w' (γ ; δ).
   Proof.
     intros.
     dependent induction w.
     dependent destruction h.
     easy_rewrite_uip.
-    apply ro_access_app.
+    apply var_access_app.
     simpl.
     easy_rewrite_uip.
     destruct γ.
     simpl in w'.
-    rewrite ro_access_Var_0.
+    rewrite var_access_Var_0.
     reflexivity.
     easy_rewrite_uip.
     destruct γ.
-    rewrite ro_access_Var_S.
+    rewrite var_access_Var_S.
     
-    rewrite (ro_access_app Γ s0 k0 τ w Δ δ (has_type_ro_Var_S_inv (Γ ++ Δ) k0 σ τ w')).
+    rewrite (var_access_app Γ s0 k0 τ w Δ δ (has_type_ro_Var_S_inv (Γ ++ Δ) k0 σ τ w')).
     reflexivity.
   Qed.
 End AccessState.

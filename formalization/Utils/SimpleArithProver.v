@@ -1,10 +1,9 @@
 From Clerical Require Import Preliminaries.Preliminaries.
 From Clerical Require Import Powerdomain.Powerdomain.
-From Clerical Require Import Syntax Typing TypingProperties Semantics ReasoningPrettyprinting ReasoningRules ReasoningUtils.
+From Clerical Require Import Syntax Typing TypingProperties Semantics ReasoningTyPaired ReasoningRules ReasoningUtils.
 From Clerical.Utils Require Import TypingTactic SimpleArith ReducingTactic.
 Require Import Coq.Program.Equality.
 Require Import ZArith Reals List.
-
 
 Ltac decide_simple_arithmetic e X Xdefi :=
   let v := fresh "tmp" in 
@@ -284,7 +283,7 @@ Ltac proves_assign_simple_arithemtical t :=
               try (rewrite <- (prop_irrl _ (eq_refl INTEGER) (eq_sym _)));
               try (rewrite <- (prop_irrl _ (eq_refl BOOL) (eq_sym _)));
               simpl); auto;
-          reduce_ro_access;
+          reduce_var_access;
           reduce_update;
           simpl
       ]
