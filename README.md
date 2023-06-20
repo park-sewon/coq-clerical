@@ -62,7 +62,8 @@ In `Utils` we define various tactics that are to be used by the users later.
 
 Files in the `formalization` directory formalize Clerical:
 
-* In [Clerical.Syntax](./formalization/Syntax.v), we define the Syntax of Clerical expressions and their typing rules are defined in [Clerical.Typing.v](./formalization/Typing.v). Both are defined inductively.
+#### Syntax and Typing
+In [Clerical.Syntax](./formalization/Syntax.v), we define the Syntax of Clerical expressions and their typing rules are defined in [Clerical.Typing.v](./formalization/Typing.v). Both are defined inductively.
 
 There, the notations
 ```coq
@@ -71,20 +72,21 @@ There, the notations
 ```
 are defined. `Γ |- e : τ` means that a Clerical expression `e` has type `τ` under a read-only context `Γ` and `Γ ;;; Δ ||- e : τ` means that a Clerical expression `e` has type `τ` under a read-only context `Γ` and a read-write context `Δ`.
 
-* In [Clerical.TypingProperties](./formalization/TypingProperties.v), various properties of our type system are proven including that our typing rules are unambiguous.
+In [Clerical.TypingProperties](./formalization/TypingProperties.v), various properties of our type system are proven including that our typing rules are unambiguous.
 
-* In [Clerical.Semantics](./formalization/Semantics.v), we define the denotational semantics of Clerical expressions using the aforementioned powerdomain recursively on well-typedness.
+#### Semantics
+In [Clerical.Semantics](./formalization/Semantics.v), we define the denotational semantics of Clerical expressions using the aforementioned powerdomain recursively on well-typedness.
 ```coq
 sem_exp_ro Γ e τ (w : Γ |- e : τ) : sem_ctx Γ -> pdom (sem_datatype τ)
 sem_exp_rw Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) :  sem_ctx Γ -> sem_ctx Δ -> pdom (sem_ctx Δ * sem_datatype τ)
 ``` 
 
-* In [Clerical.SemanticsProperties](./formalization/SemanticsProperties.v), various properties of our semantics are proven including that they are irrelevant to specific type derivations. For example when we have two type derivations `w1 : Γ |- e : τ` and `w2 : Γ |- e : τ`, we 
+In [Clerical.SemanticsProperties](./formalization/SemanticsProperties.v), various properties of our semantics are proven including that they are irrelevant to specific type derivations. For example when we have two type derivations `w1 : Γ |- e : τ` and `w2 : Γ |- e : τ`, we 
 have that their semantics are equal: `sem_exp_ro Γ e τ w1 γ = sem_exp_ro Γ e τ w1 γ` for all `γ`.
 
 
-
-* In [Clerical.Specification](./formalization/Specification.v), we define specifications. 
+### Specifications
+In [Clerical.Specification](./formalization/Specification.v), we define specifications. 
 For a well-typed read-only expression `w : Γ |- e : τ`, a pre-condition `ϕ : sem_ctx Γ -> Prop`, and a post-condition 
 `ψ : sem_ctx Γ ->  sem_datatype τ -> Prop`, `[| γ : Γ |]  |= w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵖ` denotes its partial correctness specification.
 And, `[| γ : Γ |] |= {{ϕ γ}} e {{y : τ | ψ γ y}}ᵗ` denotes its total correctness.
@@ -93,7 +95,9 @@ Specifications of read-write expressions are defined similarly:
 for a well-typed read-write expression `w : Γ ;;; Δ ||- e : τ`, a pre-condition `ϕ : sem_ctx Γ -> sem_ctx Δ  -> Prop`, and a post-condition 
 `ψ : sem_ctx Γ -> sem_ctx Δ  -> sem_datatype τ -> Prop`, `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵖ` denotes its partial correctness and `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵖ` denotes its total correctness.
 
-* In [Clerical.ReasoningRules](./formalization/ReasoningRules.v), we define the verification calculus inductively: 
+
+### Reasoning Rules
+In [Clerical.ReasoningRules](./formalization/ReasoningRules.v), we define the verification calculus inductively: 
 for a well-typed read-only expression `w : Γ |- e : τ`, a pre-condition `ϕ`, and a post-condition 
 `ψ`, `[γ : Γ]  |- w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵖ` denotes that calculus proves the partial correctness and 
 `[γ : Γ]  |- w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵗ` denotes that calculus proves the total correctness of the read-only expression.
@@ -118,7 +122,7 @@ with proves_rw_tot_sound : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ,
 
 In [Clerical.ReasoningAdmissible](./formalization/ReasoningAdmissible.v) proves some admissible rules.
 
-* The original specifications require, from its definition, the expressions that the specifications specify to be well-typed. 
+The original specifications require, from its definition, the expressions that the specifications specify to be well-typed. 
 That is why the triples hold evidence `w` of well-typedness and this affects also the proof rules as well.
 
 Alternatively, we can have triples without well-typedness and have a side lemma that says every triple derived from our proof rules are well-typed. Or, equivalently, we can have another triple which is paired with the well-typedness and prove the proof rules for the new triples.
@@ -135,7 +139,7 @@ a pair of a well-typedness derivation `w` and the original triple where `w`is th
 In [Clerical.ReasoningPrettyprinting](./formalization/ReasoningPrettyprinting.v),
 the new triples are defined and the prove rules are proved.
 
-* In [Clerical.ReasoningUtils](./formalization/ReasoningUtils.v), various utility functions in applying proof rules are defined. 
+In [Clerical.ReasoningUtils](./formalization/ReasoningUtils.v), various utility functions in applying proof rules are defined. 
 
 ## Base setting of the underlying type theory
 
