@@ -31,8 +31,7 @@ Using our prove rules, in the same file, we prove the correctness of the express
 ```coq
 Lemma clerical_abs_correct :
   forall Γ k (w : Γ |- VAR k : REAL),
-    
-	[γ : Γ] |-  {{True}} clerical_abs k {{y : REAL | y = Rabs (ro_access Γ k REAL w γ) }}ᵗ.	  
+    [γ : Γ] |-  {{True}} clerical_abs k {{y : REAL | y = Rabs (ro_access Γ k REAL w γ) }}ᵗ.	  
 ```
 Here, `ro_access Γ k REAL w x` denotes accessing the variable `k` of a state `γ : sem_ctx Γ`.
 The triple denotes the total correctness of `clerical_abs k` in the sense that for any state `γ` satisfying `True`,
