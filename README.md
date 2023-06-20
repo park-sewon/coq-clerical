@@ -63,7 +63,7 @@ In `Utils` we define various tactics that are to be used by the users later.
 Files in the `formalization` directory formalize Clerical:
 
 #### Syntax and Typing
-In [Clerical.Syntax](./formalization/Syntax.v), we define the Syntax of Clerical expressions and their typing rules are defined in [Clerical.Typing.v](./formalization/Typing.v). Both are defined inductively.
+In [Clerical.Syntax](./formalization/Syntax.v), we define the Syntax of Clerical expressions and their typing rules are defined in [Clerical.Typing](./formalization/Typing.v). Both are defined inductively.
 
 There, the notations
 ```coq
