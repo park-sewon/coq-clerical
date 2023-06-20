@@ -95,6 +95,11 @@ Specifications of read-write expressions are defined similarly:
 for a well-typed read-write expression `w : Γ ;;; Δ ||- e : τ`, a pre-condition `ϕ : sem_ctx Γ -> sem_ctx Δ  -> Prop`, and a post-condition 
 `ψ : sem_ctx Γ -> sem_ctx Δ  -> sem_datatype τ -> Prop`, `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵖ` denotes its partial correctness and `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵖ` denotes its total correctness.
 
+Furthermore, in the file, assertions' notations are defined:
+`[γ : Γ] |- {{ϕ}}` denotes `fun γ : sem_ctx Γ => ϕ`,
+`[γ : Γ] |- {{y : τ | ϕ}}` denotes `fun (γ : sem_ctx Γ) (y : sem_datatype τ) => ϕ`, `[γ : Γ ;;; δ : Δ] ||- {{ϕ}}` denotes `fun (γ : sem_ctx Γ) (δ : sem_ctx Δ) => ϕ`, and `[γ : Γ ;;; δ : Δ] ||- {{y : τ | ϕ}}` denotes `fun (γ : sem_ctx Γ) (δ : sem_ctx Δ) (y : sem_datatype τ) => ϕ`.
+
+
 
 ### Reasoning Rules
 In [Clerical.ReasoningRules](./formalization/ReasoningRules.v), we define the verification calculus inductively: 
@@ -138,7 +143,7 @@ a pair of a well-typedness derivation `w` and the original triple where `w`is th
 
 In [Clerical.ReasoningTyPaired](./formalization/ReasoningTyPaired.v),
 the new triples are defined and the prove rules are proved. 
-The rules for ty___p___e-paired tri___p___les has ___pp___ prefix. For example, the original rule for `SKIP` in [Clerical.ReasoningRules](./formalization/ReasoningRules.v)
+The rules for ty ***p*** e-paired tri ***p*** les has ___pp___ prefix. For example, the original rule for `SKIP` in [Clerical.ReasoningRules](./formalization/ReasoningRules.v)
 ```coq
 ro_skip_prt : forall Γ (w : Γ |- SKIP : UNIT) ψ,
     
