@@ -9,6 +9,102 @@ From Clerical Require Import Typing.
 From Clerical Require Import TypingProperties.
 From Clerical Require Import Semantics.
 
+
+Section Reducing.
+  Lemma reduce_var_access_0 : forall Γ τ (w : (Γ ::: τ) |- Var 0 : τ) x,
+      var_access _ _ _ w x = snd x.
+  Proof.
+    intros.
+    rewrite (var_access_typing_irrl _ _ _ w (has_type_ro_Var_0 _ _)).
+    destruct x; auto.
+  Defined.
+
+  Lemma reduce_var_access_S : forall Γ τ σ n (w : (Γ ::: σ) |- Var (S n) : τ) x,
+      var_access _ _ _ w x = var_access _ _ _ (has_type_ro_Var_S_inverse w) (fst x).
+  Proof.
+    intros.
+    rewrite (var_access_typing_irrl _ _ _ w (has_type_ro_Var_S _ _ _ _ (has_type_ro_Var_S_inverse w))).
+  destruct x; auto.
+  Defined.
+
+
+  Lemma update_assignable_irrl : forall k Δ τ  x δ (a1 a2 : assignable Δ τ k),
+      update k x δ a1 = update k x δ a2.
+  Proof.
+    intro k.
+    dependent induction k.
+    intros.
+    dependent destruction a1.
+    dependent destruction a2; auto.
+    intros.
+    dependent destruction a1.
+    dependent destruction a2; auto.
+    destruct δ.
+    assert (
+        (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_ctx Δ)  (sem_datatype σ) s s0) (assignable_S Δ τ σ k a1))
+        = (update k x s a1, s0)). 
+    simpl.
+    unfold update.
+    unfold assignable_rect.
+    destruct a1; auto.
+    assert (
+        (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_ctx Δ) (sem_datatype σ)  s s0) (assignable_S Δ τ σ k a2))
+        = (update k x s a2, s0)). 
+    simpl.
+    unfold update.
+    unfold assignable_rect.
+    destruct a2; auto.
+    rewrite H, H0; auto.
+    assert (update k x s a1 = update k x s a2).
+    apply IHk.
+    rewrite H1; auto.
+  Defined.
+
+  Lemma update'_typing_irrl_2 Γ Δ k e τ (w1 w2 : (Γ +++ Δ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit) δ x : update' w1 w' δ x = update' w2 w' δ x.
+  Proof.
+    unfold update'.
+    apply update_assignable_irrl.
+  Defined.
+
+
+  Lemma reduce_update_0 : forall Δ τ (a : assignable (Δ ::: τ) τ 0)
+                                 (x y : sem_datatype τ) (δ : sem_ctx Δ),
+      @update τ (Δ ::: τ) 0 x (δ, y) a = (δ, x).
+  Proof.
+    intros.
+    rewrite (update_assignable_irrl 0 _ _ _ _ a (assignable_0 _ _)).
+    auto.
+  Defined.
+
+  Lemma update_assignable_S : forall Δ σ k (a : assignable Δ σ k) τ x (δ : sem_ctx Δ) y,
+      @update σ (Δ ::: τ) (S k) x (δ, y) (assignable_S _ σ τ _ a)
+      = (@update σ Δ k x δ a, y).
+  Proof.
+    intros.
+    unfold update.
+    simpl.
+    unfold assignable_rect.
+    destruct a.
+    auto.
+    apply lp.
+    auto.
+  Defined.
+
+  Lemma reduce_update_S : forall Δ k τ σ (a : assignable (Δ ::: τ) σ (S k)) x y
+                                 (δ : sem_ctx Δ),
+      @update σ (Δ ::: τ) (S k) x (δ, y) a
+      = (@update σ Δ k x δ (assignable_S_inverse a), y). 
+  Proof.
+    intros.
+    rewrite (update_assignable_irrl _ _ _ _ _ a
+                                    (assignable_S _ _ _ _ ((assignable_S_inverse a)))).
+    rewrite update_assignable_S.
+    auto.
+  Defined.
+End Reducing.
+
+
+
 (* In this file, we prove some properties of the semantics of Clerical.
    The main theorems here are that 1) the semantics is irrelevnet to the welltypedness
    and that 2) the semantics does not change for us adding auxiliary variables at the end of the readonly contexts.
@@ -36,12 +132,12 @@ Proof.
 
     (* | has_type_ro_Var_0 *)
     simpl in γ.
-    exact (pdom_unit (fst γ)).
+    exact (pdom_unit (snd γ)).
 
     (* | has_type_ro_Var_S *)
     simpl in γ.
     (* exact (IHD (snd γ)). *)
-    exact (r_sem_ro_exp _ _ _ D (snd γ)).
+    exact (r_sem_ro_exp _ _ _ D (fst γ)).
 
     (* | has_type_ro_True *)
     exact (pdom_unit true).
@@ -113,18 +209,18 @@ Proof.
     exact (pdom_bind2 Rltb x y).
 
     (* | has_type_ro_Lim *)
-    exact (Rlim (fun x : Z => r_sem_ro_exp _ _ _ D (x, γ))). 
+    exact (Rlim (fun x : Z => r_sem_ro_exp _ _ _ D (γ, x))). 
 
   - (* read write commands *)
     dependent destruction D; intros γ δ.
 
-    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (δ ; γ))).
-    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (δ ; γ))).
-    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (δ ; γ))).
-    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (δ ; γ))).
-    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (δ ; γ))).
-    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (δ ; γ))).
-    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (δ ; γ))).
+    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (γ ; δ))).
+    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (γ ; δ))).
+    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (γ ; δ))).
+    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (γ ; δ))).
+    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (γ ; δ))).
+    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (γ ; δ))).
+    exact (pdom_lift (fun x => (δ, x)) (r_sem_ro_exp _ _ _ r (γ ; δ))).
 
     (* has_type_rw_Seq *)
     pose proof (r_sem_rw_exp _ _ _ _ D1 γ) as C1.
@@ -135,24 +231,24 @@ Proof.
     exact δ.
 
     (* has_type_rw_Assign *)
-    pose proof (pdom_lift (fun v => update k v δ a) (r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (δ, γ)))) as V.
+    pose proof (pdom_lift (fun v => update k v δ a) (r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (γ, δ)))) as V.
     exact (pdom_lift (fun x => (x, tt)) V).
     
     (* has_type_rw_Newvar *)
-    pose proof (r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (δ, γ))) as V.
+    pose proof (r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (γ, δ))) as V.
     pose proof (r_sem_rw_exp _ _ _ _ D γ) as f.
-    pose proof (pdom_bind f (pdom_lift (fun v => (v, δ)) V)) as res.
-    exact (pdom_lift (fun x => (snd (fst x), snd x)) res).
+    pose proof (pdom_bind f (pdom_lift (fun v => (δ, v)) V)) as res.
+    exact (pdom_lift (fun x => (fst (fst x), snd x)) res).
 
     (* has_type_rw_Cond *)
-    pose proof (r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (δ, γ))) as B.
+    pose proof (r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (γ, δ))) as B.
     pose proof (r_sem_rw_exp _ _ _ _ D1 γ δ) as X.
     pose proof (r_sem_rw_exp _ _ _ _ D2 γ δ) as Y.
     exact (pdom_bind (fun b : bool => if b then X else Y) B).
     
     (* (* has_type_rw_Case *) *)
-    (* pose proof (r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (δ, γ))) as B1. *)
-    (* pose proof (r_sem_ro_exp _ _ _ r0 (tedious_prod_sem _ _ (δ, γ))) as B2. *)
+    (* pose proof (r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (γ, δ))) as B1. *)
+    (* pose proof (r_sem_ro_exp _ _ _ r0 (tedious_prod_sem _ _ (γ, δ))) as B2. *)
     (* pose proof (r_sem_rw_exp _ _ _ _ D1 γ δ) as X. *)
     (* pose proof (r_sem_rw_exp _ _ _ _ D2 γ δ) as Y. *)
     (* exact (Case2 B1 B2 X Y). *)
@@ -163,12 +259,12 @@ Proof.
     induction f.
     exact nil.
     destruct p.
-    exact ((r_sem_ro_exp _ _ _ r (δ; γ), r_sem_rw_exp _ _ _ _ r0 γ δ) :: IHf). 
+    exact (IHf ::: (r_sem_ro_exp _ _ _ r (γ ; δ), r_sem_rw_exp _ _ _ _ r0 γ δ)). 
     exact (pdom_case_list X).
 
     
     (* has_type_rw_While *)
-    pose proof (fun d => r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (d, γ))) as B.
+    pose proof (fun d => r_sem_ro_exp _ _ _ r (tedious_prod_sem _ _ (γ, d))) as B.
     pose proof (fun d => pdom_lift fst (r_sem_rw_exp _ _ _ _ D γ d)) as C.
     exact (pdom_lift (fun x => (x, tt)) (pdom_while B C δ)).
 Defined.
@@ -192,9 +288,9 @@ Lemma r_sem_ro_Newvar : forall Γ e c τ (w :  Γ |~ (NEWVAR e IN c) : τ), exis
     =
       (fun γ : sem_ctx Γ =>
          pdom_lift snd
-           (pdom_lift (fun x : sem_datatype σ * unit * sem_datatype τ => (snd (fst x), snd x))
-              (pdom_bind (r_sem_rw_exp Γ (σ :: nil) c τ p1 γ)
-                 (pdom_lift (fun v : sem_datatype σ => (v, tt)) (r_sem_ro_exp Γ e σ p γ))))).
+           (pdom_lift (fun x : unit * sem_datatype σ  * sem_datatype τ => (fst (fst x), snd x))
+              (pdom_bind (r_sem_rw_exp Γ (nil ::: σ) c τ p1 γ)
+                 (pdom_lift (fun v : sem_datatype σ => (tt, v)) (r_sem_ro_exp Γ e σ p γ))))).
 Proof.
   intros.
   dependent destruction w.
@@ -249,7 +345,7 @@ Lemma r_sem_ro_CaseList : forall Γ l τ (w : Γ |~ CaseList l : τ),
                  (fun (x : exp * exp) (l2 : list (exp * exp)) (p : (Γ |~ fst x : BOOL) * (Γ;;; nil ||~ snd x : τ))
                       (_ : ForallT (fun ec : exp * exp => ((Γ |~ fst ec : BOOL) * (Γ;;; nil ||~ snd ec : τ))%type) l2)
                       (IHf : list (pdom bool * pdom (unit * sem_datatype τ))) =>
-                    let (a, b) := p in (r_sem_ro_exp Γ (fst x) BOOL a γ, r_sem_rw_exp Γ nil (snd x) τ b γ tt) :: IHf) l f))).
+                    let (a, b) := p in IHf ::: (r_sem_ro_exp Γ (fst x) BOOL a γ, r_sem_rw_exp Γ nil (snd x) τ b γ tt)) l f))).
   intros.
   dependent destruction w.
   dependent destruction r.
@@ -316,6 +412,7 @@ Proof.
   simpl.
   reflexivity.
 Qed.
+Open Scope list_scope.
 
 Definition app_assoc := 
   fun {A : Type} (l m n : list A) =>
@@ -333,6 +430,12 @@ Definition app_assoc :=
                eq_trans (f_equal (fun f : list A -> list A => f (l0 ++ m ++ n)) eq_refl) (f_equal (cons a) H4)) H1) H0) H)
          :
          (a :: l0) ++ m ++ n = ((a :: l0) ++ m) ++ n) l.
+
+Lemma app_assoc' : forall {A} (l m n : list A), (l +++ m) +++ n = l +++ m +++ n.
+Proof.
+  intros.
+  exact ( (app_assoc n m l)).
+Defined.
 
 Lemma tr_f_equal : forall X Y (P : Y -> Type) (f : X -> Y) (x y : X) (p : x = y),
   forall t, tr P (f_equal f p) t = tr (fun x => P (f x)) p t.
@@ -352,7 +455,7 @@ Proof.
 Defined.
 
 Lemma tr_constant_pair : forall X (P : X -> Type) C (x y : X) (p : x = y),
-  forall c t, tr (fun x => C * P x)%type p (c, t) = (c, tr P p t).
+  forall c t, tr (fun x => P x * C)%type p (t, c) = (tr P p t, c).
 Proof.
   intros.
   destruct p.
@@ -361,22 +464,23 @@ Proof.
 Defined.
 
 Fixpoint app_assoc_tr (Γ1 Γ2 Γ3 : list datatype) : forall (γ1 : sem_ctx Γ1) (γ2 : sem_ctx Γ2) (γ3 : sem_ctx Γ3),
-    tr _ (app_assoc Γ1 Γ2 Γ3) (γ1 ; (γ2 ; γ3)) = ((γ1 ; γ2) ; γ3).
+    tr _ (app_assoc' Γ1 Γ2 Γ3) ((γ1 ; γ2) ; γ3) = (γ1 ; (γ2 ; γ3)).
 Proof.
+  unfold app_assoc'.
   intros.
-  destruct Γ1.
+  destruct Γ3.
+  unfold app_assoc'.
   simpl.
   auto.
   simpl.
-  destruct γ1.
-  replace ((eq_trans eq_refl (f_equal (cons d) (app_assoc Γ1 Γ2 Γ3))))
-    with (( (f_equal (cons d) (app_assoc Γ1 Γ2 Γ3)))).
+  destruct γ3.
+  rewrite eq_refl_left_unit.
   rewrite tr_f_equal.
   simpl.
-  rewrite tr_constant_pair.
-  apply lp.
-  apply app_assoc_tr.
-  rewrite eq_refl_left_unit.
+  rewrite (tr_constant_pair (list datatype) sem_ctx (sem_datatype d)).
+  unfold app_assoc' in app_assoc_tr. 
+  
+  rewrite app_assoc_tr.
   reflexivity.
 Defined.
 
@@ -399,11 +503,11 @@ Proof.
 Defined.
 
 
-Lemma eq_sym_app_assoc_tr (Γ1 Γ2 Γ3 : list datatype) : forall (γ1 : sem_ctx Γ1) (γ2 : sem_ctx Γ2) (γ3 : sem_ctx Γ3), tr (fun Γ0 : list datatype => sem_ctx Γ0) (eq_sym (app_assoc Γ1 Γ2 Γ3)) ((γ1; γ2); γ3) = (γ1; (γ2; γ3)).
+Lemma eq_sym_app_assoc_tr (Γ1 Γ2 Γ3 : list datatype) : forall (γ1 : sem_ctx Γ1) (γ2 : sem_ctx Γ2) (γ3 : sem_ctx Γ3), tr (fun Γ0 : list datatype => sem_ctx Γ0) (eq_sym (app_assoc' Γ1 Γ2 Γ3 )) (γ1; (γ2; γ3)) = ((γ1; γ2); γ3).
 Proof.
   intros.
   pose proof (app_assoc_tr _ _ _ γ1 γ2 γ3).
-  pose proof (lp _ _ (fun k => tr (fun Γ0 : list datatype => sem_ctx Γ0) (eq_sym (app_assoc Γ1 Γ2 Γ3)) k) _ _ H).
+  pose proof (lp _ _ (fun k => tr (fun Γ0 : list datatype => sem_ctx Γ0) (eq_sym (app_assoc' Γ1 Γ2 Γ3)) k) _ _ H).
   simpl in H0.
   rewrite eq_sym_tr_inverse_left in H0.
   rewrite H0; reflexivity.
@@ -809,7 +913,7 @@ Defined.
 
 
 Fixpoint assign_concat_fst' Δ Δ' τ k (a :assignable Δ τ k) x δ δ' {struct a} : 
-  (update k x δ a ; δ') = (update k x (δ; δ') (assignable_push_back Δ Δ' τ k a)).
+  (δ'; update k x δ a) = (update k x (δ'; δ) (assignable_push_back Δ Δ' τ k a)).
 Proof.
   dependent destruction a.
   simpl.
@@ -817,24 +921,36 @@ Proof.
   simpl.
   reflexivity.
   destruct δ.
-  replace (tedious_prod_sem (@cons datatype σ Δ) Δ'
-             (@pair (sem_ctx (@cons datatype σ Δ)) (sem_ctx Δ')
-                (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_ctx Δ) s s0)
-                   (assignable_S Δ τ σ k a)) δ'))
-    with
-    (s, (update k x s0 a; δ')).
-
+  rewrite reduce_update_S.
   simpl.
-  apply lp.
   rewrite assign_concat_fst'.
-  destruct a; auto.
   simpl.
-  destruct a; auto.
+  easy_rewrite_uip.
+  assert (update k x (δ'; s) (assignable_push_back Δ Δ' τ k a) = assignable_rect
+     (fun (Θ : ctx) (τ0 : datatype) (k0 : nat) (_ : assignable Θ τ0 k0) => sem_datatype τ0 -> sem_ctx Θ -> sem_ctx Θ)
+     (fun (Δ0 : list datatype) (τ0 : datatype) (v : sem_datatype τ0) (γ : sem_ctx Δ0 * sem_datatype τ0) =>
+      (fst γ, v))
+     (fun (Δ0 : ctx) (τ0 σ0 : datatype) (k0 : nat) (_ : assignable Δ0 τ0 k0)
+        (IHi : sem_datatype τ0 -> sem_ctx Δ0 -> sem_ctx Δ0) (v : sem_datatype τ0) (γ : sem_ctx Δ0 * sem_datatype σ0)
+      => (IHi v (fst γ), snd γ))
+     ((fix app (l m : list datatype) {struct l} : list datatype :=
+         match l with
+         | nil => m
+         | l1 ::: a0 => app l1 m ::: a0
+         end) Δ Δ') τ k (assignable_push_back Δ Δ' τ k a) x (δ'; s)).
+  simpl.
+  destruct a.
+  simpl.
+  auto.
+  simpl.
+  auto.
+  rewrite H.
+  auto.
 Defined.
 
 Lemma assign_concat_fst : 
   forall Δ Δ' τ k (a0 :assignable Δ τ k) (a : assignable (Δ ++ Δ') τ k) a1 δ δ',
-    (update k a1 δ a0 ; δ') = (update k a1 (δ; δ') a).
+    (δ' ; update k a1 δ a0) = (update k a1 (δ'; δ) a).
 Proof.
   intros.
   rewrite (assign_concat_fst' Δ Δ' τ k a0).
@@ -842,9 +958,9 @@ Proof.
   apply assignable_unique. 
 Defined.
 
-Fixpoint r_sem_move_readonly  Γ Δ Δ' e τ (w1 : Γ ;;; (Δ ++ Δ') ||~ e : τ) (w2 : (Δ' ++ Γ) ;;; Δ ||~ e : τ) :
-  forall γ δ δ', r_sem_rw_exp _ _ _ _ w1 γ (δ ; δ') =
-                   pdom_lift (fun y => ((fst y; δ'), snd y)) (r_sem_rw_exp _ _ _ _ w2 (δ'; γ) δ).
+Fixpoint r_sem_move_readonly  Γ Δ Δ' e τ (w1 : Γ ;;; (Δ' +++ Δ) ||~ e : τ) (w2 : (Γ +++ Δ') ;;; Δ ||~ e : τ) :
+  forall γ δ δ', r_sem_rw_exp _ _ _ _ w1 γ (δ' ; δ) =
+                   pdom_lift (fun y => ((δ'; fst y), snd y)) (r_sem_rw_exp _ _ _ _ w2 (γ ; δ') δ).
 Proof.
   intros.
   dependent destruction w1;
@@ -866,9 +982,9 @@ Proof.
   rewrite pdom_lift_comp.
   rewrite pdom_lift_comp.
   simpl.
-  replace (fun y : sem_ctx Δ * unit => r_sem_rw_exp Γ (Δ ++ Δ') c2 τ w1_2 γ (fst y; δ'))
+  replace (fun y : sem_ctx Δ * unit => r_sem_rw_exp Γ (Δ' +++ Δ) c2 τ w1_2 γ (δ'; fst y))
     with (fun y : sem_ctx Δ * unit =>
-            pdom_lift (fun y => ((fst y; δ'), snd y)) (r_sem_rw_exp _ _ _ _ w2_2 (δ'; γ) (fst y))).
+            pdom_lift (fun y => ((δ'; fst y), snd y)) (r_sem_rw_exp _ _ _ _ w2_2 (γ; δ') (fst y))).
   simpl.
   rewrite <- pdom_lift_comp.
   rewrite pdom_mult_natural.
@@ -890,13 +1006,13 @@ Proof.
   rewrite pdom_lift_comp.
   rewrite pdom_lift_comp.
   simpl.
-  replace (fun y : sem_datatype τ => (update k y (δ; δ') a, tt)) with
-    (fun y : sem_datatype τ => ((update k y δ a0; δ'), tt)).
+  replace (fun y : sem_datatype τ => (update k y (δ'; δ) a, tt)) with
+    (fun y : sem_datatype τ => ((δ'; update k y δ a0), tt)).
   apply lp.
   rewrite (r_sem_ctx_rewrite _ _ _ _ r0 r (app_assoc Δ Δ' Γ)).
   apply lp, eq_sym, app_assoc_tr.
   apply dfun_ext; intro.
-  assert (((update k a1 δ a0; δ') = (update k a1 (δ; δ') a))).
+  assert (((δ'; update k a1 δ a0) = (update k a1 (δ'; δ) a))).
   apply assign_concat_fst.
 
   rewrite H; reflexivity.
@@ -917,14 +1033,14 @@ Proof.
   apply (r_has_type_ro_unambiguous _ _ _ _ H r0).
   induction H.
   rewrite (r_sem_ctx_rewrite _ _ _ _ r0 r (app_assoc Δ Δ' Γ)).
-  replace  (tr (fun Γ0 : list datatype => sem_ctx Γ0) (app_assoc Δ Δ' Γ) (δ; (δ'; γ)))
-    with  ((δ; δ'); γ) by (apply eq_sym, app_assoc_tr).
+  replace  (tr (fun Γ0 : list datatype => sem_ctx Γ0) (app_assoc Δ Δ' Γ) ((γ; δ'); δ))
+    with  (γ ; (δ'; δ)) by (apply eq_sym, app_assoc_tr).
   pose proof (r_sem_move_readonly Γ (σ::Δ) Δ' _ _ w1 w2 γ).
 
-  replace (fun y : sem_datatype σ => r_sem_rw_exp Γ (σ :: Δ ++ Δ') c τ w1 γ (y, (δ; δ')))
+  replace (fun y : sem_datatype σ => r_sem_rw_exp Γ (σ :: Δ ++ Δ') c τ w1 γ ((δ'; δ), y))
     with ((fun y : sem_datatype σ =>
-             pdom_lift (fun y : sem_ctx (σ :: Δ) * sem_datatype τ => ((fst y; δ'), snd y))
-               (r_sem_rw_exp (Δ' ++ Γ) (σ :: Δ) c τ w2 (δ'; γ) (y, δ)))).
+             pdom_lift (fun y : sem_ctx (σ :: Δ) * sem_datatype τ => ((δ'; fst y), snd y))
+               (r_sem_rw_exp (Δ' ++ Γ) (σ :: Δ) c τ w2 (γ ; δ') (δ, y)))).
   rewrite <- pdom_lift_comp.
   rewrite pdom_mult_natural.
   rewrite pdom_lift_comp.
@@ -938,36 +1054,36 @@ Proof.
   reflexivity.
   apply dfun_ext.
   intro.
-  rewrite <- (H (a, δ) δ').
+  rewrite <- (H (δ, a) δ').
   simpl.
   reflexivity.
 
   unfold pdom_bind.
 
   rewrite (r_sem_ctx_rewrite _ _ _ _ r0 r (app_assoc Δ Δ' Γ)).
-  replace  (tr (fun Γ0 : list datatype => sem_ctx Γ0) (app_assoc Δ Δ' Γ) (δ; (δ'; γ)))
-    with  ((δ; δ'); γ) by (apply eq_sym, app_assoc_tr).
-  rewrite (r_sem_move_readonly Γ _ _ _ _ w1_1 w2_1 γ ).
+  replace  (tr (fun Γ0 : list datatype => sem_ctx Γ0) (app_assoc Δ Δ' Γ) ((γ; δ'); δ))
+    with  (γ ; (δ'; δ)) by (apply eq_sym, app_assoc_tr).
+  rewrite (r_sem_move_readonly Γ _ _ _ _ w1_1 w2_1 γ).
   rewrite (r_sem_move_readonly Γ _ _ _ _ w1_2 w2_2 γ).
   replace
     ((fun b : bool =>
         if b
         then
-          pdom_lift (fun y : sem_ctx Δ * sem_datatype τ => ((fst y; δ'), snd y))
-            (r_sem_rw_exp (Δ' ++ Γ) Δ c1 τ w2_1 (δ'; γ) δ)
+          pdom_lift (fun y : sem_ctx Δ * sem_datatype τ => ((δ'; fst y), snd y))
+            (r_sem_rw_exp (Δ' ++ Γ) Δ c1 τ w2_1 (γ ; δ') δ)
         else
-          pdom_lift (fun y : sem_ctx Δ * sem_datatype τ => ((fst y; δ'), snd y))
-            (r_sem_rw_exp (Δ' ++ Γ) Δ c2 τ w2_2 (δ'; γ) δ)))
+          pdom_lift (fun y : sem_ctx Δ * sem_datatype τ => ((δ'; fst y), snd y))
+            (r_sem_rw_exp (Δ' ++ Γ) Δ c2 τ w2_2 (γ ; δ') δ)))
     with
     
     ((fun b : bool =>
-        pdom_lift (fun y : sem_ctx Δ * sem_datatype τ => ((fst y; δ'), snd y))
+        pdom_lift (fun y : sem_ctx Δ * sem_datatype τ => ((δ'; fst y), snd y))
           (if b
            then
              
-             (r_sem_rw_exp (Δ' ++ Γ) Δ c1 τ w2_1 (δ'; γ) δ)
+             (r_sem_rw_exp (Δ' ++ Γ) Δ c1 τ w2_1 (γ ; δ') δ)
            else
-             (r_sem_rw_exp (Δ' ++ Γ) Δ c2 τ w2_2 (δ'; γ) δ)))).
+             (r_sem_rw_exp (Δ' ++ Γ) Δ c2 τ w2_2 (γ ; δ') δ)))).
   rewrite <- pdom_lift_comp.
   rewrite pdom_mult_natural.
   rewrite app_assoc_tr.
@@ -1069,9 +1185,9 @@ Proof.
   rewrite pdom_lift_comp.
   apply lp.
   rewrite (r_sem_ctx_rewrite _ _ _ _ r0 r (app_assoc Δ Δ' Γ)).
-  replace  (tr (fun Γ0 : list datatype => sem_ctx Γ0) (app_assoc Δ Δ' Γ) (δ0; (δ'0; γ)))
-    with  ((δ0; δ'0); γ) by (apply eq_sym, app_assoc_tr).
-  rewrite app_assoc_tr.
+  replace (tr (fun Γ0 : ctx => sem_ctx Γ0) (app_assoc Δ Δ' Γ) ((γ; δ'0); δ0)) 
+    with  (γ; (δ'0; δ0)) by (apply eq_sym, app_assoc_tr).
+  (* rewrite app_assoc_tr. *)
   apply pl.
   apply lp.
   apply dfun_ext.
@@ -1084,24 +1200,25 @@ Proof.
       (fun y : sem_ctx (Δ ++ Δ') * unit =>
          pdom_lift (fun x : sem_ctx (Δ ++ Δ') => (x, tt))
            (pdom_fun_bot_chain
-              (pdom_W (fun d : sem_ctx (Δ ++ Δ') => r_sem_ro_exp ((Δ ++ Δ') ++ Γ) e BOOL r (d; γ))
+              (pdom_W (fun d : sem_ctx (Δ ++ Δ') => r_sem_ro_exp ((Δ ++ Δ') ++ Γ) e BOOL r (γ; d))
                  (fun d : sem_ctx (Δ ++ Δ') => pdom_lift fst (r_sem_rw_exp Γ (Δ ++ Δ') c UNIT w1 γ d)))
-              (pdom_W_monotone (fun d : sem_ctx (Δ ++ Δ') => r_sem_ro_exp ((Δ ++ Δ') ++ Γ) e BOOL r (d; γ))
+              (pdom_W_monotone (fun d : sem_ctx (Δ ++ Δ') => r_sem_ro_exp ((Δ ++ Δ') ++ Γ) e BOOL r ( γ; d))
                  (fun d : sem_ctx (Δ ++ Δ') => pdom_lift fst (r_sem_rw_exp Γ (Δ ++ Δ') c UNIT w1 γ d))) n
               (fst y))) =
         fun y : sem_ctx (Δ ++ Δ') * unit =>
-          pdom_lift (fun y0 : sem_ctx Δ => ((y0; snd_app (fst y)), tt))
+          pdom_lift (fun y0 : sem_ctx Δ => ((fst_app (fst y); y0), tt))
             (pdom_fun_bot_chain
-               (pdom_W (fun d : sem_ctx Δ => r_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL r0 (d; (snd_app (fst y); γ)))
-                  (fun d : sem_ctx Δ => pdom_lift fst (r_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (snd_app (fst y); γ) d)))
+               (pdom_W (fun d : sem_ctx Δ => r_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL r0
+                                                          ((γ ; fst_app (fst y)); d))
+                  (fun d : sem_ctx Δ => pdom_lift fst (r_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (γ ; fst_app (fst y)) d)))
                (pdom_W_monotone
-                  (fun d : sem_ctx Δ => r_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL r0 (d; (snd_app (fst y); γ)))
-                  (fun d : sem_ctx Δ => pdom_lift fst (r_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (snd_app (fst y); γ) d))) n
-               (fst_app (fst y)))).
+                  (fun d : sem_ctx Δ => r_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL r0 ((γ ; fst_app (fst y)); d))
+                  (fun d : sem_ctx Δ => pdom_lift fst (r_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (γ ; fst_app (fst y)) d))) n
+               (snd_app (fst y)))).
   
 
   apply dfun_ext; intro y.
-  pose proof (IHn (fst_app (fst y)) (snd_app (fst y))).
+  pose proof (IHn (snd_app (fst y)) (fst_app (fst y))).
   rewrite <- tedious_equiv_2 in H0.
   simpl.
   auto.
@@ -1112,29 +1229,24 @@ Proof.
   rewrite (r_sem_move_readonly Γ _ _ _ _ w1 w2 γ).
   rewrite pdom_lift_comp.
   simpl.
-  assert  ((fun y : sem_ctx Δ * unit =>
-              pdom_lift (fun y0 : sem_ctx Δ => ((y0; snd_app (fst y; δ'0)), tt))
-                (pdom_fun_bot_chain
-                   (pdom_W (fun d : sem_ctx Δ => r_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL r0 (d; (snd_app (fst y; δ'0); γ)))
-                      (fun d : sem_ctx Δ =>
-                         pdom_lift fst (r_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (snd_app (fst y; δ'0); γ) d)))
-                   (pdom_W_monotone
-                      (fun d : sem_ctx Δ => r_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL r0 (d; (snd_app (fst y; δ'0); γ)))
-                      (fun d : sem_ctx Δ =>
-                         pdom_lift fst (r_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (snd_app (fst y; δ'0); γ) d))) n
-                   (fst_app (fst y; δ'0)))) =
-             (fun y : sem_ctx Δ * unit =>
-                pdom_lift (fun y0 : sem_ctx Δ => ((y0;  δ'0), tt))
-                  (pdom_fun_bot_chain
-                     (pdom_W (fun d : sem_ctx Δ => r_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL r0 (d; (δ'0; γ)))
-                        (fun d : sem_ctx Δ =>
-                           pdom_lift fst (r_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (δ'0; γ) d)))
-                     (pdom_W_monotone
-                        (fun d : sem_ctx Δ => r_sem_ro_exp (Δ ++ Δ' ++ Γ) e BOOL r0 (d; (δ'0; γ)))
-                        (fun d : sem_ctx Δ =>
-                           pdom_lift fst (r_sem_rw_exp (Δ' ++ Γ) Δ c UNIT w2 (δ'0; γ) d))) n
-                     (fst y)))).
-
+  assert ((fun y : sem_ctx Δ * unit =>
+     pdom_lift (fun y0 : sem_ctx Δ => ((fst_app (δ'0; fst y); y0), tt))
+       (pdom_fun_bot_chain
+          (pdom_W (fun d : sem_ctx Δ => r_sem_ro_exp ((Γ +++ Δ') +++ Δ) e BOOL r0 ((γ; fst_app (δ'0; fst y)); d))
+             (fun d : sem_ctx Δ => pdom_lift fst (r_sem_rw_exp (Γ +++ Δ') Δ c UNIT w2 (γ; fst_app (δ'0; fst y)) d)))
+          (pdom_W_monotone
+             (fun d : sem_ctx Δ => r_sem_ro_exp ((Γ +++ Δ') +++ Δ) e BOOL r0 ((γ; fst_app (δ'0; fst y)); d))
+             (fun d : sem_ctx Δ => pdom_lift fst (r_sem_rw_exp (Γ +++ Δ') Δ c UNIT w2 (γ; fst_app (δ'0; fst y)) d)))
+          n (snd_app (δ'0; fst y)))) =
+          (fun y : sem_ctx Δ * unit =>
+     pdom_lift (fun y0 : sem_ctx Δ => ((fst_app (δ'0; fst y); y0), tt))
+       (pdom_fun_bot_chain
+          (pdom_W (fun d : sem_ctx Δ => r_sem_ro_exp ((Γ +++ Δ') +++ Δ) e BOOL r0 ((γ; fst_app (δ'0; fst y)); d))
+             (fun d : sem_ctx Δ => pdom_lift fst (r_sem_rw_exp (Γ +++ Δ') Δ c UNIT w2 (γ; fst_app (δ'0; fst y)) d)))
+          (pdom_W_monotone
+             (fun d : sem_ctx Δ => r_sem_ro_exp ((Γ +++ Δ') +++ Δ) e BOOL r0 ((γ; fst_app (δ'0; fst y)); d))
+             (fun d : sem_ctx Δ => pdom_lift fst (r_sem_rw_exp (Γ +++ Δ') Δ c UNIT w2 (γ; fst_app (δ'0; fst y)) d)))
+          n (fst y)))).
   apply dfun_ext.
   intros.
   unfold snd_app.
@@ -1145,8 +1257,12 @@ Proof.
   simpl in H0.
   simpl.
   rewrite H0.
+  apply pl.
+  apply lp.
+  apply dfun_ext.
+  intros.
+  rewrite tedious_equiv_fst.
   auto.
-
   rewrite pdom_unit_natural.
   rewrite pdom_unit_natural.
   auto.
@@ -1718,9 +1834,9 @@ Proof.
 Defined.
 
 Fixpoint r_sem_ro_exp_auxiliary_ctx Γ Γ' e τ (w : Γ |~ e : τ) :
-  forall γ γ', r_sem_ro_exp Γ e τ w γ = r_sem_ro_exp (Γ ++ Γ') e τ (r_has_type_ro_add_auxiliaries _ _ _ w Γ') (γ; γ')
+  forall γ γ', r_sem_ro_exp Γ e τ w γ = r_sem_ro_exp (Γ' +++ Γ) e τ (r_has_type_ro_add_auxiliaries _ _ _ w Γ') (γ'; γ)
 with r_sem_rw_exp_auxiliary_ctx Γ Γ' Δ e τ (w : Γ ;;; Δ ||~ e : τ) :
-  forall γ γ' δ, r_sem_rw_exp Γ Δ e τ w γ δ = r_sem_rw_exp (Γ ++ Γ') Δ e τ (r_has_type_rw_add_auxiliaries _ _ _ _ w Γ') (γ ; γ') δ.
+  forall γ γ' δ, r_sem_rw_exp Γ Δ e τ w γ δ = r_sem_rw_exp (Γ' +++ Γ) Δ e τ (r_has_type_rw_add_auxiliaries _ _ _ _ w Γ') (γ' ; γ) δ.
 Proof.
   +
     intros.
@@ -1736,12 +1852,12 @@ Proof.
 
     destruct γ.
     simpl.
-    rewrite (r_sem_ro_exp_auxiliary_ctx _ _ _ _ w s0 γ'). 
+    rewrite (r_sem_ro_exp_auxiliary_ctx _ _ _ _ w s γ'). 
     reflexivity.
 
     apply lp.
     apply dfun_ext; intro.
-    rewrite (r_sem_ro_exp_auxiliary_ctx _ _ _ _ w (a, γ) γ'). 
+    rewrite (r_sem_ro_exp_auxiliary_ctx _ _ _ _ w (γ, a) γ'). 
     reflexivity.
     
   +
@@ -1814,7 +1930,7 @@ Proof.
       assert (r_sem_rw_exp Γ Δ (snd x) τ r0 γ δ =
                 r_sem_rw_exp (Γ ++ Γ') Δ (snd x) τ
                   (eq_rec ((Δ ++ Γ) ++ Γ') (fun _ : list datatype => (Γ ++ Γ');;; Δ ||~ snd x : τ) (r_has_type_rw_add_auxiliaries Γ Δ (snd x) τ r0 Γ') 
-                     (Δ ++ Γ ++ Γ') (eq_sym (app_assoc Δ Γ Γ'))) (γ; γ') δ).
+                     (Δ ++ Γ ++ Γ') (eq_sym (app_assoc Δ Γ Γ'))) (γ'; γ) δ).
       
       rewrite  (r_sem_rw_exp_auxiliary_ctx _ _ _ _ _ r0 _ γ').
       assert (forall (A : Type) (x y: A) (P : Set) (e : x = y) p,
@@ -1858,7 +1974,7 @@ Qed.
 
 
 Lemma sem_ro_exp_auxiliary_ctx :
-  forall Γ Γ' e τ (w : Γ |- e : τ) (w' : (Γ ++ Γ') |- e : τ) γ γ', sem_ro_exp Γ e τ w γ = sem_ro_exp (Γ ++ Γ') e τ w' (γ; γ').
+  forall Γ Γ' e τ (w : Γ |- e : τ) (w' : (Γ ++ Γ') |- e : τ) γ γ', sem_ro_exp Γ e τ w γ = sem_ro_exp (Γ ++ Γ') e τ w' (γ'; γ).
 Proof.
   intros.
   rewrite (sem_ro_r_sem_ro _ _ _ _ (has_type_ro_r_has_type_ro _ _ _ w)).
@@ -1868,7 +1984,7 @@ Proof.
 Defined.
 
 
-Lemma sem_rw_exp_auxiliary_ctx : forall Γ Γ' Δ e τ (w : Γ ;;; Δ ||- e : τ) (w' : (Γ ++ Γ') ;;; Δ ||- e : τ) γ γ' δ, sem_rw_exp Γ Δ e τ w γ δ = sem_rw_exp (Γ ++ Γ') Δ e τ w' (γ ; γ') δ.
+Lemma sem_rw_exp_auxiliary_ctx : forall Γ Γ' Δ e τ (w : Γ ;;; Δ ||- e : τ) (w' : (Γ ++ Γ') ;;; Δ ||- e : τ) γ γ' δ, sem_rw_exp Γ Δ e τ w γ δ = sem_rw_exp (Γ ++ Γ') Δ e τ w' (γ' ; γ) δ.
 Proof.
   intros.
   rewrite (sem_rw_r_sem_rw _ _ _ _ _ (has_type_rw_r_has_type_rw _ _ _ _ w)).
@@ -1878,98 +1994,3 @@ Proof.
 Defined.
 
 
-Lemma reduce_var_access_0 : forall Γ τ (w : (τ :: Γ) |- Var 0 : τ) x,
-    var_access _ _ _ w x = fst x.
-Proof.
-  intros.
-  rewrite (var_access_typing_irrl _ _ _ w (has_type_ro_Var_0 _ _)).
-  destruct x; auto.
-Defined.
-
-Lemma reduce_var_access_S : forall Γ τ σ n (w : (σ :: Γ) |- Var (S n) : τ) x,
-    var_access _ _ _ w x = var_access _ _ _ (has_type_ro_Var_S_inverse w) (snd x).
-Proof.
-  intros.
-  rewrite (var_access_typing_irrl _ _ _ w (has_type_ro_Var_S _ _ _ _ (has_type_ro_Var_S_inverse w))).
-  destruct x; auto.
-Defined.
-
-
-Lemma update_assignable_irrl : forall k Δ τ  x δ (a1 a2 : assignable Δ τ k),
-    update k x δ a1 = update k x δ a2.
-Proof.
-  intro k.
-  dependent induction k.
-  intros.
-  dependent destruction a1.
-  dependent destruction a2; auto.
-  intros.
-  dependent destruction a1.
-  dependent destruction a2; auto.
-  destruct δ.
-  assert (
-      (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_ctx Δ) s s0) (assignable_S Δ τ σ k a1))
-            = (s, update k x s0 a1)). 
-  simpl.
-  unfold update.
-  unfold assignable_rect.
-  destruct a1; auto.
-  assert (
-      (@update τ (@cons datatype σ Δ) (S k) x (@pair (sem_datatype σ) (sem_ctx Δ) s s0) (assignable_S Δ τ σ k a2))
-            = (s, update k x s0 a2)). 
-  simpl.
-  unfold update.
-  unfold assignable_rect.
-  destruct a2; auto.
-  rewrite H, H0; auto.
-  assert (update k x s0 a1 = update k x s0 a2).
-  apply IHk.
-  rewrite H1; auto.
-Defined.
-
-Lemma update'_typing_irrl_2 Γ Δ k e τ (w1 w2 : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit) δ x :
-  update' w1 w' δ x = update' w2 w' δ x.
-Proof.
-  unfold update'.
-  apply update_assignable_irrl.
-Defined.
-
-
-Lemma reduce_update_0 : forall Δ τ (a : assignable (τ :: Δ) τ 0)
-                                   (x y : sem_datatype τ) (δ : sem_ctx Δ),
-    @update τ (τ::Δ) 0 x (y, δ) a = (x, δ).
-Proof.
-  intros.
-  rewrite (update_assignable_irrl 0 _ _ _ _ a (assignable_0 _ _)).
-  auto.
-Defined.
-
-Lemma update_assignable_S : forall Δ σ k (a : assignable Δ σ k) τ x δ y,
-    @update σ (τ :: Δ) (S k) x (y, δ) (assignable_S _ σ τ _ a)
-    = (y, @update σ Δ k x δ a).
-Proof.
-  intros.
-  simpl.
-  unfold update.
-  apply lp.
-  auto.
-  simpl.
-  destruct a.
-  simpl.
-  auto.
-  simpl.
-  apply lp.
-  auto.
-Defined.
-
-Lemma reduce_update_S : forall Δ k τ σ (a : assignable (τ :: Δ) σ (S k)) x y
-                               (δ : sem_ctx Δ),
-    @update σ (τ :: Δ) (S k) x (y, δ) a
-    = (y, @update σ Δ k x δ (assignable_S_inverse a)). 
-Proof.
-  intros.
-  rewrite (update_assignable_irrl _ _ _ _ _ a
-             (assignable_S _ _ _ _ ((assignable_S_inverse a)))).
-  rewrite update_assignable_S.
-  auto.
-Defined.

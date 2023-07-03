@@ -27,7 +27,7 @@ Proof.
   inversion H7.
 Defined.
 
-Lemma assignable_push_back Γ Δ k τ (t : assignable Γ k τ) : assignable (Γ ++ Δ) k τ.
+Lemma assignable_push_back Γ Δ k τ (t : assignable Γ k τ) : assignable (Δ +++ Γ) k τ.
 Proof.
   induction t.
   simpl.
@@ -94,8 +94,8 @@ Section RestrictedTyping.
   | r_has_type_ro_rw_While : forall Γ e c, Γ ;;; nil ||~ (While e c) : DUnit -> Γ |~ (While e c) : DUnit
                                                                                                      
   (* variables *)
-  | r_has_type_ro_Var_0 : forall Γ τ,  ((τ :: Γ) |~ (VAR 0) : τ)
-  | r_has_type_ro_Var_S : forall Γ σ τ k, Γ |~ Var k : τ -> (σ :: Γ) |~ VAR (S k) : τ
+  | r_has_type_ro_Var_0 : forall Γ τ,  ((Γ ::: τ) |~ (VAR 0) : τ)
+  | r_has_type_ro_Var_S : forall Γ σ τ k, Γ |~ Var k : τ -> (Γ ::: σ) |~ VAR (S k) : τ
 
   (* constants *)
   | r_has_type_ro_True : forall Γ, Γ |~ TRUE : DBoolean
@@ -120,61 +120,61 @@ Section RestrictedTyping.
   | r_has_type_ro_OpRlt : forall Γ e1 e2, Γ |~ e1 : DReal -> Γ |~ e2 : DReal -> Γ |~ (BinOp OpRlt e1 e2) : DBoolean
 
   (* limit *)
-  | r_has_type_ro_Lim : forall Γ e, (DInteger :: Γ) |~ e : DReal -> Γ |~ Lim e : DReal
+  | r_has_type_ro_Lim : forall Γ e, (Γ ::: INTEGER) |~ e : DReal -> Γ |~ Lim e : DReal
                                                                                    
   with r_has_type_rw : ctx -> ctx -> exp -> datatype -> Type :=
   (* from readonly *)
   | r_has_type_rw_ro_Var :
     forall Γ Δ k τ,
-      (Δ ++ Γ) |~ Var k : τ -> Γ ;;; Δ ||~ Var k : τ
+      (Γ +++ Δ) |~ Var k : τ -> Γ ;;; Δ ||~ Var k : τ
   | r_has_type_rw_ro_Boolean :
     forall Γ Δ b,
-      (Δ ++ Γ) |~ Boolean b : DBoolean -> Γ ;;; Δ ||~ Boolean b : DBoolean
+      (Γ +++ Δ) |~ Boolean b : DBoolean -> Γ ;;; Δ ||~ Boolean b : DBoolean
   | r_has_type_rw_ro_Integer :
     forall Γ Δ k,
-      (Δ ++ Γ) |~ Integer k : DInteger -> Γ ;;; Δ ||~ Integer k : DInteger
+      (Γ +++ Δ) |~ Integer k : DInteger -> Γ ;;; Δ ||~ Integer k : DInteger
   | r_has_type_rw_ro_BinOp :
     forall Γ Δ e1 e2 τ op,
-      (Δ ++ Γ) |~ BinOp op e1 e2 : τ -> Γ ;;; Δ ||~ BinOp op e1 e2 : τ
+      (Γ +++ Δ) |~ BinOp op e1 e2 : τ -> Γ ;;; Δ ||~ BinOp op e1 e2 : τ
   | r_has_type_rw_ro_UniOp :
     forall Γ Δ e τ op,
-      (Δ ++ Γ) |~ UniOp op e : τ -> Γ ;;; Δ ||~ UniOp op e : τ
+      (Γ +++ Δ) |~ UniOp op e : τ -> Γ ;;; Δ ||~ UniOp op e : τ
   | r_has_type_rw_ro_Skip :
     forall Γ Δ ,
-      (Δ ++ Γ) |~ Skip : DUnit -> Γ ;;; Δ ||~ Skip : DUnit
+      (Γ +++ Δ) |~ Skip : DUnit -> Γ ;;; Δ ||~ Skip : DUnit
                                                        
   | r_has_type_rw_ro_Lim :
     forall Γ Δ  e,
-      (Δ ++ Γ) |~ Lim e : DReal -> Γ ;;; Δ ||~ Lim e : DReal
+      (Γ +++ Δ) |~ Lim e : DReal -> Γ ;;; Δ ||~ Lim e : DReal
 
   (* sequential *)
   | r_has_type_rw_Seq : forall Γ Δ c1 c2 τ, Γ ;;; Δ ||~ c1 : DUnit -> Γ ;;; Δ ||~ c2 : τ -> Γ ;;; Δ ||~ (Seq c1 c2) : τ 
                                                                                                                        
   (* assignment *)
-  | r_has_type_rw_Assign : forall Γ Δ e τ k, assignable Δ τ k -> (Δ ++ Γ) |~ e : τ -> Γ ;;; Δ ||~ Assign k e : DUnit
+  | r_has_type_rw_Assign : forall Γ Δ e τ k, assignable Δ τ k -> (Γ +++ Δ) |~ e : τ -> Γ ;;; Δ ||~ Assign k e : DUnit
 
   (* newvar *)
-  | r_has_type_rw_Newvar : forall Γ Δ e c σ τ, (Δ ++ Γ) |~ e : σ -> Γ ;;; σ :: Δ ||~ c : τ -> Γ ;;; Δ ||~ Newvar e c : τ
+  | r_has_type_rw_Newvar : forall Γ Δ e c σ τ, (Γ +++ Δ) |~ e : σ -> Γ ;;; Δ ::: σ ||~ c : τ -> Γ ;;; Δ ||~ Newvar e c : τ
 
   (* cond *)
-  | r_has_type_rw_Cond : forall Γ Δ e c1 c2 τ, (Δ ++ Γ) |~ e : DBoolean -> Γ ;;; Δ ||~ c1 : τ -> Γ ;;; Δ ||~ c2 : τ -> Γ ;;; Δ ||~ Cond e c1 c2 : τ
+  | r_has_type_rw_Cond : forall Γ Δ e c1 c2 τ, (Γ +++ Δ) |~ e : DBoolean -> Γ ;;; Δ ||~ c1 : τ -> Γ ;;; Δ ||~ c2 : τ -> Γ ;;; Δ ||~ Cond e c1 c2 : τ
 
   (* case *)
-  (* | r_has_type_rw_Case : forall Γ Δ e1 c1 e2 c2 τ, (Δ ++ Γ) |~ e1 : DBoolean -> Γ ;;; Δ ||~ c1 : τ -> (Δ ++ Γ) |~ e2 : DBoolean -> Γ ;;; Δ ||~ c2 : τ -> Γ ;;; Δ ||~ Case e1 c1 e2 c2 : τ *)
+  (* | r_has_type_rw_Case : forall Γ Δ e1 c1 e2 c2 τ, (Γ +++ Δ) |~ e1 : DBoolean -> Γ ;;; Δ ||~ c1 : τ -> (Γ +++ Δ) |~ e2 : DBoolean -> Γ ;;; Δ ||~ c2 : τ -> Γ ;;; Δ ||~ Case e1 c1 e2 c2 : τ *)
 
   | r_has_type_rw_CaseList : forall Γ Δ l τ,
       (1 <= length l)%nat -> 
-      ForallT (fun ec => ((Δ ++ Γ) |~ fst ec : DBoolean) * (Γ ;;; Δ ||~ snd ec : τ))%type l ->
+      ForallT (fun ec => ((Γ +++ Δ) |~ fst ec : DBoolean) * (Γ ;;; Δ ||~ snd ec : τ))%type l ->
       Γ ;;; Δ ||~ CaseList l : τ
                                  
   (* while *)
-  | r_has_type_rw_While : forall Γ Δ e c, (Δ ++ Γ) |~ e : DBoolean -> Γ ;;; Δ ||~ c : DUnit -> Γ ;;; Δ ||~ While e c : DUnit
+  | r_has_type_rw_While : forall Γ Δ e c, (Γ +++ Δ) |~ e : DBoolean -> Γ ;;; Δ ||~ c : DUnit -> Γ ;;; Δ ||~ While e c : DUnit
                                                                                                                          
                                                                                                                          
   where " Γ |~ c : τ " := (r_has_type_ro Γ c τ) and " Γ ;;; Δ ||~ c : τ " := (r_has_type_rw  Γ Δ c τ).
 
-
-  Fixpoint r_has_type_rw_move Γ Δ1 Δ2 e τ (w : (Δ2 ++ Γ) ;;; Δ1 ||~ e : τ) {struct w}: Γ ;;; (Δ1 ++ Δ2) ||~ e : τ.
+  Open Scope list_scope.
+  Fixpoint r_has_type_rw_move Γ Δ1 Δ2 e τ (w : (Γ +++ Δ2) ;;; Δ1 ||~ e : τ) {struct w}: Γ ;;; (Δ2 +++ Δ1) ||~ e : τ.
   Proof.
     inversion w.
     apply r_has_type_rw_ro_Var; auto.
@@ -697,7 +697,7 @@ End Unambiguity.
 Section InverseTyping.
 
 
-  Fixpoint has_type_ro_Var_S_inverse {Γ} {τ} {σ} {k} (w : (σ :: Γ) |- Var (S k) : τ) : Γ |- Var k : τ.
+  Fixpoint has_type_ro_Var_S_inverse {Γ} {τ} {σ} {k} (w : (Γ ::: σ) |- Var (S k) : τ) : Γ |- Var k : τ.
   Proof.
     dependent destruction w.
     dependent destruction h.
@@ -707,7 +707,7 @@ Section InverseTyping.
   Defined.  
 
 
-  Lemma assignable_S_inverse {Γ} {τ} {σ} {k} (a : assignable (σ :: Γ) τ (S k)) :
+  Lemma assignable_S_inverse {Γ} {τ} {σ} {k} (a : assignable (Γ ::: σ) τ (S k)) :
     assignable Γ τ k.
   Proof.
     dependent destruction a.
@@ -812,7 +812,7 @@ Section InverseTyping.
     exact (pair w1 w2).
   Defined.
 
-  Fixpoint has_type_ro_Lim_inverse Γ e (w : Γ |- (Lim e) : REAL) : ((INTEGER :: Γ) |- e  : REAL).
+  Fixpoint has_type_ro_Lim_inverse Γ e (w : Γ |- (Lim e) : REAL) : ((Γ ::: INTEGER) |- e  : REAL).
   Proof.
     dependent destruction w.
     dependent destruction h.
@@ -833,7 +833,7 @@ Section InverseTyping.
 
 
   Fixpoint has_type_rw_Cond_inverse Γ Δ e c1 c2 τ (w : Γ ;;; Δ ||- (IF e THEN c1 ELSE c2 END) : τ) :
-    (((Δ ++ Γ) |- e : BOOL) * (Γ ;;; Δ ||- c1 : τ) * (Γ ;;; Δ ||- c2 : τ))%type.
+    (((Γ +++ Δ) |- e : BOOL) * (Γ ;;; Δ ||- c1 : τ) * (Γ ;;; Δ ||- c2 : τ))%type.
   Proof.
     apply has_type_rw_r_has_type_rw in w.
     dependent destruction w.
@@ -844,7 +844,7 @@ Section InverseTyping.
   Defined.
 
   Fixpoint has_type_rw_CaseList_inverse Γ Δ l τ (w : Γ ;;; Δ ||- (CaseList l) : τ) :
-    (ForallT (fun ec : exp * exp => (((Δ ++ Γ) |- fst ec : BOOL) * (Γ ;;; Δ ||- snd ec : τ))%type) l).
+    (ForallT (fun ec : exp * exp => (((Γ +++ Δ) |- fst ec : BOOL) * (Γ ;;; Δ ||- snd ec : τ))%type) l).
   Proof.
     apply has_type_rw_r_has_type_rw in w.
     dependent destruction w.
@@ -860,7 +860,7 @@ Section InverseTyping.
   Defined.
 
   Fixpoint has_type_rw_While_inverse {Γ Δ} {e c} (w : Γ ;;; Δ ||-(WHILE e DO c END) : UNIT) :
-    ((Δ ++ Γ) |- e : BOOL) * (Γ ;;; Δ ||- c : UNIT)%type.
+    ((Γ +++ Δ) |- e : BOOL) * (Γ ;;; Δ ||- c : UNIT)%type.
   Proof.
     apply has_type_rw_r_has_type_rw in w.
     dependent destruction w.
@@ -870,7 +870,7 @@ Section InverseTyping.
   Defined.
   
   Fixpoint has_type_rw_Assign_inverse {Γ Δ} {k} {e} (w : Γ ;;; Δ ||-(Assign k e) : UNIT) :
-    {τ & (assignable Δ τ k) * ((Δ ++ Γ) |- e : τ)} %type.
+    {τ & (assignable Δ τ k) * ((Γ +++ Δ) |- e : τ)} %type.
   Proof.
     apply has_type_rw_r_has_type_rw in w.
     dependent destruction w.
@@ -880,7 +880,7 @@ Section InverseTyping.
   Defined.
 
   Fixpoint has_type_rw_Newvar_inverse {Γ Δ} {e c} {τ} (w : Γ ;;; Δ ||- (NEWVAR e IN c) : τ) :
-    {σ &     ((Δ ++ Γ) |- e : σ) * (Γ ;;; (σ :: Δ) ||- c : τ) }%type.
+    {σ &     ((Γ +++ Δ) |- e : σ) * (Γ ;;; (Δ ::: σ) ||- c : τ) }%type.
   Proof.
     apply has_type_rw_r_has_type_rw in w.
     dependent destruction w.
@@ -1044,27 +1044,27 @@ Section InferTyping.
 End InferTyping.
 
   (* Fixpoint has_type_rw_Assign Γ Δ e τ k (w : Γ ;;; Δ ||- (LET k := e)) :   : forall (Γ : list datatype) (Δ : ctx) (e : exp) (τ : datatype) (k : nat), *)
-  (*                        assignable Δ τ k -> (Δ ++ Γ) |- e : τ -> Γ; Δ ||- (LET k := e) : UNIT *)
+  (*                        assignable Δ τ k -> (Γ +++ Δ) |- e : τ -> Γ; Δ ||- (LET k := e) : UNIT *)
   (* Fixpoint has_type_rw_Newvar Γ c :  : forall (Γ Δ : list datatype) (e c : exp) (σ τ : datatype), *)
-  (*                        (Δ ++ Γ) |- e : σ -> Γ; (σ :: Δ) ||- c : τ -> Γ; Δ ||- (NEWVAR e IN c) : τ *)
+  (*                        (Γ +++ Δ) |- e : σ -> Γ; (σ :: Δ) ||- c : τ -> Γ; Δ ||- (NEWVAR e IN c) : τ *)
   (* Fixpoint has_type_rw_Cond Γ c :  : forall (Γ Δ : list datatype) (e c1 c2 : exp) (τ : datatype), *)
-  (*                      (Δ ++ Γ) |- e : BOOL -> *)
+  (*                      (Γ +++ Δ) |- e : BOOL -> *)
   (*                      Γ; Δ ||- c1 : τ -> Γ; Δ ||- c2 : τ -> Γ; Δ ||- (IF e THEN c1 ELSE c2 END) : τ *)
   (* Fixpoint has_type_rw_Case Γ c :  : forall (Γ Δ : list datatype) (e1 c1 e2 c2 : exp) (τ : datatype), *)
-  (*                      (Δ ++ Γ) |- e1 : BOOL -> *)
+  (*                      (Γ +++ Δ) |- e1 : BOOL -> *)
   (*                      Γ; Δ ||- c1 : τ -> *)
-  (*                      (Δ ++ Γ) |- e2 : BOOL -> *)
+  (*                      (Γ +++ Δ) |- e2 : BOOL -> *)
   (*                      Γ; Δ ||- c2 : τ -> Γ; Δ ||- (CASE e1 ==> c1 OR e2 ==> c2 END) : τ *)
   (* Fixpoint has_type_rw_CaseList Γ c :  : forall (Γ Δ : list datatype) (l : list (exp * exp)) (τ : datatype), *)
   (*                          1 <= length l -> *)
   (*                          ForallT *)
-  (*                            (fun ec : exp * exp => (((Δ ++ Γ) |- fst ec : BOOL) * (Γ; Δ ||- snd ec : τ))%type) l -> *)
+  (*                            (fun ec : exp * exp => (((Γ +++ Δ) |- fst ec : BOOL) * (Γ; Δ ||- snd ec : τ))%type) l -> *)
   (*                          Γ; Δ ||- CaseList l : τ *)
   (* Fixpoint has_type_rw_While Γ c :  : forall (Γ Δ : list datatype) (e c : exp), *)
-  (*                       (Δ ++ Γ) |- e : BOOL -> Γ; Δ ||- c : UNIT -> Γ; Δ ||- (WHILE e DO c END) : UNIT. *)
+  (*                       (Γ +++ Δ) |- e : BOOL -> Γ; Δ ||- c : UNIT -> Γ; Δ ||- (WHILE e DO c END) : UNIT. *)
 
-Fixpoint r_has_type_ro_add_auxiliary Γ e τ (w : Γ |~ e : τ) Γ' {struct w}: (Γ ++ Γ') |~ e : τ
-with r_has_type_rw_add_auxiliary Γ Δ e τ (w : Γ ;;; Δ ||~ e : τ) Γ' {struct w} : (Γ ++ Γ') ;;; Δ ||~ e : τ.
+Fixpoint r_has_type_ro_add_auxiliary Γ e τ (w : Γ |~ e : τ) Γ' {struct w}: (Γ' +++ Γ) |~ e : τ
+with r_has_type_rw_add_auxiliary Γ Δ e τ (w : Γ ;;; Δ ||~ e : τ) Γ' {struct w} : (Γ' +++ Γ) ;;; Δ ||~ e : τ.
 Proof.
   dependent destruction w;
     try
@@ -1121,7 +1121,7 @@ Proof.
   apply r_has_type_ro_add_auxiliary; auto.
 Defined.
 
-Lemma has_type_ro_add_auxiliary Γ e τ (w : Γ |- e : τ) Γ': (Γ ++ Γ') |- e : τ.
+Lemma has_type_ro_add_auxiliary Γ e τ (w : Γ |- e : τ) Γ': (Γ' +++ Γ) |- e : τ.
 Proof.
   apply r_has_type_ro_has_type_ro.
   apply r_has_type_ro_add_auxiliary.
@@ -1129,7 +1129,7 @@ Proof.
   exact w.
 Defined.
 
-Lemma has_type_rw_add_auxiliary Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) Γ' : (Γ ++ Γ') ;;; Δ ||- e : τ.
+Lemma has_type_rw_add_auxiliary Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) Γ' : (Γ' +++ Γ) ;;; Δ ||- e : τ.
 Proof.
   apply r_has_type_rw_has_type_rw.
   apply r_has_type_rw_add_auxiliary.
@@ -1140,7 +1140,7 @@ Defined.
 
 Lemma has_type_rw_move
      : forall (Γ : list datatype) (Δ1 : ctx) (Δ2 : list datatype) (e : exp) (τ : datatype),
-    (Δ2 ++ Γ) ;;; Δ1 ||- e : τ -> Γ ;;; (Δ1 ++ Δ2) ||- e : τ.
+    (Γ +++ Δ2) ;;; Δ1 ||- e : τ -> Γ ;;; (Δ2 +++ Δ1) ||- e : τ.
 Proof.
   intros.
   apply r_has_type_rw_has_type_rw.

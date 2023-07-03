@@ -9,25 +9,25 @@ Require Import Clerical.SemanticsProperties.
 Structure ro_prt {Γ : ctx} {e : exp} {τ : datatype} (wty : Γ |- e : τ) :=
   {
     ro_prt_pre : sem_ctx Γ -> Prop ;
-    ro_prt_post : sem_ctx Γ -> sem_datatype τ -> Prop
+    ro_prt_post : sem_ctx Γ * sem_datatype τ -> Prop
   }.
 
 Structure ro_tot {Γ : ctx} {e : exp} {τ : datatype} (wty : Γ |- e : τ) :=
   {
     ro_tot_pre : sem_ctx Γ -> Prop ;
-    ro_tot_post : sem_ctx Γ -> sem_datatype τ ->  Prop
+    ro_tot_post : sem_ctx Γ * sem_datatype τ ->  Prop
   }.
 
 Structure rw_prt {Γ Δ: ctx} {c : exp} {τ : datatype} (wty : Γ ;;; Δ ||- c : τ) :=
   {
-    rw_prt_pre :  sem_ctx Γ -> sem_ctx Δ -> Prop ;
-    rw_prt_post : sem_ctx Γ -> sem_ctx Δ -> sem_datatype τ -> Prop
+    rw_prt_pre :  sem_ctx Γ * sem_ctx Δ -> Prop ;
+    rw_prt_post : sem_ctx Γ * (sem_ctx Δ * sem_datatype τ) -> Prop
   }.
 
 Structure rw_tot {Γ Δ : ctx} {c : exp} {τ : datatype} (wty : Γ ;;; Δ ||- c : τ) :=
   {
-    rw_tot_pre : sem_ctx Γ -> sem_ctx Δ -> Prop ;
-    rw_tot_post : sem_ctx Γ -> sem_ctx Δ -> sem_datatype τ -> Prop
+    rw_tot_pre : sem_ctx Γ * sem_ctx Δ -> Prop ;
+    rw_tot_post : sem_ctx Γ * (sem_ctx Δ * sem_datatype τ) -> Prop
   }.
 
 Definition sem_ro_prt {Γ} {e} {τ} {wty} (t : ro_prt wty) :=
@@ -36,7 +36,7 @@ Definition sem_ro_prt {Γ} {e} {τ} {wty} (t : ro_prt wty) :=
   forall γ, P γ ->
             let V := sem_ro_exp Γ e τ wty γ in
             pdom_neg_is_empty V /\
-              forall v, v ∈ V -> forall v', v = total v' -> Q γ v'.
+              forall v, v ∈ V -> forall v', v = total v' -> Q (γ, v').
 
 Definition sem_ro_tot {Γ} {e} {τ} {wty} (t : ro_tot wty) :=
   let P := ro_tot_pre _ t in
@@ -44,25 +44,25 @@ Definition sem_ro_tot {Γ} {e} {τ} {wty} (t : ro_tot wty) :=
   forall γ, P γ ->
             let V := sem_ro_exp Γ e τ wty γ in
             pdom_neg_is_empty V /\
-              forall v, v ∈ V -> exists v', v = total v' /\ Q γ v'.
+              forall v, v ∈ V -> exists v', v = total v' /\ Q (γ, v').
 
 Definition sem_rw_prt {Γ Δ} {c} {τ} {wty} (t : rw_prt wty) :=
   let P := rw_prt_pre _ t in
   let Q := rw_prt_post _ t in
-  forall γ δ, P γ δ ->
+  forall γ δ, P (γ, δ) ->
             let V := sem_rw_exp Γ Δ c τ wty γ δ in
             pdom_neg_is_empty V /\
               forall v, v ∈ V -> forall v',
-                  v = total v' -> Q γ (fst v') (snd v').
+                  v = total v' -> Q (γ, v').
 
 Definition sem_rw_tot {Γ Δ} {c} {τ} {wty} (t : rw_tot wty) :=
   let P := rw_tot_pre _ t in
   let Q := rw_tot_post _ t in
-  forall γ δ, P γ δ ->
+  forall γ δ, P (γ, δ) ->
               let V := sem_rw_exp Γ Δ c τ wty γ δ in
               pdom_neg_is_empty V /\
                 forall v, v ∈ V -> exists v',
-                  v = total v' /\ Q γ (fst v') (snd v').
+                  v = total v' /\ Q (γ, v').
 
 Definition mk_ro_prt {Γ} {e} {τ} (w : Γ |- e : τ) P Q : ro_prt w
   := {| ro_prt_pre := P ; ro_prt_post := Q |}.
@@ -78,16 +78,16 @@ Definition mk_rw_tot {Γ Δ} {e} {τ} (w : Γ ;;; Δ ||- e : τ) P Q : rw_tot w
 
 Declare Scope clerical_soundness_scope.
 Notation " [| x ':' Γ |] '|=' w '{{' ϕ '}}' e '{{' y ':' τ '|' ψ '}}ᵖ' " 
-  := (sem_ro_prt (@mk_ro_prt Γ e τ w (fun x => ϕ) (fun x y => ψ)))
+  := (sem_ro_prt (@mk_ro_prt Γ e τ w (fun x => ϕ) (fun '(x, y) => ψ)))
        (at level 50, Γ, w, ϕ, e, y, τ, ψ at next level, x pattern) : clerical_soundness_scope.
 Notation " [| x ':' Γ |] '|=' w '{{' ϕ '}}' e '{{' y ':' τ '|' ψ '}}ᵗ' "
-  := (sem_ro_tot (@mk_ro_tot Γ e τ w (fun x => ϕ) (fun x y => ψ)))
+  := (sem_ro_tot (@mk_ro_tot Γ e τ w (fun x => ϕ) (fun '(x, y) => ψ)))
        (at level 50, Γ, w, ϕ, e, y, τ, ψ at next level, x pattern) : clerical_soundness_scope.
 Notation " [| x ':' Γ  ';;;'   y ':' Δ |] '||=' w '{{' ϕ '}}' e '{{' z ':' τ '|' ψ '}}ᵖ' "
-  := (sem_rw_prt (@mk_rw_prt Γ Δ e τ w (fun x y => ϕ) (fun x y z => ψ)))
+  := (sem_rw_prt (@mk_rw_prt Γ Δ e τ w (fun '(x, y) => ϕ) (fun '(x, (y, z)) => ψ)))
        (at level 50, Γ, w, ϕ, e, z, τ, ψ at next level, x pattern, y pattern) : clerical_soundness_scope.
 Notation " [| x ':' Γ  ';;;'   y ':' Δ |] '||=' w '{{' ϕ '}}' e '{{' z ':' τ '|' ψ '}}ᵗ' "
-  := (sem_rw_tot (@mk_rw_tot Γ Δ e τ w (fun x y => ϕ) (fun x y z => ψ)))
+  := (sem_rw_tot (@mk_rw_tot Γ Δ e τ w (fun '(x, y) => ϕ) (fun '(x, (y, z)) => ψ)))
        (at level 50, Γ, w, ϕ, e, z, τ, ψ at next level, x pattern, y pattern) : clerical_soundness_scope.
 Open Scope clerical_soundness_scope.
 (* Now let us prove some properties *)
@@ -95,23 +95,23 @@ Open Scope clerical_soundness_scope.
 
 
 Notation " [ x : Γ ] |- {{ y : τ | ϕ }} "
-  := (fun x : sem_ctx Γ => fun y : sem_datatype τ => ϕ)
+  := (fun '((x, y) : sem_ctx Γ * sem_datatype τ) =>  ϕ)
        (at level 50,  Γ, ϕ, y, τ at next level, x pattern) : clerical_scope.
 Notation " [ x : Γ ;;; y : Δ ] ||- {{ z : τ | ϕ }} "
-  := (fun x : sem_ctx Γ => fun y : sem_ctx Δ => fun z : sem_datatype τ => ϕ)
+  := (fun '((x, (y, z)) : sem_ctx Γ * (sem_ctx Δ * sem_datatype τ)) =>  ϕ)
        (at level 50,  Γ, Δ, ϕ, z, τ at next level, x pattern, y pattern) : clerical_scope.
 Notation " [ x : Γ ] |- {{ ϕ }} "
   := (fun x : sem_ctx Γ => ϕ)
        (at level 50,  Γ, ϕ at next level, x pattern) : clerical_scope.
 Notation " [ x : Γ ;;; y : Δ ] ||- {{ ϕ }} "
-  := (fun x : sem_ctx Γ => fun y : sem_ctx Δ => ϕ)
+  := (fun '((x, y) :  sem_ctx Γ * sem_ctx Δ) => ϕ)
        (at level 50,  Γ, Δ, ϕ at next level, x pattern, y pattern) : clerical_scope.
 
 
 Lemma sem_ro_prt_excludes_bot_is_tot : forall Γ e τ ϕ ψ (w : Γ |- e : τ), 
-    [|γ : Γ|] |= w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵖ -> 
+    [|γ : Γ|] |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ -> 
     (forall γ, ϕ γ -> ⊥ ∉ sem_ro_exp _ _ _ w γ) ->
-    [|γ : Γ|] |= w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵗ.
+    [|γ : Γ|] |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ.
 Proof.
   intros Γ e τ ϕ ψ w h1 h2 γ m; simpl; simpl in m.
   destruct (h1 γ m) as [h3 h4]; split; auto.

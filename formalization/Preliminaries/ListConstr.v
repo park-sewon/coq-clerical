@@ -1,6 +1,13 @@
 Require Import Coq.Program.Equality.
 Require Import List.
 
+Close Scope list_scope.
+(* we use list notation where the head is on the right to be consistent with the paper.  *)
+
+Notation "a ::: b" := (cons b a) (at level 60, right associativity).
+Notation "a +++ b" := (app b a) (right associativity, at level 60).
+
+
 (* List forall in type level; cf. the Forall in List library is for Prop-level type families *)
 Inductive ForallT {A} (P : A -> Type): list A -> Type :=
 | ForallT_nil : ForallT P nil

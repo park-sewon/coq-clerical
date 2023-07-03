@@ -36,7 +36,7 @@ Definition sem_datatype (τ : datatype) : Type :=
 Fixpoint sem_ctx (lst : ctx) : Type :=
   match lst with
   | nil => unit
-  | cons t lst => sem_datatype t * sem_ctx lst
+  | lst ::: t => sem_ctx lst * sem_datatype t
   end.
 
 
@@ -49,18 +49,21 @@ Proof.
 
   (* is_writable_0 *)
   {
-    exact (v, snd γ).
+    simpl in γ.
+    exact (fst γ, v).
   }
 
   (* is_writable_S *)
   {
     split.
-    - exact (fst γ).
-    - apply (IHi v (snd γ)).
+    -
+      apply (IHi v (fst γ)).
+    -
+      exact (snd γ).
   }
 Defined.
 
-Definition assign_wty_assignable  Γ Δ k e τ (w : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit) : assignable Δ τ k.
+Definition assign_wty_assignable  Γ Δ k e τ (w : (Γ +++ Δ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit) : assignable Δ τ k.
 Proof.
   intros.
   inversion w'.
@@ -70,7 +73,7 @@ Proof.
   exact H3.
 Defined.
 
-Definition update' {Γ Δ} {k} {e} {τ} (w : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit) : sem_ctx Δ -> sem_datatype τ -> sem_ctx Δ.
+Definition update' {Γ Δ} {k} {e} {τ} (w : (Γ +++ Δ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit) : sem_ctx Δ -> sem_datatype τ -> sem_ctx Δ.
 Proof.
   intros δ v.
   exact (update _ v δ (assign_wty_assignable _ _ _ _ _ w w')).
@@ -88,98 +91,99 @@ Section TediousList.
    - snd_app : sem_ctx (Γ ++ Δ) -> sem_ctx Δ
    and prove their properties. *)
   
-  Definition tedious_sem_app Γ Δ : sem_ctx (Γ ++ Δ) -> (sem_ctx Γ) * sem_ctx Δ.
+  Definition tedious_sem_app Δ Γ : sem_ctx (Δ +++ Γ) -> sem_ctx Δ *  (sem_ctx Γ).
   Proof.
     intro.
     induction Γ.
     simpl.
     simpl in X.
-    exact (tt, X).
+    exact (X, tt).
     simpl.
     simpl in X.
     destruct X.
-    destruct (IHΓ s0).
-    exact ((s, s1), s2).
+    destruct (IHΓ s).
+    exact (s1, (s2, s0)).
   Defined.
 
-  Definition tedious_prod_sem Γ Δ : (sem_ctx Γ) * sem_ctx Δ -> sem_ctx (Γ ++ Δ).
+  Definition tedious_prod_sem Δ Γ : sem_ctx Δ *  (sem_ctx Γ)  -> sem_ctx (Δ +++ Γ).
   Proof.
     intros.
     induction Γ.
     simpl.
     simpl in X.
-    destruct X as [_ X]; exact X.
+    destruct X as [X _]; exact X.
     simpl.
     destruct X.
-    simpl in s.
-    destruct s.
+    simpl in s0.
+    destruct s0.
     split.
-    exact s.
-    exact (IHΓ (s1, s0)).
+    exact (IHΓ (s, s0)). 
+    exact s1.
   Defined.
   
   Notation " ( γ ; δ ) " := (tedious_prod_sem _ _  (γ, δ)).
 
-  Definition fst_app {Γ Δ} : sem_ctx (Γ ++ Δ) -> sem_ctx Γ.
+  Definition fst_app {Γ Δ} : sem_ctx (Γ +++ Δ) -> sem_ctx Γ.
   Proof.
     intro γδ.
     destruct (tedious_sem_app _ _ γδ) as [γ _].
     exact γ.
   Defined.
 
-  Definition snd_app {Γ Δ} : sem_ctx (Γ ++ Δ) -> sem_ctx Δ.
+  Definition snd_app {Γ Δ} : sem_ctx (Γ +++ Δ) -> sem_ctx Δ.
   Proof.
     intro γδ.
     destruct (tedious_sem_app _ _ γδ) as [_ δ].
     exact δ.
   Defined.
 
-  Definition pair_app {Γ Δ} : sem_ctx Γ -> sem_ctx Δ -> sem_ctx (Γ ++ Δ).
-  Proof.
-    intros γ δ.
-    apply tedious_prod_sem.
-    exact (γ, δ).
-  Defined.
+
+  (* Definition pair_app {Γ Δ} : sem_ctx Γ -> sem_ctx Δ -> sem_ctx (Γ ++ Δ). *)
+  (* Proof. *)
+  (*   intros γ δ. *)
+  (*   apply tedious_prod_sem. *)
+  (*   exact (γ, δ). *)
+  (* Defined. *)
 
   Lemma tedious_equiv_1 : forall Δ Γ δ γ,  tedious_sem_app Δ Γ (tedious_prod_sem Δ Γ (δ, γ)) = (δ, γ).
   Proof.
     intros.
-    induction Δ.
-    simpl in δ.
-    destruct δ.
-    simpl.
-    auto.
-    simpl.
-    simpl in δ.
-    destruct δ.
-    rewrite IHΔ.
-    auto.
-  Defined.
-
-  Lemma tedious_equiv_2_snd : forall Δ Γ τ  (γ : sem_ctx ((τ :: Δ) ++ Γ)), snd_app γ = snd_app (snd γ).
-  Proof.
-    intros.
-    unfold snd_app.
-    simpl.
+    induction Γ.
+    simpl in γ.
     destruct γ.
     simpl.
-    destruct (tedious_sem_app Δ Γ s0); auto.
+    auto.
+    simpl.
+    simpl in γ.
+    destruct γ.
+    rewrite IHΓ.
+    auto.
   Defined.
 
-  Lemma tedious_equiv_2_fst : forall Δ Γ τ  (γ : sem_ctx ((τ :: Δ) ++  Γ)), fst_app γ = (fst γ, fst_app (snd γ)).
+  Lemma tedious_equiv_2_fst : forall Δ Γ τ (γ : sem_ctx (Γ +++ (Δ ::: τ))), fst_app γ = fst_app (fst γ).
   Proof.
-    intro.
     intros.
     unfold fst_app.
     simpl.
     destruct γ.
-    simpl.  
-    destruct (tedious_sem_app Δ Γ s0); auto.
+    simpl.
+    destruct (tedious_sem_app _ _ s); auto.
   Defined.
 
-  Lemma tedious_equiv_2 {Δ Γ} (γ : sem_ctx (Δ ++ Γ)) : γ = (fst_app γ; snd_app γ). 
+  Lemma tedious_equiv_2_snd : forall Δ Γ τ (γ : sem_ctx (Γ +++ (Δ ::: τ))), snd_app γ = (snd_app (fst γ), snd γ).
   Proof.
-    dependent induction Δ.
+    intro.
+    intros.
+    unfold snd_app.
+    simpl.
+    destruct γ.
+    simpl.  
+    destruct (tedious_sem_app _ _ s); auto.
+  Defined.
+
+  Lemma tedious_equiv_2 {Δ Γ} (γ : sem_ctx (Δ +++ Γ)) : γ = (fst_app γ; snd_app γ). 
+  Proof.
+    dependent induction Γ.
     simpl.
     auto.
     simpl.
@@ -189,11 +193,9 @@ Section TediousList.
     simpl.
     rewrite tedious_equiv_2_fst.
     simpl.
-    rewrite <- IHΔ.
+    rewrite <- IHΓ.
     auto.
   Defined.
-
-  
 
   Lemma tedious_equiv_3 : forall {Γ Δ} h, tedious_prod_sem Δ Γ (tedious_sem_app Δ Γ h) = h.
   Proof.
@@ -205,7 +207,6 @@ Section TediousList.
     rewrite  tedious_equiv_1.
     reflexivity.
   Defined.
-
   
   Lemma tedious_equiv_snd : forall Γ Δ (x : sem_ctx Γ) (y : sem_ctx Δ), snd_app (x; y) = y.
   Proof.
@@ -230,25 +231,26 @@ Section TediousList.
     apply tedious_equiv_1.
   Defined.
   
-  Lemma tedious_equiv_4_fst : forall Δ x, @snd_app nil Δ x = x. 
+  Lemma tedious_equiv_4_fst : forall Δ x, @fst_app Δ nil x = x. 
   Proof.
     intros.
     simpl in x.
-    unfold snd_app; simpl; auto.
+    unfold fst_app; simpl; auto.
   Defined.
-
-
   
 End TediousList.
+
 Notation " ( γ ; δ ) " := (tedious_prod_sem _ _  (γ, δ)).
-  Ltac reduce_tedious_tactic h :=
-    match type of h with
-    | ltac_No_arg =>
-        repeat (simpl; try rewrite <- tedious_equiv_2; try rewrite tedious_equiv_fst; try rewrite tedious_equiv_snd;
-                try rewrite tedious_equiv_2_fst; try rewrite tedious_equiv_2_snd; try rewrite tedious_equiv_4_fst)
-    | _ =>
-        repeat (simpl in h; try rewrite <- tedious_equiv_2 in h; try rewrite tedious_equiv_fst in h; try rewrite tedious_equiv_snd in h; try rewrite tedious_equiv_2_fst in h; try rewrite tedious_equiv_2_snd in h; try rewrite tedious_equiv_4_fst in h)
-    end.
+
+Ltac reduce_tedious_tactic h :=
+  match type of h with
+  | ltac_No_arg =>
+      repeat (simpl; try rewrite <- tedious_equiv_2; try rewrite tedious_equiv_fst; try rewrite tedious_equiv_snd;
+              try rewrite tedious_equiv_2_fst; try rewrite tedious_equiv_2_snd; try rewrite tedious_equiv_4_fst)
+  | _ =>
+      repeat (simpl in h; try rewrite <- tedious_equiv_2 in h; try rewrite tedious_equiv_fst in h; try rewrite tedious_equiv_snd in h; try rewrite tedious_equiv_2_fst in h; try rewrite tedious_equiv_2_snd in h; try rewrite tedious_equiv_4_fst in h)
+  end.
+
 Tactic Notation "reduce_tedious" constr(x1) :=
   reduce_tedious_tactic x1 .
 
@@ -256,6 +258,7 @@ Tactic Notation "reduce_tedious" :=
   reduce_tedious_tactic ltac_no_arg.
 
 Section AccessState.
+  
   Fixpoint var_access  Γ k τ (w: Γ |- Var k : τ) : sem_ctx Γ -> sem_datatype τ.
   Proof.
     inversion w.
@@ -265,11 +268,11 @@ Section AccessState.
     intro.
     simpl in X.
     destruct X.
-    exact s.
+    exact s0.
     intro.
     apply (var_access _ _ _ H1).
     destruct X.
-    exact s0.
+    exact s.
   Defined.
 
   Fixpoint p_var_access  Γ k τ (w : r_has_type_ro Γ (Var k) τ) : sem_ctx Γ -> sem_datatype τ.
@@ -278,19 +281,19 @@ Section AccessState.
     intro.
     simpl in X.
     destruct X.
-    exact s.
+    exact s0.
     intro.
     apply (p_var_access _ _ _ H1).
     destruct X.
-    exact s0.
+    exact s.
   Defined.
 
-  Fixpoint var_access_Var_0 Γ τ (w : (τ :: Γ) |- Var 0 : τ) {struct w} : forall x (γ : sem_ctx Γ), var_access (τ :: Γ) 0 τ w (x, γ) = x.
+  Fixpoint var_access_Var_0 Γ τ (w : (Γ ::: τ) |- Var 0 : τ) {struct w} : forall x (γ : sem_ctx Γ), var_access (Γ ::: τ) 0 τ w (γ, x) = x.
   Proof.
     intros.
     dependent destruction w.
     dependent destruction h.
-    assert (var_access (τ :: Γ) 0 τ (has_type_ro_rw (τ :: Γ) (VAR 0) τ (has_type_rw_ro (τ :: Γ) nil (VAR 0) τ h)) (x, γ) = var_access _ _ _ h (x, γ)).
+    assert (var_access (Γ ::: τ) 0 τ (has_type_ro_rw (Γ ::: τ) (VAR 0) τ (has_type_rw_ro (Γ ::: τ) nil (VAR 0) τ h)) (γ , x) = var_access _ _ _ h (γ , x)).
     auto.
     rewrite H.
     apply var_access_Var_0.
@@ -299,7 +302,7 @@ Section AccessState.
     auto.  
   Defined.
 
-  Fixpoint has_type_ro_Var_S_inv Γ k τ σ (w : (τ :: Γ) |- Var (S k) : σ) : Γ |- Var k : σ.
+  Fixpoint has_type_ro_Var_S_inv Γ k τ σ (w : (Γ ::: τ) |- Var (S k) : σ) : Γ |- Var k : σ.
   Proof.
     dependent destruction w.
     dependent destruction h.
@@ -307,16 +310,16 @@ Section AccessState.
     exact w.
   Defined.
 
-  Fixpoint var_access_Var_S Γ k τ σ (w : (τ :: Γ) |- Var (S k) : σ) {struct w} : forall x (γ : sem_ctx Γ),
-      var_access (τ :: Γ) (S k) σ w (x, γ) = var_access Γ k σ (has_type_ro_Var_S_inv _ _ _ _ w) γ .
+  Fixpoint var_access_Var_S Γ k τ σ (w : (Γ ::: τ) |- Var (S k) : σ) {struct w} : forall x (γ : sem_ctx Γ),
+      var_access (Γ ::: τ) (S k) σ w (γ, x) = var_access Γ k σ (has_type_ro_Var_S_inv _ _ _ _ w) γ .
   Proof.
     intros.
     dependent destruction w.
     dependent destruction h.
-    assert (var_access (τ :: Γ) (S k) τ0 (has_type_ro_rw (τ :: Γ) (VAR S k) τ0 (has_type_rw_ro (τ :: Γ) nil (VAR S k) τ0 h)) (x, γ) = var_access _ _ _ h (x, γ)).
+    assert (var_access (Γ ::: τ) (S k) τ0 (has_type_ro_rw (Γ ::: τ) (VAR S k) τ0 (has_type_rw_ro (Γ ::: τ) nil (VAR S k) τ0 h)) (γ, x) = var_access _ _ _ h (γ, x)).
     auto.
     rewrite H.
-    assert ((has_type_ro_Var_S_inv Γ k τ τ0 (has_type_ro_rw (τ :: Γ) (VAR S k) τ0 (has_type_rw_ro (τ :: Γ) nil (VAR S k) τ0 h))) = (has_type_ro_Var_S_inv Γ k τ τ0 h)).
+    assert ((has_type_ro_Var_S_inv Γ k τ τ0 (has_type_ro_rw (Γ ::: τ) (VAR S k) τ0 (has_type_rw_ro (Γ ::: τ) nil (VAR S k) τ0 h))) = (has_type_ro_Var_S_inv Γ k τ τ0 h)).
     simpl.
     easy_rewrite_uip.
     reflexivity.
@@ -357,7 +360,7 @@ Section AccessState.
   Defined.
 
   Fixpoint var_access_app  Γ γ k τ w Δ δ w':
-    var_access Γ k τ w γ = var_access (Γ ++ Δ) k τ w' (γ ; δ).
+    var_access Γ k τ w γ = var_access (Δ +++ Γ) k τ w' (δ ; γ).
   Proof.
     intros.
     dependent induction w.
@@ -374,9 +377,10 @@ Section AccessState.
     destruct γ.
     rewrite var_access_Var_S.
     
-    rewrite (var_access_app Γ s0 k0 τ w Δ δ (has_type_ro_Var_S_inv (Γ ++ Δ) k0 σ τ w')).
+    rewrite (var_access_app Γ _ k0 τ w Δ δ (has_type_ro_Var_S_inv _ k0 σ τ w')).
     reflexivity.
   Qed.
+
 End AccessState.
 
 Fixpoint sem_ro_exp (Γ : ctx) (e : exp) (τ : datatype) (D : Γ |- e : τ) {struct D} :
@@ -393,12 +397,12 @@ Proof.
 
     (* | has_type_ro_Var_0 *)
     simpl in γ.
-    exact (pdom_unit (fst γ)).
+    exact (pdom_unit (snd γ)).
 
     (* | has_type_ro_Var_S *)
     simpl in γ.
     (* exact (IHD (snd γ)). *)
-    exact (sem_ro_exp _ _ _ D (snd γ)).
+    exact (sem_ro_exp _ _ _ D (fst γ)).
     
     (* | has_type_ro_True *)
     exact (pdom_unit true).
@@ -470,7 +474,7 @@ Proof.
     exact (pdom_bind2 Rltb x y).
 
     (* | has_type_ro_Lim *)
-    exact (Rlim (fun x : Z => sem_ro_exp _ _ _ D (x, γ))). 
+    exact (Rlim (fun x : Z => sem_ro_exp _ _ _ D (γ, x))). 
 
 
   - (* read write commands*)
@@ -478,7 +482,7 @@ Proof.
     dependent destruction D; intros γ δ.
 
     (* has_type_rw_ro *)
-    exact (pdom_lift (fun x => (δ, x)) (sem_ro_exp _ _ _ h (δ; γ))).
+    exact (pdom_lift (fun x => (δ, x)) (sem_ro_exp _ _ _ h (γ ; δ))).
     
     (* has_type_rw_Seq *)
     pose proof (sem_rw_exp _ _ _ _ D1 γ) as C1.
@@ -489,17 +493,17 @@ Proof.
     exact δ.
 
     (* has_type_rw_Assign *)
-    pose proof (pdom_lift (fun v => update k v δ a) (sem_ro_exp _ _ _ h (δ; γ))) as V.
+    pose proof (pdom_lift (fun v => update k v δ a) (sem_ro_exp _ _ _ h (γ ; δ))) as V.
     exact (pdom_lift (fun x => (x, tt)) V).
     
     (* has_type_rw_Newvar *)
-    pose proof (sem_ro_exp _ _ _ h (δ; γ)) as V.
+    pose proof (sem_ro_exp _ _ _ h (γ ; δ)) as V.
     pose proof (sem_rw_exp _ _ _ _ D γ) as f.
-    pose proof (pdom_bind f (pdom_lift (fun v => (v, δ)) V)) as res.
-    exact (pdom_lift (fun x => (snd (fst x), snd x)) res).
+    pose proof (pdom_bind f (pdom_lift (fun v => (δ, v)) V)) as res.
+    exact (pdom_lift (fun x => (fst (fst x), snd x)) res).
 
     (* has_type_rw_Cond *)
-    pose proof (sem_ro_exp _ _ _ h (δ; γ)) as B.
+    pose proof (sem_ro_exp _ _ _ h (γ ; δ)) as B.
     pose proof (sem_rw_exp _ _ _ _ D1 γ δ) as X.
     pose proof (sem_rw_exp _ _ _ _ D2 γ δ) as Y.
     exact (pdom_bind (fun b : bool => if b then X else Y) B).
@@ -517,11 +521,11 @@ Proof.
     induction f.
     exact nil.
     destruct p.
-    exact ((sem_ro_exp _ _ _ h (δ; γ), sem_rw_exp _ _ _ _ h0 γ δ) :: IHf ).
+    exact (IHf ::: (sem_ro_exp _ _ _ h (γ ; δ), sem_rw_exp _ _ _ _ h0 γ δ) ).
     exact (pdom_case_list X).
     
     (* has_type_rw_While *)
-    pose proof (fun d => sem_ro_exp _ _ _ h (d; γ)) as B.
+    pose proof (fun d => sem_ro_exp _ _ _ h (γ ; d)) as B.
     pose proof (fun d => pdom_lift fst (sem_rw_exp _ _ _ _ D γ d)) as C.
     exact (pdom_lift (fun x => (x, tt)) (pdom_while B C δ)).
 Defined.
