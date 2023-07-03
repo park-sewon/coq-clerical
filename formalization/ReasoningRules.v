@@ -25,6 +25,10 @@ Infix "->>" := asrt_imp (at level 80).
 Infix "/\\" := asrt_and (at level 80).
 Infix "\//" := asrt_or (at level 80).
 
+(* notations to be used as placeholders to teach Coq type inference engine
+   when using function types whose input is pattern  *)
+Notation patf := (fun '(_, _) => _) (only parsing). 
+Notation pattf := (fun '(_, (_, _)) => _) (only parsing).
 
 Section Rules.
   Reserved Notation " ' x : Γ |- w {{ ϕ }} e {{ y : τ | ψ }}ᵖ "

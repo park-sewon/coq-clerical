@@ -103,9 +103,6 @@ Proof.
   destruct h1; auto.
 Defined.
 
-Notation patf := (fun '(_, _) => _).
-Notation pattf := (fun '(_, (_, _)) => _).
-
 Fixpoint admissible_ro_prt_pose_readonly Γ e τ (w : Γ |- e : τ) ϕ ψ θ (X : [x : Γ] |- w {{ϕ x}} e {{y : τ | ψ (x, y)}}ᵖ) {struct X} : [x : Γ] |- w {{ϕ x /\ θ x}} e {{y : τ | ψ (x, y) /\ θ x}}ᵖ
 with admissible_ro_tot_pose_readonly Γ e τ (w : Γ |- e : τ) ϕ ψ θ (X : [x : Γ] |- w {{ϕ x}} e {{y : τ | ψ (x, y)}}ᵗ) {struct X} : [x : Γ] |- w {{ϕ x /\ θ x}} e {{y : τ | ψ (x, y) /\ θ x}}ᵗ
 with admissible_rw_prt_pose_readonly Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ θ (X : [γ : Γ ;;; δ : Δ] ||- w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ) {struct X} : [γ : Γ ;;; δ : Δ] ||- w {{ϕ (γ, δ) /\ θ γ}} e {{y : τ | ψ (γ, (δ, y)) /\ θ γ}}ᵖ
