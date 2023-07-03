@@ -24,9 +24,9 @@ Arguments existT {_} {_}.
    which include that about finitely branching trees that are used in while loop termination proof.  *)
 
 Lemma sem_ro_prt_excludes_bot_is_tot : forall Γ e τ ϕ ψ (w : Γ |- e : τ), 
-    [|γ : Γ|] |= w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵖ -> 
+    [|γ : Γ|] |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ -> 
     (forall γ, ϕ γ -> ⊥ ∉ sem_ro_exp _ _ _ w γ) ->
-    [|γ : Γ|] |= w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵗ.
+    [|γ : Γ|] |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ.
 Proof.
   intros Γ e τ ϕ ψ w h1 h2 γ m; simpl; simpl in m.
   destruct (h1 γ m) as [h3 h4]; split; auto.
@@ -51,8 +51,8 @@ Proof.
   easy_rewrite_uip.
   destruct γ; simpl.
   apply eq_refl.
-  assert (sem_ro_exp (σ :: Γ) (VAR S k0) τ (has_type_ro_Var_S Γ σ τ k0 w) γ
-          = sem_ro_exp Γ (Var k0) τ w (snd γ)).
+  assert (sem_ro_exp (Γ ::: σ) (VAR S k0) τ (has_type_ro_Var_S Γ σ τ k0 w) γ
+          = sem_ro_exp Γ (Var k0) τ w (fst γ)).
   simpl.
   auto.
   rewrite H.
@@ -65,7 +65,7 @@ Defined.
 
   
 Fixpoint proves_ro_prt_Var_sound  k Γ τ (w : Γ |- Var k : τ) ϕ {struct w} :
-    [| x : Γ|] |=  w {{ϕ x (var_access Γ k τ w x)}} Var k {{y : τ | ϕ x y}}ᵖ.
+    [| x : Γ|] |=  w {{ϕ (x, var_access Γ k τ w x)}} Var k {{y : τ | ϕ (x, y)}}ᵖ.
 Proof.
   intros γ m.
   rewrite Var_sem_var_access_equiv.
@@ -82,7 +82,7 @@ Proof.
 Defined.
 
 Fixpoint proves_ro_tot_Var_sound  k Γ τ (w : Γ |- Var k : τ) ϕ {struct w} :
-    [|γ : Γ|] |= w {{ϕ γ (var_access Γ k τ w γ)}} Var k {{y : τ | ϕ γ y}}ᵗ.
+    [|γ : Γ|] |= w {{ϕ (γ, var_access Γ k τ w γ)}} Var k {{y : τ | ϕ (γ, y)}}ᵗ.
 Proof.
   intros γ m.
   rewrite Var_sem_var_access_equiv.
@@ -95,10 +95,10 @@ Proof.
 Defined.
 
 Lemma proves_rw_prt_Assign_sound
-  Γ Δ e k τ ϕ0 (ψ0 :rwpost) θ (w : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit)  :
-  [|x : (Δ ++ Γ)|] |= w {{ϕ0 (snd_app x) (fst_app x)}} e {{y : τ | θ x y}}ᵖ
-  -> (forall γ δ x, θ (δ; γ) x -> ψ0 γ (update' w w' δ x) tt)
-  ->  [| γ : Γ ;;; δ : Δ |] ||= w' {{ϕ0 γ δ}} Assign k e {{y : UNIT | ψ0 γ δ y}}ᵖ.
+  Γ Δ e k τ ϕ0 (ψ0 :pred) θ (w : (Γ +++ Δ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit)  :
+  [|x : (Γ +++ Δ)|] |= w {{ϕ0 (fst_app x, snd_app x)}} e {{y : τ | θ (x, y)}}ᵖ
+  -> (forall γ δ x, θ ((γ; δ), x) -> ψ0 (γ, (update' w w' δ x, tt)))
+  ->  [| γ : Γ ;;; δ : Δ |] ||= w' {{ϕ0 (γ, δ)}} Assign k e {{y : UNIT | ψ0 (γ, (δ, y))}}ᵖ.
 Proof.
   intros.
   dependent destruction w'.
@@ -110,7 +110,7 @@ Proof.
   intro.
   apply pdom_lift_empty_2 in H1.
   apply pdom_lift_empty_2 in H1.
-  pose proof (H (δ; γ)).
+  pose proof (H (γ; δ)).
   simpl in H2.
   reduce_tedious H2.  
   pose proof (H2 m); clear H2.
@@ -137,7 +137,7 @@ Proof.
   apply total_is_injective in h4.
   rewrite <- h4.
   simpl.
-  pose proof (H (δ; γ)).
+  pose proof (H (γ; δ)).
   simpl in H4.
   reduce_tedious H4.
   pose proof (H4 m); clear H4.
@@ -156,10 +156,10 @@ Proof.
 Defined.
 
 Lemma proves_rw_tot_Assign_sound
-  Γ Δ e k τ ϕ0 (ψ0 :rwpost) θ (w : (Δ ++ Γ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit)  :
-  [|x : (Δ ++ Γ)|] |= w {{ϕ0 (snd_app x) (fst_app x)}} e {{y : τ | θ x y}}ᵗ
-  -> (forall γ δ x, θ (δ; γ) x -> ψ0 γ (update' w w' δ x) tt)
-  ->  [|γ : Γ ;;; δ : Δ|] ||= w' {{ϕ0 γ δ}} Assign k e {{y : UNIT | ψ0 γ δ y}}ᵗ.
+  Γ Δ e k τ ϕ0 (ψ0 :pred) θ (w : (Γ +++ Δ) |- e : τ) (w' : Γ ;;; Δ ||- Assign k e : DUnit)  :
+  [|x : (Γ +++ Δ)|] |= w {{ϕ0 (fst_app x, snd_app x)}} e {{y : τ | θ (x, y)}}ᵗ
+  -> (forall γ δ x, θ ((γ; δ), x) -> ψ0 (γ, (update' w w' δ x, tt)))
+  ->  [|γ : Γ ;;; δ : Δ|] ||= w' {{ϕ0 (γ, δ)}} Assign k e {{y : UNIT | ψ0 (γ, (δ, y))}}ᵗ.
 Proof.
   intros.
   apply sem_ro_tot_is_prt_excludes_bot in H as [h1 h2].
@@ -181,7 +181,7 @@ Proof.
   pose proof (has_type_ro_unambiguous _ _ _ _ h w).
   induction H4.
   rewrite  (sem_ro_exp_unique _ _ _ h w) in H1.
-  pose proof (h2 (δ; γ)).
+  pose proof (h2 (γ; δ)).
   reduce_tedious H4.
   apply (H4 H H1).
   
@@ -195,25 +195,25 @@ Proof.
 Defined.
 
 Lemma proves_rw_while_prt_sound : forall Γ Δ  e c (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : Γ ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT)  ϕ θ,   
-    [|γ : _|]|= wty_e {{ϕ (snd_app γ) (fst_app γ)}} e {{y : BOOL | θ γ y}}ᵖ ->
-    [|γ : Γ ;;; δ : Δ|] ||= wty_c {{θ (δ ; γ) true}} c {{_ : UNIT | ϕ γ δ}}ᵖ ->
+    [|γ : _|]|= wty_e {{ϕ (fst_app γ, snd_app γ)}} e {{y : BOOL | θ (γ, y)}}ᵖ ->
+    [|γ : Γ ;;; δ : Δ|] ||= wty_c {{θ ((γ ; δ), true)}} c {{_ : UNIT | ϕ (γ, δ)}}ᵖ ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    [|γ : Γ ;;; δ : Δ|] ||= wty {{ϕ γ δ}} While e c {{_ : UNIT | ϕ γ δ /\ θ  (δ ; γ) false}}ᵖ.
+    [|γ : Γ ;;; δ : Δ|] ||= wty {{ϕ (γ, δ)}} While e c {{_ : UNIT | ϕ (γ, δ) /\ θ  ((γ ; δ), false)}}ᵖ.
 Proof.
   intros Γ Δ e c wty_e wty_c wty ϕ θ BB CC.
   intros γ δ m; simpl; simpl in m.
-  pose (fun d => sem_ro_exp _ _ _ wty_e (d; γ)) as B.
+  pose (fun d => sem_ro_exp _ _ _ wty_e (γ; d)) as B.
   pose (fun d => pdom_lift fst (sem_rw_exp _ _ _ _ wty_c γ d)) as C.
-      replace (sem_rw_exp Γ Δ (WHILE e DO c END) UNIT wty γ δ) with
-        (pdom_lift (fun x => (x, tt)) (pdom_while B C δ))
-        by (rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_While _ _ _ _ wty_e  wty_c)); simpl; auto).
-  pose proof (BB (δ ; γ)) as [p1 p2].
+  replace (sem_rw_exp Γ Δ (WHILE e DO c END) UNIT wty γ δ) with
+    (pdom_lift (fun x => (x, tt)) (pdom_while B C δ))
+    by (rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_While _ _ _ _ wty_e  wty_c)); simpl; auto).
+  pose proof (BB (γ ; δ)) as [p1 p2].
   reduce_tedious; auto.
                                  
   (* important sub lemmas *)
   pose (fun n δ => pdom_fun_bot_chain (pdom_W B C) (pdom_W_monotone B C) n δ) as thechain.
   (* the chain respects invariant *)
-  assert (forall n, forall δ1 δ2, ϕ γ δ1 -> total δ2 ∈ thechain n δ1 -> ϕ γ δ2 /\ (θ (δ2; γ) false) ) as l.
+  assert (forall n, forall δ1 δ2, ϕ (γ, δ1) -> total δ2 ∈ thechain n δ1 -> ϕ (γ, δ2) /\ (θ ((γ; δ2), false)) ) as l.
   {
     (* base *)
     intro n.
@@ -242,7 +242,7 @@ Proof.
     (* pose proof (ro_prt_post_pre _ _ _ _ _ _ ((BB)) true (δ1 ; γ) H0 H3) as m''. *)
     pose proof (CC γ δ1) as [_ r2].
     reduce_tedious; auto.
-    apply  (ro_prt_post_pre _ _ _ _ _ _ ((BB)) true (δ1 ; γ) ).
+    apply  (ro_prt_post_pre _ _ _ _ _ _ ((BB)) true (γ; δ1) ).
     reduce_tedious; auto.
     auto.
     simpl in r2.
@@ -266,12 +266,12 @@ Proof.
     apply total_is_injective in H1.    
     induction H1.
     split; auto.
-    apply (ro_prt_post_pre _ _ _ _ _ _ ((BB)) false (δ1 ; γ)); auto.
+    apply (ro_prt_post_pre _ _ _ _ _ _ ((BB)) false (γ; δ1)); auto.
     reduce_tedious; auto.
   }
 
   (* nondempty *)
-  assert (forall n, forall δ1, ϕ γ δ1 -> ~ pdom_is_empty (thechain n δ1)) as r.
+  assert (forall n, forall δ1, ϕ (γ, δ1) -> ~ pdom_is_empty (thechain n δ1)) as r.
   {
     intro n.
     induction n.
@@ -286,7 +286,7 @@ Proof.
     unfold pdom_W in H0.
     apply pdom_bind_empty_2 in H0.
     destruct H0.
-    pose proof (BB (δ1; γ)) as [h _]; auto.
+    pose proof (BB (γ; δ1)) as [h _]; auto.
     reduce_tedious; auto.
     destruct H0.
     destruct H0.
@@ -297,14 +297,14 @@ Proof.
     apply pdom_lift_empty_2 in H1.
     pose proof (CC γ δ1 ) as [r1 _]; auto.
     reduce_tedious; auto.
-    apply (ro_prt_post_pre _ _ _ _ _ _ ((BB)) true (δ1 ; γ)); auto.
+    apply (ro_prt_post_pre _ _ _ _ _ _ ((BB)) true (γ; δ1)); auto.
     reduce_tedious; auto.
     destruct H1.
     destruct H1.
     apply (fun k => IHn x k H2).
     pose proof (CC γ δ1) as [_ r2].
     reduce_tedious; auto.
-    apply (ro_prt_post_pre _ _ _ _ _ _ ((BB)) true (δ1 ; γ)); auto.
+    apply (ro_prt_post_pre _ _ _ _ _ _ ((BB)) true (γ; δ1)); auto.
     reduce_tedious; auto.
     apply pdom_lift_total_2 in H1.
     destruct H1.
@@ -449,7 +449,7 @@ Section FinitelyBranchingTree.
       simpl in n.
       
       assert (exists n, S n = x0).
-      exists (pred x0).
+      exists (Nat.pred x0).
       apply Nat.succ_pred; auto.
       destruct H1.
       induction H1.
@@ -645,15 +645,18 @@ Proof.
 Defined. 
 
 Lemma proves_rw_while_tot_sound :
-  forall Γ Δ e c (wty_e : (Δ ++ Γ) |- e : BOOL) (wty_c : (Γ ++ Δ) ;;; Δ ||- c : UNIT) (wty_c' : Γ ;;; Δ ||- c : UNIT) (wty : Γ ;;; Δ ||- While e c : UNIT) ϕ θ ψ, 
-    [| x : _ |] |= wty_e {{ϕ (snd_app x) (fst_app x)}} e {{y : BOOL | θ x y }}ᵗ ->
-    [|γ : Γ ;;; δ : Δ|] ||= wty_c' {{θ (δ ; γ) true}} c {{_ : UNIT | ϕ γ δ}}ᵗ ->
-    [|γ : (Γ ++ Δ) ;;; δ : Δ|] ||= wty_c  {{θ (δ ; fst_app γ) true /\ δ = snd_app γ}} c {{_ : _ | ψ γ δ }}ᵗ -> 
-    (forall δ γ, ϕ γ δ ->
+  forall Γ Δ e c (wty_e : (Γ +++ Δ) |- e : BOOL)
+         (wty_c : (Δ +++ Γ) ;;; Δ ||- c : UNIT)
+         (wty_c' : Γ ;;; Δ ||- c : UNIT)
+         (wty : Γ ;;; Δ ||- While e c : UNIT) ϕ θ ψ, 
+    [| x : _ |] |= wty_e {{ϕ (fst_app x, snd_app x)}} e {{y : BOOL | θ (x, y) }}ᵗ ->
+    [|γ : Γ ;;; δ : Δ|] ||= wty_c' {{θ ((γ ; δ), true)}} c {{_ : UNIT | ϕ (γ, δ)}}ᵗ ->
+    [|γ : (Δ +++ Γ) ;;; δ : Δ|] ||= wty_c  {{θ ((snd_app γ; δ), true) /\ δ = fst_app γ}} c {{_ : _ | ψ (γ, δ) }}ᵗ -> 
+    (forall γ δ, ϕ (γ, δ) ->
                  ~exists f : nat -> sem_ctx Δ,
-                     f 0 = δ /\ forall n, ψ (γ ; f n) (f (S n))) ->
+                     f 0 = δ /\ forall n, ψ ((f n; γ), f (S n))) ->
     (*——————————-——————————-——————————-——————————-——————————-*)
-    [|γ : Γ ;;; δ : Δ|] ||= wty {{ϕ γ δ}} While e c {{_ : UNIT | ϕ γ δ /\ θ  (δ ; γ) false}}ᵗ.
+    [|γ : Γ ;;; δ : Δ|] ||= wty {{ϕ (γ, δ)}} While e c {{_ : UNIT | ϕ (γ, δ) /\ θ  ((γ ; δ), false)}}ᵗ.
 Proof.
   intros Γ Δ e c wty_e wty_c wty_c' wty ϕ θ ψ BB CC' CC chainp.
   apply sem_rw_prt_excludes_bot_is_tot.
@@ -665,7 +668,7 @@ Proof.
 
   (* non empty *)
   intros.
-  pose (fun d => sem_ro_exp _ _ _ wty_e (d ; γ)) as B.
+  pose (fun d => sem_ro_exp _ _ _ wty_e (γ; d)) as B.
   pose (fun d => pdom_lift fst (sem_rw_exp _ _ _ _ (has_type_while_inv_body _ _ _ _ wty) γ d)) as C.
   replace (sem_rw_exp Γ Δ (WHILE e DO c END) UNIT wty γ δ) with
     (pdom_lift (fun x => (x, tt)) (pdom_while B C δ))
@@ -675,14 +678,14 @@ Proof.
   intro p.
   pose proof
        (pdom_While_bot B C
-                       (fun d => ϕ γ d)
-                       (fun b d => θ (d; γ) b)
-                       (fun d d' => ψ (γ; d) d')
+                       (fun d => ϕ (γ, d))
+                       (fun b d => θ ((γ; d), b))
+                       (fun d d' => ψ ((d; γ), d'))
        )
     as [f h].
   {
     intros x m.
-    pose proof (BB (x; γ)).
+    pose proof (BB (γ; x)).
     simpl in H0.
     reduce_tedious H0.
     pose proof (H0 m).
@@ -690,7 +693,7 @@ Proof.
   }
 
   intros x m.
-  pose proof (CC (γ; x) x).
+  pose proof (CC (x; γ) x).
   simpl in H0.
   reduce_tedious H0.
   pose proof (H0 (conj m eq_refl)).
@@ -744,20 +747,20 @@ Proof.
 
   
   destruct h.
-  pose proof (chainp δ γ H).
+  pose proof (chainp γ δ H).
   contradict H2.
   exists f.
   split; auto.
 Defined.
 
 Lemma proves_ro_prt_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ,
-    [x : Γ]|- w {{ϕ x}} e {{y : τ | ψ x y}}ᵖ ->  [|x : Γ|]|= w {{ϕ x}} e {{y : τ | ψ x y}}ᵖ
+    [x : Γ]|- w {{ϕ x}} e {{y : τ | ψ (x, y)}}ᵖ -> [|x : Γ|]|= w {{ϕ x}} e {{y : τ | ψ (x, y)}}ᵖ
 with proves_ro_tot_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ,
-    [x : Γ]|- w {{ϕ x}} e {{y : τ | ψ x y}}ᵗ ->  [|x : Γ|]|= w {{ϕ x}} e {{y : τ | ψ x y}}ᵗ
+    [x : Γ]|- w {{ϕ x}} e {{y : τ | ψ (x, y)}}ᵗ ->  [|x : Γ|]|= w {{ϕ x}} e {{y : τ | ψ (x, y)}}ᵗ
 with proves_rw_prt_sound : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ,
-    [γ : Γ ;;; δ : Δ] ||- w {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵖ -> [|γ : Γ ;;; δ : Δ|] ||= w {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵖ 
+    [γ : Γ ;;; δ : Δ] ||- w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ -> [|γ : Γ ;;; δ : Δ|] ||= w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ 
 with proves_rw_tot_sound : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ,
-    [γ : Γ ;;; δ : Δ] ||- w {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵗ -> [|γ : Γ ;;; δ : Δ|] ||= w {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵗ. 
+    [γ : Γ ;;; δ : Δ] ||- w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵗ -> [|γ : Γ ;;; δ : Δ|] ||= w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵗ. 
 Proof.
   + (*  partial correctness triple for read only expressions *)
     intros Γ e τ w ϕ ψ trip.
@@ -829,7 +832,6 @@ Proof.
       
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w |- {{fun γ => Q (var_access Γ k τ w γ) γ}} VAR k {{Q}} *)
-
       apply proves_ro_prt_Var_sound.
       
     ++
@@ -898,7 +900,7 @@ Proof.
       (*     w' |- {{fun γ => P (tt, γ)}} c {{fun v w => Q v (tt, w)}} *)
 
       intros γ m; simpl in m; simpl.
-      pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p γ tt m) as [p1 p2].
+      pose proof (proves_rw_prt_sound _ _ _ _ _ (fun '(γ, _) => P (γ, tt)) (fun '(γ, (_, y)) => Q (γ, (tt, y))) p γ tt m) as [p1 p2].
       rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_rw _ _ _ w)).
       simpl.
       split.
@@ -927,7 +929,9 @@ Proof.
       (*     w' |- {{P}} RE e {{Q}} *)
 
       intros γ m; simpl in m; simpl.
-      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip γ m) as [p1 p2].
+      pose proof (proves_ro_prt_sound _ _ INTEGER _ _
+                    (fun '(γ, y) => Q (γ, IZR y))
+                    trip γ m) as [p1 p2].
       rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZRcoerce  _ _ w)).
       simpl.
       split.
@@ -960,7 +964,9 @@ Proof.
 
 
       intros γ m; simpl in m; simpl.
-      pose proof (proves_ro_prt_sound _ _ _ _ _ _ trip γ m) as [p1 p2].
+      pose proof (proves_ro_prt_sound _ _ INTEGER _ _
+                    (fun '(γ, y) => Q (γ, pow2 y))
+                    trip γ m) as [p1 p2].
       rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZRexp  _ _ w)).
       simpl.
       split.
@@ -1575,7 +1581,7 @@ Proof.
       intros γ m; simpl; simpl in m.
       rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_Lim _ _ w)).
       simpl.
-      pose proof (fun z =>proves_ro_tot_sound _ _ _ w (fun '(z, γ') => ϕ0 γ') (fun '(z, γ') y => θ (z, γ') y) p (z, γ) m).
+      pose proof (fun z =>proves_ro_tot_sound _ _ _ w (fun '(γ', z) => ϕ0 γ') (fun '((γ', z), y) => θ ((γ', z), y)) p (γ, z) m).
       simpl in H.
       pose proof (e0 γ m).
       destruct H0 as [y h1].
@@ -1608,7 +1614,7 @@ Proof.
       }
       intros.
       assert (total y = total v').
-      apply (Rlim_def_unique ((fun x : Z => sem_ro_exp (INTEGER :: Γ) e REAL w (x, γ)))); auto.
+      apply (Rlim_def_unique ((fun x : Z => sem_ro_exp (INTEGER :: Γ) e REAL w (γ, x)))); auto.
       unfold Rlim_def.
       exists y.
       split; auto.
@@ -1779,7 +1785,10 @@ Proof.
       (*     w' |- [{fun γ => P (tt, γ)}] c [{fun v w => Q v (tt, w)}] *)
       
       intros γ m; simpl in m; simpl.
-      pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ p γ tt m) as [p1 p2].
+      pose proof (proves_rw_tot_sound _ _ _ _ _
+                    (fun '(γ, _) => P (γ, tt))
+                    (fun '(γ, (_, y)) => Q (γ, (tt, y)))
+                    p γ tt m) as [p1 p2].
       rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_rw _ _ _ w)).
       simpl.
       split.
@@ -1802,7 +1811,9 @@ Proof.
       (*     w' |- [{ϕ}] RE e [{ψ}] *)
 
       intros γ m; simpl in m; simpl.
-      pose proof (proves_ro_tot_sound _ _ _ _ _ _ trip γ m) as [p1 p2].
+      pose proof (proves_ro_tot_sound _ _ INTEGER _ _
+                    (fun '(γ, y) => Q (γ, IZR y))
+                    trip γ m) as [p1 p2].
       rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZRcoerce  _ _ w)).
       simpl.
       split.
@@ -1826,7 +1837,9 @@ Proof.
       (*     w' |- [{ϕ}] EXP e [{ψ}] *)
 
       intros γ m; simpl in m; simpl.
-      pose proof (proves_ro_tot_sound _ _ _ _ _ _ trip γ m) as [p1 p2].
+      pose proof (proves_ro_tot_sound _ _ INTEGER _ _
+                    (fun '(γ, y) => Q (γ, pow2 y))
+                    trip γ m) as [p1 p2].
       rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_OpZRexp  _ _ w)).
       simpl.
       split.
@@ -2526,7 +2539,9 @@ Proof.
       intros γ m; simpl; simpl in m.
       rewrite (sem_ro_exp_unique _ _ _ w' (has_type_ro_Lim _ _ w)).
       simpl.
-      pose proof (fun z => proves_ro_tot_sound _ _ _ w _ _  trip (z, γ) m).
+      pose proof (fun z => proves_ro_tot_sound _ _ _ w _
+                             (fun '((γ, x), y) => θ (γ, x, y)) 
+                             trip (γ, z) m).
       simpl in H.
       pose proof (e0 γ m).
       destruct H0 as [y h1].
@@ -2560,7 +2575,7 @@ Proof.
       exists r; split; auto.      
       replace r with y; auto.
       apply total_is_injective.
-      apply (Rlim_def_unique ((fun x : Z => sem_ro_exp (INTEGER :: Γ) e REAL w (x, γ)))); auto.
+      apply (Rlim_def_unique ((fun x : Z => sem_ro_exp (INTEGER :: Γ) e REAL w (γ, x)))); auto.
       
       unfold Rlim_def.
       exists y.
@@ -2599,10 +2614,11 @@ Proof.
       
       intros γ δ m; simpl; simpl in m.
       rewrite (sem_rw_exp_unique _ _ _ _ w' w).
-      apply ϕ1 in m.      
+      apply a in m.      
       pose proof (proves_rw_prt_sound _ _ _ _ _ _ _  trip γ δ m) as [h1 h2]; split; auto.
       intros t1 t2 t3 t4.
-      apply ψ1, (h2 _ t2 _ t4).
+      destruct t3.
+      apply a0, (h2 _ t2 _ t4).
 
     ++
       (* | rw_exfalso_prt : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ψ, *)
@@ -2623,11 +2639,20 @@ Proof.
       pose proof (proves_rw_prt_sound _ _ _ _ _ _ _  trip2 γ δ m) as [_ q2].
       split; auto.
       intros t1 t2 t3 t4.
+      destruct t3.
       split.
       rewrite t4 in t2.
-      apply (p2 _ t2); auto.
-      apply (q2 _ t2); auto.
-
+      pose proof (p2 _ t2).
+      simpl in H.
+      pose proof (H (s, s0) eq_refl).
+      simpl in H0.
+      apply H0.
+      pose proof (q2 _ t2).
+      simpl in H.
+      pose proof (H (s, s0) t4).
+      simpl in H0.
+      apply H0.
+      
     ++
       (* | rw_disj_prt : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ϕ' ψ, *)
       
@@ -2651,7 +2676,7 @@ Proof.
       (*     w' ||- {{fun γδ => ϕ (tedious_prod_sem _ _ γδ)}} e {{fun v γδ => ψ v (tedious_prod_sem _ _ γδ)}} *)
       intros γ δ m; simpl; simpl in m.
       rewrite (sem_rw_exp_unique _ _ _ _ w' (has_type_rw_ro _ _ _ _ w)); simpl.
-      pose proof (proves_ro_prt_sound _ _ _ _ _ _  p (tedious_prod_sem _ _ (δ, γ)) m) as [p1 p2].
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _  p (γ; δ) m) as [p1 p2].
       split.
       auto.
       apply neg_forall_exists_neg in p1.
@@ -2710,7 +2735,10 @@ Proof.
         destruct s0; auto.
         pose proof (p2 _ H _ eq_refl).
         simpl in H0.
-        pose proof (proves_rw_prt_sound _ _ _ _ _ _ _  trip2 γ δ' H0) as [q1 q2]; auto.
+        pose proof (proves_rw_prt_sound _ _ _ _ _
+                      (fun '(γ, δ) => θ (γ, (δ, tt)))
+                      (fun '(γ, (δ, y)) => ψ0 (γ, (δ, y)))
+                      trip2 γ δ' H0) as [q1 q2]; auto.
       }
       intros h1 h2 [δ'' y] h4.
       simpl.
@@ -2722,7 +2750,10 @@ Proof.
       destruct tmp'.
       pose proof (p2 _ h4 _ eq_refl) as H.
       simpl in H.
-      pose proof (proves_rw_prt_sound _ _ _ _ _ _ _  trip2 γ δ' H) as [q1 q2]; auto.
+      pose proof (proves_rw_prt_sound _ _ _ _ _
+                    (fun '(γ, δ) => θ (γ, (δ, tt)))
+                    (fun '(γ, (δ, y)) => ψ0 (γ, (δ, y)))
+                    trip2 γ δ' H) as [q1 q2]; auto.
       apply (q2 _ h3 _ eq_refl).
 
     ++
@@ -2733,16 +2764,16 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- {{ϕ}} NEWVAR e IN c {{ψ}} *)
       intros γ δ m; simpl; simpl in m.
-      pose (sem_ro_exp _ _ _ w1 (tedious_prod_sem _ _ (δ, γ))) as V.
+      pose (sem_ro_exp _ _ _ w1 (γ; δ)) as V.
       pose (sem_rw_exp _ _ _ _ w2 γ) as f.
-      pose (pdom_bind f (pdom_lift (fun v => (v, δ)) V)) as res.
+      pose (pdom_bind f (pdom_lift (fun v => (δ, v)) V)) as res.
       replace (sem_rw_exp Γ Δ (NEWVAR e IN c) τ w' γ δ) with
-        (pdom_lift (fun x => (snd (fst x), snd x)) res) by
+        (pdom_lift (fun x => (fst (fst x), snd x)) res) by
         (rewrite (sem_rw_exp_unique _ _ _ _ w' (has_type_rw_Newvar _ _ _ _ _ _ w1 w2)); simpl; auto).
       unfold V, f, res.
-      pose proof (proves_ro_prt_sound _ _ _ _ _ _ p (tedious_prod_sem Δ Γ (δ, γ))).
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ p (γ; δ)).
       simpl in H.
-      assert (ϕ0 (snd_app (δ; γ)) (fst_app (δ; γ))) as H'
+      assert (ϕ0 (fst_app (γ; δ), snd_app (γ; δ))) as H'
           by (reduce_tedious; auto).
       apply H in H' as [p1 p2]; clear H.
       split.
@@ -2759,13 +2790,21 @@ Proof.
         apply pdom_lift_total_2 in h1 as [x'' [h h']].
         unfold f in h2.
         pose proof (p2 _ h _ eq_refl).
-        pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip γ x').
+        simpl in trip.
+        pose proof (proves_rw_prt_sound _ _ _ _ _
+                      (fun '((γ, ((δ, x))) : sem_ctx Γ * sem_ctx (Δ ::: σ)) => θ ((γ; δ), x))
+                      (fun '((γ, ((δ, x), y)) : sem_ctx Γ * (sem_ctx (Δ ::: σ) * sem_datatype τ)) => ψ0 (γ, (δ, y)))
+                      trip γ x').
         assert (rw_prt_pre w2
-         (mk_rw_prt w2
-            (fun (γ : sem_ctx Γ) (δ : sem_ctx (σ :: Δ)) => (fun (γ0 : sem_ctx Γ) '(x, δ0) => θ (δ0; γ0) x) γ δ)
-            (fun (γ : sem_ctx Γ) (δ : sem_ctx (σ :: Δ)) (y : sem_datatype τ) =>
-             (fun (γ0 : sem_ctx Γ) (pat : sem_ctx (σ :: Δ)) (y0 : sem_datatype τ) =>
-              (let '(_, δ0) := pat in fun y1 : sem_datatype τ => ψ0 γ0 δ0 y1) y0) γ δ y)) γ x').
+         (mk_rw_prt w2 ([γ : Γ;;; δ : (Δ ::: σ)]||- {{([γ0 : Γ;;; (δ0, x) : (Δ ::: σ)]||- {{θ ((γ0; δ0), x)}}) (γ, δ)}})
+            ([γ : Γ;;; δ : (Δ ::: σ)]||- {{y : τ | ([γ0 : Γ;;; (δ0, _) : (Δ ::: σ)]||- {{y0 : τ | ψ0 (γ0, (δ0, y0))}}) (γ, (δ, y))}})) (
+         γ, x')).
+        (* assert (rw_prt_pre w2 *)
+        (*  (mk_rw_prt w2 *)
+        (*     (fun (γ : sem_ctx Γ) (δ : sem_ctx (σ :: Δ)) => (fun (γ0 : sem_ctx Γ) '(x, δ0) => θ ((γ0; δ0), x) γ δ) *)
+        (*     (fun (γ : sem_ctx Γ) (δ : sem_ctx (σ :: Δ)) (y : sem_datatype τ) => *)
+        (*      (fun (γ0 : sem_ctx Γ) (pat : sem_ctx (σ :: Δ)) (y0 : sem_datatype τ) => *)
+        (*       (let '(_, δ0) := pat in fun y1 : sem_datatype τ => ψ0 γ0 δ0 y1) y0) γ δ y)) γ x'). *)
         simpl.
         destruct x'.
         simpl.
@@ -2789,7 +2828,11 @@ Proof.
       reduce_tedious p2.
       (* apply (p2 _ h5 _ eq_refl). *)
       (* auto. *)
-      pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip γ (x''', δ'')) as [_ h].
+      pose proof (proves_rw_prt_sound _ _ _ _ _
+                    (fun '((γ, ((δ, x))) : sem_ctx Γ * sem_ctx (Δ ::: σ)) => θ ((γ; δ), x))
+                    (fun '((γ, ((δ, x), y)) : sem_ctx Γ * (sem_ctx (Δ ::: σ) * sem_datatype τ)) => ψ0 (γ, (δ, y)))
+                    
+                    trip γ (x''', δ'')) as [_ h].
       simpl.
       apply (p2 _ h5 _ eq_refl).
       simpl in h.
@@ -2814,25 +2857,36 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- {{ϕ}} Cond e c1 c2 {{ψ}} *)
       intros γ δ m; simpl; simpl in m.
-      pose (sem_ro_exp _ _ _ w (δ; γ)) as B.
+      pose (sem_ro_exp _ _ _ w (γ; δ)) as B.
       pose (sem_rw_exp _ _ _ _ w1 γ δ) as X.
       pose (sem_rw_exp _ _ _ _ w2 γ δ) as Y.
       replace (sem_rw_exp Γ Δ (IF e THEN c1 ELSE c2 END) τ w' γ δ)
         with (pdom_bind (fun b : bool => if b then X else Y) B)
         by  (rewrite (sem_rw_exp_unique _ _ _ _ w' (has_type_rw_Cond _ _ _ _ _ _ w w1 w2)); simpl; auto).
-      assert (ro_prt_pre w(mk_ro_prt w (fun x : sem_ctx (Δ ++ Γ) => (fun x0 : sem_ctx (Δ ++ Γ) => ϕ0 (snd_app x0) (fst_app x0)) x) (fun (x : sem_ctx (Δ ++ Γ)) (y : sem_datatype BOOL) => θ x y)) (δ; γ)) as m' by (reduce_tedious; auto).
+      (* assert (ro_prt_pre w(mk_ro_prt w (fun x : sem_ctx (Δ ++ Γ) => (fun x0 : sem_ctx (Δ ++ Γ) => ϕ0 (fst_app x0, snd_app x0)) x) (fun (x : sem_ctx (Δ ++ Γ)) (y : sem_datatype BOOL) => θ x y)) (δ; γ)) as m' by (reduce_tedious; auto). *)
       (* assert (ro_prt_pre w (mk_ro_prt w (rw_to_ro_pre ϕ0) θ) (δ; γ)) as m' *)
       (*     by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto). *)
-       
-      pose proof (proves_ro_prt_sound _ _ _ _ _ _ p (δ ; γ) m') as [nempty_e sem_e].
+      assert ( ro_prt_pre w
+        (mk_ro_prt w ([x : (Γ +++ Δ)]|- {{([x0 : (Γ +++ Δ)]|- {{ϕ0 (fst_app x0, snd_app x0)}}) x}}) ([x : (Γ +++ Δ)]|- {{y : BOOL | θ (x, y)}})) 
+        (γ; δ)) as m'.
+      simpl.
+      reduce_tedious; auto.
+      
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ p (γ ; δ) m') as [nempty_e sem_e].
       pose proof (proves_ro_prt_sound _ _ _ _ _ _ p) as E. 
-      pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip1) as C1.
-      pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip2) as C2.
+      pose proof (proves_rw_prt_sound _ _ _ _ _
+                    (fun '(γ, δ) => θ ((γ; δ), true))                                  
+                    (fun '(γ, (δ, y)) => ψ0 (γ, (δ, y)))
+                    trip1) as C1.
+      pose proof (proves_rw_prt_sound _ _ _ _ _
+                    (fun '(γ, δ) => θ ((γ; δ), false))                                  
+                    (fun '(γ, (δ, y)) => ψ0 (γ, (δ, y)))
+                    trip2) as C2.
       split.
       {
         intro h.
         apply pdom_bind_empty_2 in h as [h|[x [h1 h2]]]; auto.
-        pose proof (ro_prt_post_pre _ _ _ _ _ _ E x (δ ; γ) m').
+        pose proof (ro_prt_post_pre _ _ _ _ _ _ E x (γ ; δ) m').
         apply H in h1.
         destruct x.
         pose proof (C1 γ δ h1) as [h _]; auto.
@@ -2842,7 +2896,7 @@ Proof.
       intros h1 h2 h3 h4.
       rewrite h4 in h2; clear h4.
       apply pdom_bind_total_2 in h2 as [_ [b [semb h2]]].
-      pose proof (ro_prt_post_pre _ _ _ _ _ _ E b (δ ; γ) m').
+      pose proof (ro_prt_post_pre _ _ _ _ _ _ E b (γ; δ) m').
       apply H in semb; clear H.
       destruct b.
       pose proof (C1 γ δ semb) as [_ h].
@@ -2850,56 +2904,6 @@ Proof.
       pose proof (C2 γ δ semb) as [_ h].
       apply (h _ h2 h3 eq_refl).
       
-    (* ++ *)
-    (*   (* | rw_case_prt : forall Γ Δ e1 e2 c1 c2 τ (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) ϕ θ1 θ2 ψ, *) *)
-
-    (*   (*     wty_e1 |- {{rw_to_ro_pre ϕ}} e1 {{θ1}} ->  *) *)
-    (*   (*     wty_e2 |- {{rw_to_ro_pre ϕ}} e2 {{θ2}} ->  *) *)
-    (*   (*     wty_c1 ||- {{ro_to_rw_pre (θ1 true)}} c1 {{ψ}} ->  *) *)
-    (*   (*     wty_c2 ||- {{ro_to_rw_pre (θ2 true)}} c2 {{ψ}} -> *) *)
-    (*   (*     (*——————————-——————————-——————————-——————————-——————————-*) *) *)
-    (*   (*     wty ||- {{ϕ}} Case e1 c1 e2 c2 {{ψ}} *) *)
-    (*   intros γ δ m; simpl; simpl in m. *)
-
-
-    (*   pose (sem_ro_exp _ _ _ wty_e1 (δ; γ)) as B1. *)
-    (*   pose (sem_ro_exp _ _ _ wty_e2 (δ; γ)) as B2. *)
-    (*   pose (sem_rw_exp _ _ _ _ wty_c1 γ δ) as X. *)
-    (*   pose (sem_rw_exp _ _ _ _ wty_c2 γ δ) as Y. *)
-    (*   replace (sem_rw_exp Γ Δ (CASE e1 ==> c1 OR e2 ==> c2 END) τ wty γ δ) with *)
-    (*     (Case2 B1 B2 X Y)  *)
-    (*     by  (rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_Case _ _ _ _ _ _ _ wty_e1  wty_c1 wty_e2 wty_c2)); simpl; auto). *)
-    (*   assert ( (rw_to_ro_pre ϕ0) (δ; γ)) as m' *)
-    (*       by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto). *)
-    (*   pose proof (proves_ro_prt_sound _ _ _ _ _ _ p _ m') as [p1 p2]. *)
-    (*   pose proof (proves_ro_prt_sound _ _ _ _ _ _ p0 _ m') as [q1 q2]. *)
-    (*   split. *)
-    (*   { *)
-    (*     (* non empty *) *)
-    (*     unfold Case2. *)
-    (*     intro h. *)
-    (*     apply pdom_case2_empty_2 in h. *)
-    (*     destruct h as [h| [h | [[h1 h2] | [h1 h2]]]]. *)
-    (*     apply (p1 h). *)
-    (*     apply (q1 h). *)
-    (*     pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p)) true (δ ; γ) m' h1) as m''. *)
-    (*     pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip1 _ _ m'') as [r1 r2]. *)
-    (*     auto. *)
-    (*     pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p0)) true (δ ; γ) m' h1) as m''. *)
-    (*     pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip2 _ _ m'') as [r1 r2]. *)
-    (*     auto. *)
-    (*   } *)
-    (*   intros h1 h2 h3 h4. *)
-    (*   rewrite h4 in h2; clear h4. *)
-    (*   apply pdom_case2_total_2 in h2. *)
-    (*   destruct h2 as [[h2 h4]|[h2 h4]].  *)
-    (*   pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p)) true (δ ; γ) m' h2) as m''. *)
-    (*   pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip1 _ _ m'') as [_ r2]. *)
-    (*   apply (r2 _ h4 _ (eq_refl)). *)
-    (*   pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p0)) true (δ ; γ) m' h2) as m''. *)
-    (*   pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ trip2 _ _ m'') as [_ r2]. *)
-    (*   apply (r2 _ h4 _ (eq_refl)). *)
-
 
     ++
       (* | Rw_case_list_prt *)
@@ -2936,12 +2940,15 @@ Proof.
         (* unfold rw_to_ro_pre. *)
         (* rewrite tedious_equiv_1. *)
         (* auto. *)
+        (* assert (ro_prt_pre (fst (h, h0)) *)
+        (*  (mk_ro_prt (fst (h, h0)) *)
+        (*     (fun x : sem_ctx (Δ ++ Γ) => (fun x0 : sem_ctx (Δ ++ Γ) => ϕ0 (fst_app x0, snd_app x0) x) *)
+        (*     (fun (x : sem_ctx (Δ ++ Γ)) (y : sem_datatype BOOL) => q x y)) (δ; γ)) as m'. *)
         assert (ro_prt_pre (fst (h, h0))
-         (mk_ro_prt (fst (h, h0))
-            (fun x : sem_ctx (Δ ++ Γ) => (fun x0 : sem_ctx (Δ ++ Γ) => ϕ0 (snd_app x0) (fst_app x0)) x)
-            (fun (x : sem_ctx (Δ ++ Γ)) (y : sem_datatype BOOL) => q x y)) (δ; γ)) as m'.
+         (mk_ro_prt (fst (h, h0)) ([x : (Γ +++ Δ)]|- {{([x0 : (Γ +++ Δ)]|- {{ϕ0 (fst_app x0, snd_app x0)}}) x}})
+            ([x : (Γ +++ Δ)]|- {{y : BOOL | q (x, y)}})) (γ; δ)) as m'.
         reduce_tedious; auto.
-        pose proof (proves_ro_prt_sound _ _ _ _ _ _ p _ m').
+        pose proof (proves_ro_prt_sound _ _ _ _ _ _ p (γ; δ) m').
         (* pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p0). *)
         destruct H1.
         destruct H0 as [H0 _]; auto.
@@ -2950,11 +2957,17 @@ Proof.
         pose proof (H0 _ H1 _ eq_refl).
         simpl in H3.
         assert (rw_prt_pre (snd (h, h0))
-                          (mk_rw_prt (snd (h, h0))
-                                     (fun (γ : sem_ctx Γ) (δ : sem_ctx Δ) => (fun (γ0 : sem_ctx Γ) (δ0 : sem_ctx Δ) => q (δ0; γ0) true) γ δ)
-                                     (fun (γ : sem_ctx Γ) (δ : sem_ctx Δ) (y : sem_datatype τ) => ψ0 γ δ y)) γ δ) as H4.
+         (mk_rw_prt (snd (h, h0)) ([γ : Γ;;; δ : Δ]||- {{([γ0 : Γ;;; δ0 : Δ]||- {{q ((γ0; δ0), true)}}) (γ, δ)}})
+            ([γ : Γ;;; δ : Δ]||- {{y : τ | ([γ0 : Γ;;; δ0 : Δ]||- {{y0 : τ | ψ0 (γ0, (δ0, y0))}}) (γ, (δ, y))}})) (γ, δ) ).
+        (* assert (rw_prt_pre (snd (h, h0)) *)
+        (*                   (mk_rw_prt (snd (h, h0)) *)
+        (*                              (fun (γ : sem_ctx Γ) (δ : sem_ctx Δ) => (fun (γ0 : sem_ctx Γ) (δ0 : sem_ctx Δ) => q (δ0; γ0) true) γ δ) *)
+        (*                              (fun (γ : sem_ctx Γ) (δ : sem_ctx Δ) (y : sem_datatype τ) => ψ0 γ δ y)) γ δ) as H4. *)
         reduce_tedious; auto.
-        pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p0 γ δ H4) as [H5 _].
+        pose proof (proves_rw_prt_sound _ _ _ _ _
+                      (fun '(γ, δ) => q ((γ; δ), true))
+                      (fun '(γ, (δ, y)) => ψ0 (γ, (δ, y)))
+                      p0 γ δ H4) as [H5 _].
         auto.
         apply (IHf γ δ m x H).
         exact H1.
@@ -2981,7 +2994,7 @@ Proof.
       (* rewrite tedious_equiv_1. *)
       (* auto. *)
       destruct r.
-      pose proof (proves_ro_prt_sound _ _ _ _ _ _ p (δ; γ) ) as [H2].
+      pose proof (proves_ro_prt_sound _ _ _ _ _ _ p (γ; δ) ) as [H2].
       reduce_tedious; auto.
       (* pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p0). *)
       destruct H0.
@@ -2992,7 +3005,11 @@ Proof.
       (* assert (ro_to_rw_pre (q true) (δ, γ)). *)
       (* unfold ro_to_rw_pre. *)
       (* auto. *)
-      pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p0 _ _ H5) as [_ H6].
+      pose proof (proves_rw_prt_sound _ _ _ _ _
+                    (fun '(γ, δ) => q ((γ; δ), true))
+                    (fun '(γ, (δ, y)) => ψ0 (γ, (δ, y)))
+                    
+                    p0 γ δ H5) as [_ H6].
       simpl in H6.
       simpl in H3, H5, H6.
       apply (H6 (total v')); auto.
@@ -3026,38 +3043,43 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     wty ||- {{ϕ}} While e c {{fun _ => (ϕ /\\ ro_to_rw_pre (θ false))}} *)
       apply proves_ro_prt_sound in p.
-      apply proves_rw_prt_sound in trip.
-      apply (proves_rw_while_prt_sound _ _ _ _ _ _ _ _ _ p trip).
+      pose proof (proves_rw_prt_sound _ _ _ _ _
+                    (fun '(γ, δ) => θ ((γ; δ), true))
+                    (fun '(γ, (δ, y)) => ϕ0 (γ, δ))
+                    trip
+        ).
+
+      apply (proves_rw_while_prt_sound _ _ _ _ _ _ _ _ _ p H).
       
   + (*  total correctness triple for read write expressions *)
     intros Γ Δ e τ w ϕ ψ trip.
     induction trip.
-
     ++
       (* (** logical rules *) *)
-      (* | rw_imply_tot : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ ϕ' ψ', *)
+      (* | rw_imply_prt : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ ϕ' ψ', *)
       
       (*     ϕ' ->> ϕ ->  *)
-      (*     w ||- [{ ϕ }] e [{ ψ }] ->  *)
+      (*     w ||- {{ ϕ }} e {{ ψ }} ->  *)
       (*     ψ ->>> ψ' ->  *)
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
-      (*     w ||- [{ ϕ'}]  e [{ ψ' }] *)
+      (*     w ||- {{ ϕ'}}  e {{ ψ' }} *)
+      
       intros γ δ m; simpl; simpl in m.
       rewrite (sem_rw_exp_unique _ _ _ _ w' w).
-      apply ϕ1 in m.
-      pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip γ δ m) as H.
-      simpl in H.
-      split; destruct H as [h1 h2]; auto.
+      apply a in m.      
+      pose proof (proves_rw_tot_sound _ _ _ _ _ _ _  trip γ δ m) as [h1 h2]; split; auto.
       intros t1 t2.
-      pose proof (h2 _ t2) as [p1 p2].
-      destruct p2 as [p2 p3].
-      exists p1; split; auto; try apply a0; auto.
-      
+      destruct (h2 _ t2).
+      exists x.
+      destruct H; split; auto.
+      destruct x; simpl in H0.
+      apply a0; auto.
+
     ++
-      (* | rw_exfalso_tot : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ψ, *)
+      (* | rw_exfalso_prt : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ψ, *)
       
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
-      (*     w ||- [{ (fun _ => False) }] e [{ ψ }] *)
+      (*     w ||- {{ (fun _ => False) }} e {{ ψ }} *)
       intros γ δ m; simpl; simpl in m.
       contradict m.
 
@@ -3081,9 +3103,12 @@ Proof.
       destruct H, H0.
       exists x.
       split; auto.
-      split; auto.
+      destruct x; split; auto.
       rewrite H in H0; injection H0; intro j; rewrite j; auto.
-      
+      simpl in H1, H2.
+      rewrite <- j in H2.
+      rewrite <- j; auto.
+
     ++
       (* | rw_disj_tot : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ϕ' ψ, *)
       
@@ -3107,7 +3132,7 @@ Proof.
       (*     w' ||- [{fun γδ => ϕ (tedious_prod_sem _ _ γδ)}] e [{fun v γδ => ψ v (tedious_prod_sem _ _ γδ)}] *)
       intros γ δ m; simpl; simpl in m.
       rewrite (sem_rw_exp_unique _ _ _ _ w' (has_type_rw_ro _ _ _ _ w)); simpl.
-      pose proof (proves_ro_tot_sound _ _ _ _ _ _  p (tedious_prod_sem _ _ (δ, γ)) m) as [p1 p2].
+      pose proof (proves_ro_tot_sound _ _ _ _ _ _  p (γ; δ) m) as [p1 p2].
       split.
       auto.
       apply neg_forall_exists_neg in p1.
@@ -3165,7 +3190,10 @@ Proof.
         destruct H0.
         apply total_is_injective in H0.
         rewrite <- H0 in H1.
-        pose proof (proves_rw_tot_sound _ _ _ _ _ _ _  trip2 γ δ' H1) as [q1 q2]; auto.
+        pose proof (proves_rw_tot_sound _ _ _ _ _
+                      (fun '(γ, δ) => θ (γ, (δ, tt)))
+                      (fun '(γ, (δ, y)) => ψ0 (γ, (δ, y)))
+                      trip2 γ δ' H1) as [q1 q2]; auto.
       }
       intros h1 h2.
       destruct h1.
@@ -3179,14 +3207,17 @@ Proof.
       apply pdom_lift_total_2 in h1 as [[x u] [h3 h4]].
       destruct u.
       simpl in h4; rewrite <- h4 in h3; clear h4. 
-      assert (θ γ y tt).
+      assert (θ (γ, (y, tt))).
       pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip1 _ _ m) as [_ p].
       pose proof (p (total (y, tt)) h3) as [y' [e1 e2]]. 
       apply total_is_injective in e1.
       rewrite <- e1 in e2.
       simpl in e2.
       auto.
-      pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip2 _ _ H) as [_ q].
+      pose proof (proves_rw_tot_sound _ _ _ _ _
+                    (fun '(γ, δ) => θ (γ, (δ, tt)))
+                    (fun '(γ, (δ, y)) => ψ0 (γ, (δ, y)))
+trip2 _ _ H) as [_ q].
       pose proof (q _ h2) as [q' [e' _]].
       contradict (flat_bot_neq_total _ e').
       apply pdom_bind_total_2 in h2 as [_ [δ' [h2 h3]]].
@@ -3200,7 +3231,11 @@ Proof.
       rewrite <- hh2 in hh3.
 
       simpl in hh3.
-      pose proof (proves_rw_tot_sound _ _ _ _ _ _ _  trip2 γ δ' hh3) as [_ q2]; auto.
+      pose proof (proves_rw_tot_sound _ _ _ _ _
+                    (fun '(γ, δ) => θ (γ, (δ, tt)))
+                    (fun '(γ, (δ, y)) => ψ0 (γ, (δ, y)))
+                    
+                    trip2 γ δ' hh3) as [_ q2]; auto.
      
 
     ++
@@ -3211,14 +3246,14 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- [{ϕ}] NEWVAR e IN c [{ψ}] *)
       intros γ δ m; simpl; simpl in m.
-      pose (sem_ro_exp _ _ _ w1 (δ; γ)) as V.
+      pose (sem_ro_exp _ _ _ w1 (γ; δ)) as V.
       pose (sem_rw_exp _ _ _ _ w2 γ) as f.
-      pose (pdom_bind f (pdom_lift (fun v => (v, δ)) V)) as res.
+      pose (pdom_bind f (pdom_lift (fun v => (δ, v)) V)) as res.
       replace (sem_rw_exp Γ Δ (NEWVAR e IN c) τ w' γ δ) with
-        (pdom_lift (fun x => (snd (fst x), snd x)) res) by
+        (pdom_lift (fun x => (fst (fst x), snd x)) res) by
         (rewrite (sem_rw_exp_unique _ _ _ _ w' (has_type_rw_Newvar _ _ _ _ _ _ w1 w2)); simpl; auto).
       unfold V, f, res.
-      pose proof (proves_ro_tot_sound _ _ _ _ _ _ p (tedious_prod_sem Δ Γ (δ, γ))).
+      pose proof (proves_ro_tot_sound _ _ _ _ _ _ p (γ; δ)).
       simpl in H.
       (* assert (ϕ0 (tedious_sem_app Δ Γ (tedious_prod_sem Δ Γ (δ, γ)))) as H' *)
       (*     by (rewrite tedious_equiv_1; auto). *)
@@ -3240,13 +3275,14 @@ Proof.
         apply pdom_lift_total_2 in h1 as [x'' [h h']].
         unfold f in h2.
         pose proof (p2 _ h) as [v'' [e1 e2]].
-        pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip γ x').
+        pose proof (proves_rw_tot_sound _ _ _ _ _
+                      (fun '((γ, (δ, x)) : sem_ctx Γ * sem_ctx (Δ ::: σ)) => θ ((γ; δ), x))
+                      (fun '((γ, ((δ, x), y)) : sem_ctx Γ * (sem_ctx (Δ ::: σ) *sem_datatype τ)) => ψ0 (γ, (δ, y)))
+                      trip γ x').
         assert (rw_tot_pre w2
-        (mk_rw_tot w2
-           (fun (γ : sem_ctx Γ) (δ : sem_ctx (σ :: Δ)) => (fun (γ0 : sem_ctx Γ) '(x, δ0) => θ (δ0; γ0) x) γ δ)
-           (fun (γ : sem_ctx Γ) (δ : sem_ctx (σ :: Δ)) (y : sem_datatype τ) =>
-            (fun (γ0 : sem_ctx Γ) (pat : sem_ctx (σ :: Δ)) (y0 : sem_datatype τ) =>
-             (let '(_, δ0) := pat in fun y1 : sem_datatype τ => ψ0 γ0 δ0 y1) y0) γ δ y)) γ x').
+        (mk_rw_tot w2 ([γ : Γ;;; δ : (Δ ::: σ)]||- {{([γ0 : Γ;;; (δ0, x) : (Δ ::: σ)]||- {{θ ((γ0; δ0), x)}}) (γ, δ)}})
+           ([γ : Γ;;; δ : (Δ ::: σ)]||- {{y : τ | ([γ0 : Γ;;; (δ0, _) : (Δ ::: σ)]||- {{y0 : τ | ψ0 (γ0, (δ0, y0))}}) (γ, (δ, y))}})) (
+        γ, x') ).
         reduce_tedious; auto.
         destruct x'.
         simpl.
@@ -3278,13 +3314,14 @@ Proof.
       destruct H2.
       apply total_is_injective in  H2.
       induction H2.
-      pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip γ x).
+      pose proof (proves_rw_tot_sound _ _ _ _ _
+                    (fun '((γ, (δ, x)) : sem_ctx Γ * sem_ctx (Δ ::: σ)) => θ ((γ; δ), x))
+                    (fun '((γ, ((δ, x), y)) : sem_ctx Γ * (sem_ctx (Δ ::: σ) *sem_datatype τ)) => ψ0 (γ, (δ, y)))
+                    trip γ x).
       assert (rw_tot_pre w2
-         (mk_rw_tot w2
-            (fun (γ : sem_ctx Γ) (δ : sem_ctx (σ :: Δ)) => (fun (γ0 : sem_ctx Γ) '(x, δ0) => θ (δ0; γ0) x) γ δ)
-            (fun (γ : sem_ctx Γ) (δ : sem_ctx (σ :: Δ)) (y : sem_datatype τ) =>
-             (fun (γ0 : sem_ctx Γ) (pat : sem_ctx (σ :: Δ)) (y0 : sem_datatype τ) =>
-              (let '(_, δ0) := pat in fun y1 : sem_datatype τ => ψ0 γ0 δ0 y1) y0) γ δ y)) γ x).
+         (mk_rw_tot w2 ([γ : Γ;;; δ : (Δ ::: σ)]||- {{([γ0 : Γ;;; (δ0, x) : (Δ ::: σ)]||- {{θ ((γ0; δ0), x)}}) (γ, δ)}})
+            ([γ : Γ;;; δ : (Δ ::: σ)]||- {{y : τ | ([γ0 : Γ;;; (δ0, _) : (Δ ::: σ)]||- {{y0 : τ | ψ0 (γ0, (δ0, y0))}}) (γ, (δ, y))}})) (
+         γ, x)).
       simpl.
       destruct x.
       simpl.
@@ -3307,9 +3344,12 @@ Proof.
       unfold f in h4.
       injection h6; intros i j; induction i; induction j.
       unfold V in h5.
-      pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip γ (x''', δ'')).
+      pose proof (proves_rw_tot_sound _ _ _ _ _
+                    (fun '((γ, (δ, x)) : sem_ctx Γ * sem_ctx (Δ ::: σ)) => θ ((γ; δ), x))
+                    (fun '((γ, ((δ, x), y)) : sem_ctx Γ * (sem_ctx (Δ ::: σ) *sem_datatype τ)) => ψ0 (γ, (δ, y)))
+                    trip γ (x''', δ'')).
       simpl in H.
-      assert ( θ (δ''; γ) x''' ).
+      assert ( θ ((γ; x'''), δ'')).
       pose proof (p2 _ h5).
       destruct H0.
       destruct H0.
@@ -3325,7 +3365,7 @@ Proof.
       simpl in H1.
       apply total_is_injective in H.
       injection H; intros.
-      rewrite H2, H3; auto. 
+      rewrite H2, H4; auto. 
 
 
     ++
@@ -3347,10 +3387,10 @@ Proof.
       (*     (*——————————-——————————-——————————-——————————-——————————-*) *)
       (*     w' ||- [{ϕ}] Cond e c1 c2 [{ψ}] *)
       intros γ δ m; simpl; simpl in m.
-      assert (ϕ0 (snd_app (δ; γ)) (fst_app (δ; γ))) as m'.
+      assert (ϕ0 (fst_app (γ; δ), snd_app (γ; δ))) as m'.
       reduce_tedious; auto.
 
-      pose (sem_ro_exp _ _ _ w (δ; γ)) as B.
+      pose (sem_ro_exp _ _ _ w (γ; δ)) as B.
       pose (sem_rw_exp _ _ _ _ w1 γ δ) as X.
       pose (sem_rw_exp _ _ _ _ w2 γ δ) as Y.
       replace (sem_rw_exp Γ Δ (IF e THEN c1 ELSE c2 END) τ w' γ δ)
@@ -3359,17 +3399,23 @@ Proof.
       (* assert (ro_prt_pre w (mk_ro_prt w (rw_to_ro_pre ϕ0) θ) (δ; γ)) as m' *)
       (*     by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto). *)
       
-      pose proof (proves_ro_tot_sound _ _ _ _ _ _ p (δ ; γ) ) as [nempty_e sem_e].
+      pose proof (proves_ro_tot_sound _ _ _ _ _ _ p (γ ; δ) ) as [nempty_e sem_e].
       reduce_tedious; auto.
       pose proof (proves_ro_tot_sound _ _ _ _ _ _ p) as E. 
-      pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip1) as C1.
-      pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip2) as C2.
+      pose proof (proves_rw_tot_sound _ _ _ _ _
+                    (fun '(γ, δ) => θ ((γ; δ), true))
+                    (fun '(γ, (δ, y)) => ψ0 (γ, (δ, y)))
+                    trip1) as C1.
+      pose proof (proves_rw_tot_sound _ _ _ _ _
+                    (fun '(γ, δ) => θ ((γ; δ), false))
+                    (fun '(γ, (δ, y)) => ψ0 (γ, (δ, y)))
+                    trip2) as C2.
       split.
       {
         (* non empty *)
         intro h.
         apply pdom_bind_empty_2 in h as [h|[x [h1 h2]]]; auto.
-        pose proof (ro_tot_post_pre _ _ _ _ _ _ E x (δ ; γ) ) as H .
+        pose proof (ro_tot_post_pre _ _ _ _ _ _ E x (γ ; δ) ) as H .
         simpl in H.
         apply H in h1.
         destruct x.
@@ -3413,7 +3459,7 @@ Proof.
       }
       
       apply pdom_bind_total_2 in h2 as [_ [b [semb h2]]].
-      pose proof (ro_tot_post_pre _ _ _ _ _ _ E b (δ ; γ) m').
+      pose proof (ro_tot_post_pre _ _ _ _ _ _ E b (γ ; δ) m').
       apply H in semb; clear H.
       destruct b.
       pose proof (C1 γ δ semb) as [_ h].
@@ -3423,104 +3469,6 @@ Proof.
       pose proof (h _ h2) as [x [p1 p2]].
       exists x; split; auto.
       
-    (* ++ *)
-
-    (*   (* | rw_case_tot : forall Γ Δ e1 e2 c1 c2 τ (wty_e1 : (Δ ++ Γ) |- e1 : BOOL) (wty_e2 : (Δ ++ Γ) |- e2 : BOOL) (wty_c1 : Γ ;;; Δ ||- c1 : τ) (wty_c2 : Γ ;;; Δ ||- c2 : τ) (wty : Γ ;;; Δ ||- Case e1 c1 e2 c2 : τ) ϕ θ1 θ2 ψ ϕ1 ϕ2, *) *)
-      
-    (*   (*     wty_e1 |- {{rw_to_ro_pre ϕ}} e1 {{θ1}} ->  *) *)
-    (*   (*     wty_e2 |- {{rw_to_ro_pre ϕ}} e2 {{θ2}} ->  *) *)
-    (*   (*     wty_c1 ||- [{ro_to_rw_pre (θ1 true)}] c1 [{ψ}] ->  *) *)
-    (*   (*     wty_c2 ||- [{ro_to_rw_pre (θ2 true)}] c2 [{ψ}] ->  *) *)
-    (*   (*     wty_e1 |- [{ϕ1}] e1 [{b |fun _ => b = true}] ->  *) *)
-    (*   (*     wty_e2 |- [{ϕ2}] e2 [{b | fun _ => b = true}] ->  *) *)
-    (*   (*     (forall x, (rw_to_ro_pre ϕ x) -> (ϕ1 x \/ ϕ2 x)) ->  *) *)
-    (*   (*     (*——————————-——————————-——————————-——————————-——————————-*) *) *)
-    (*   (*     wty ||- [{ϕ}] Case e1 c1 e2 c2 [{ψ}] *) *)
-
-    (*   intros γ δ m; simpl; simpl in m. *)
-    (*   rename p1 into t1. *)
-    (*   rename p2 into t2. *)
-    (*   pose (sem_ro_exp _ _ _ wty_e1 (δ; γ)) as B1. *)
-    (*   pose (sem_ro_exp _ _ _ wty_e2 (δ; γ)) as B2. *)
-    (*   pose (sem_rw_exp _ _ _ _ wty_c1 γ δ) as X. *)
-    (*   pose (sem_rw_exp _ _ _ _ wty_c2 γ δ) as Y. *)
-     
-
-    (*   replace (sem_rw_exp Γ Δ (CASE e1 ==> c1 OR e2 ==> c2 END) τ wty γ δ) with *)
-    (*     (Case2 B1 B2 X Y)  *)
-    (*     by  (rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_Case _ _ _ _ _ _ _ wty_e1  wty_c1 wty_e2 wty_c2)); simpl; auto). *)
-    (*   assert ( (rw_to_ro_pre ϕ0) (δ; γ)) as m' *)
-    (*       by (simpl; unfold rw_to_ro_pre; rewrite tedious_equiv_1; auto). *)
-    (*   pose proof (proves_ro_prt_sound _ _ _ _ _ _ p _ m') as [p1 p2]. *)
-    (*   pose proof (proves_ro_prt_sound _ _ _ _ _ _ p0 _ m') as [q1 q2]. *)
-    (*   split. *)
-    (*   { *)
-    (*     (* non empty *) *)
-    (*     unfold Case2. *)
-    (*     intro h. *)
-    (*     apply pdom_case2_empty_2 in h. *)
-    (*     destruct h as [h| [h | [[h1 h2] | [h1 h2]]]]. *)
-    (*     apply (p1 h). *)
-    (*     apply (q1 h). *)
-    (*     pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p)) true (δ ; γ) m' h1) as m''. *)
-    (*     pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip1 _ _ m'') as [r1 r2]. *)
-    (*     auto. *)
-    (*     pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p0)) true (δ ; γ) m' h1) as m''. *)
-    (*     pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip2 _ _ m'') as [r1 r2]. *)
-    (*     auto. *)
-    (*   } *)
-    (*   intros h1 h2. *)
-    (*   destruct h1. *)
-    (*   { *)
-    (*     (* non bottom *) *)
-    (*     apply pdom_case2_bot_2 in h2. *)
-
-    (*     destruct h2 as [[h2 h3] | [[h2  h3] | [h2 h3]]]. *)
-    (*     contradict h3. *)
-    (*     pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p)) true (δ ; γ) m' h2) as m''. *)
-    (*     apply (sem_rw_tot_excludes_bot _ _ _ _ _ _ _ ((proves_rw_tot_sound _ _ _ _ _ _ _ trip1)) _ _ m''). *)
-    (*     contradict h3. *)
-    (*     pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p0)) true (δ ; γ) m' h2) as m''. *)
-    (*     apply (sem_rw_tot_excludes_bot _ _ _ _ _ _ _ ((proves_rw_tot_sound _ _ _ _ _ _ _ trip2)) _ _ m''). *)
-
-    (*     destruct (o (δ ; γ) m'). *)
-        
-    (*     pose proof (proves_ro_tot_sound _ _ _ _ _ _ t1 (δ; γ) H) as [_ h]. *)
-    (*     destruct h2 as [h2 | h2]; contradict h2. *)
-    (*     intro. *)
-    (*     pose proof (h _ H0) as [v [H1 H2]]. *)
-    (*     contradict (flat_bot_neq_total _ H1). *)
-    (*     intro. *)
-    (*     pose proof (h _ H0) as [v [H1 H2]]. *)
-    (*     simpl in H2. *)
-    (*     rewrite H2 in H1. *)
-    (*     apply total_is_injective in H1. *)
-    (*     contradict H1; auto. *)
-    (*     pose proof (proves_ro_tot_sound _ _ _ _ _ _ t2 (δ; γ) H) as [_ h]. *)
-    (*     clear h2; destruct h3 as [h2 | h2]; contradict h2. *)
-    (*     intro. *)
-    (*     pose proof (h _ H0) as [v [H1 H2]]. *)
-    (*     contradict (flat_bot_neq_total _ H1). *)
-    (*     intro. *)
-    (*     pose proof (h _ H0) as [v [H1 H2]]. *)
-    (*     simpl in H2. *)
-    (*     rewrite H2 in H1. *)
-    (*     apply total_is_injective in H1. *)
-    (*     contradict H1; auto. *)
-    (*   } *)
-      
-    (*   apply pdom_case2_total_2 in h2. *)
-    (*   destruct h2 as [[h2 h4]|[h2 h4]].  *)
-    (*   pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p)) true (δ ; γ) m' h2) as m''. *)
-    (*   pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip1 _ _ m'') as [_ r2]. *)
-    (*   pose proof (r2 _ h4) as [h2' [eq1 h3]]. *)
-    (*   exists h2'. *)
-    (*   split; auto. *)
-    (*   pose proof (ro_prt_post_pre _ _ _ _ _ _ ((proves_ro_prt_sound _ _ _ _ _ _ p0)) true (δ ; γ) m' h2) as m''. *)
-    (*   pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ trip2 _ _ m'') as [_ r2]. *)
-    (*   pose proof (r2 _ h4) as [h2' [eq1 h3]]. *)
-    (*   exists h2'. *)
-    (*   split; auto. *)
       
     ++
       (* case_list *)
@@ -3540,6 +3488,7 @@ Proof.
           pose proof (has_type_rw_r_has_type_rw _ _ _ _ wty).
           dependent destruction H; auto.
         }
+
         rewrite (sem_rw_exp_unique _ _ _ _ wty (has_type_rw_CaseList _ _ l _ H wty_l)).
         easy_rewrite_uip.
         split.
@@ -3563,7 +3512,7 @@ Proof.
           rewrite <- H in H1; simpl in H1.
           destruct j.
           destruct p.
-          pose proof (proves_ro_prt_sound _ _ _ _ _ _ p (δ; γ)).
+          pose proof (proves_ro_prt_sound _ _ _ _ _ _ p (γ; δ)).
           (* pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p0). *)
           destruct H1.
           destruct H0 as [H0 _]; auto.
@@ -3573,7 +3522,10 @@ Proof.
           reduce_tedious; auto.
           pose proof (H0 _ H1 _ eq_refl).
           simpl in H3.
-          pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ p1 γ δ) as [H5 _].
+          pose proof (proves_rw_tot_sound _ _ _ _ _
+                        (fun '(γ, δ) => q ((γ; δ), true))
+                        (fun '(γ, (δ, y)) => ψ0 (γ, (δ, y)))
+                        p1 γ δ) as [H5 _].
           reduce_tedious; auto.
           
           auto.
@@ -3598,7 +3550,7 @@ Proof.
         destruct H.
         destruct j.
         destruct p.
-        pose proof (proves_ro_prt_sound _ _ _ _ _ _ p (δ; γ)).
+        pose proof (proves_ro_prt_sound _ _ _ _ _ _ p (γ; δ)).
         (* pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p0). *)
         destruct H0.
         destruct H2 as [_ H2].
@@ -3611,7 +3563,11 @@ Proof.
         (* assert (ro_to_rw_pre (q true) (δ, γ)). *)
         (* unfold ro_to_rw_pre. *)
         (* auto. *)
-        pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ p1) as [_ H6].
+        pose proof (proves_rw_tot_sound _ _ _ _ _
+                                              (fun '(γ, δ) => q ((γ; δ), true))
+                        (fun '(γ, (δ, y)) => ψ0 (γ, (δ, y)))
+
+                        p1) as [_ H6].
         reduce_tedious; auto.
         exact H4.
         simpl in H6.
@@ -3669,11 +3625,15 @@ Proof.
           pose proof (proves_ro_prt_sound _ _ _ _ _ _ p).
           (* pose proof (proves_rw_prt_sound _ _ _ _ _ _ _ p0). *)
           destruct H0.
-          destruct (H1 (δ; γ)) as [_ H4].
+          destruct (H1 (γ; δ)) as [_ H4].
           reduce_tedious; auto.
           simpl in H4.
           pose proof (H4 _ H0 _ eq_refl).
-          pose proof (proves_rw_tot_sound _ _ _ _ _ _ _ p1).
+          pose proof (proves_rw_tot_sound _ _ _ _ _
+                                                (fun '(γ, δ) => q ((γ; δ), true))
+                        (fun '(γ, (δ, y)) => ψ0 (γ, (δ, y)))
+
+                        p1).
           destruct (H5 γ δ H3).
           simpl in H7.
           pose proof (H7 _ H2).
@@ -3687,7 +3647,7 @@ Proof.
           (* when there is no guard *)
           destruct H0 as [_ H0].
           pose proof (Forall_to_forall _ _ H0); clear H0.
-          assert ( ϕ0 (snd_app (δ; γ)) (fst_app (δ; γ))) as m'.
+          assert ( ϕ0 (fst_app (γ; δ), snd_app (γ; δ))) as m'.
           reduce_tedious; auto.
           pose proof (f0 _ m').
           clear H wty f0.
@@ -3699,11 +3659,14 @@ Proof.
 
           destruct H0.
           destruct j.
-          pose proof (proves_ro_tot_sound _ _ _ _ _ _  p1 _ H) as [_ H2].
+          pose proof (proves_ro_tot_sound _ _ BOOL _
+                        (fun γ => r γ)
+                        (fun '(γ, y) => y = true)
+                        p1 _ H) as [_ H2].
           simpl in H2.
           destruct p; simpl in H1.
                
-          pose proof (H1  (sem_ro_exp (Δ ++ Γ) (fst a) BOOL h (δ; γ), sem_rw_exp Γ Δ (snd a) τ h0 γ δ) ( or_introl eq_refl )) as hh.
+          pose proof (H1  (sem_ro_exp (Δ ++ Γ) (fst a) BOOL h (γ; δ), sem_rw_exp Γ Δ (snd a) τ h0 γ δ) ( or_introl eq_refl )) as hh.
           simpl in hh.
           destruct hh.
           pose proof (H2 _ H0).
@@ -3741,8 +3704,17 @@ Proof.
       (*     wty ||- [{ϕ}] While e c [{fun _ => (ϕ /\\ ro_to_rw_pre (θ false))}] *)
 
       apply proves_ro_tot_sound in p.
-      apply proves_rw_tot_sound in trip1.
-      apply proves_rw_tot_sound in trip2.
-      apply (proves_rw_while_tot_sound _ _ _ _ _ _ _ _ _ _ _ p trip1 trip2 n).
+      pose proof (proves_rw_tot_sound _ _ _ _ _
+                    (fun '(γ, δ) => θ ((γ; δ), true))
+                    (fun '(γ, (δ, y)) => ϕ0 (γ, δ))
+                    trip1
+        ).
+      pose proof (proves_rw_tot_sound _ _ _ _ _
+                    (fun '(x, δ) => θ ((snd_app x; δ), true) /\ δ = fst_app x)
+                    (fun '(x, (δ, y)) => ψ0 (x, δ))
+                    trip2
+        ).
+
+      apply (proves_rw_while_tot_sound _ _ _ _ _ _ _ _ _ _ _ p H H0 n).
 
 Defined.
