@@ -4,7 +4,7 @@ Require Import List.
 Close Scope list_scope.
 (* we use list notation where the head is on the right to be consistent with the paper.  *)
 
-Notation "a ::: b" := (cons b a) (at level 60, right associativity).
+Notation "a ::: b" := (cons b a) (at level 55, left associativity).
 Notation "a +++ b" := (app b a) (right associativity, at level 60).
 
 

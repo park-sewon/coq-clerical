@@ -119,13 +119,16 @@ have that their semantics are equal: `sem_exp_ro Γ e τ w1 γ = sem_exp_ro Γ e
 ### Specifications
 In [Clerical.Specification](./formalization/Specification.v), we define specifications. 
 For a well-typed read-only expression `w : Γ |- e : τ`, a pre-condition `ϕ : sem_ctx Γ -> Prop`, and a post-condition 
-`ψ : sem_ctx Γ *  sem_datatype τ -> Prop`, `[| γ : Γ |]  |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ` denotes its partial correctness specification.
-And, `[| γ : Γ |] |= {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ` denotes its total correctness.
+`ψ : sem_ctx Γ *  sem_datatype τ -> Prop`, 
+- `[| γ : Γ |]  |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ` denotes its partial correctness specification.
+- And, `[| γ : Γ |] |= {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ` denotes its total correctness.
 
 Specifications of read-write expressions are defined similarly: 
 for a well-typed read-write expression `w : Γ ;;; Δ ||- e : τ`, a pre-condition 
 `ϕ : sem_ctx Γ * sem_ctx Δ  -> Prop`, and a post-condition 
-`ψ : sem_ctx Γ * (sem_ctx Δ  * sem_datatype τ) -> Prop`, `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ` denotes its partial correctness and `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ` denotes its total correctness.
+`ψ : sem_ctx Γ * (sem_ctx Δ  * sem_datatype τ) -> Prop`, 
+- `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ` denotes its partial correctness 
+- and `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ` denotes its total correctness.
 
 Furthermore, in the file, assertions' notations are defined:
 - `[γ : Γ] |- {{ϕ}}` denotes `fun γ : sem_ctx Γ => ϕ`,
