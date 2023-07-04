@@ -13,8 +13,7 @@ Proof.
   apply (pp_ro_rw_tot_back).
 
   apply (pp_rw_cond_tot
-           (θ :=
-              (fun x y => ψ (snd_app x) y)) ). 
+           (θ := (fun '(x, y) => ψ (fst_app x) y))). 
   (* clondition on the condition *)
   exact X.
   (* condition on the first branch *)
@@ -38,8 +37,7 @@ Proof.
   apply (pp_ro_rw_tot_back).
 
   apply (pp_rw_cond_tot
-           (θ :=
-              (fun x y => ψ (snd_app x) (negb y)))). 
+           (θ := (fun '(x, y) => ψ (fst_app x) (negb y)))). 
   (* condition on the condition *)
   exact X.
   (* condition on the first branch *)
@@ -63,8 +61,7 @@ Proof.
   apply (pp_ro_rw_prt_back).
 
   apply (pp_rw_cond_prt
-           (θ :=
-              (fun x y => ψ (snd_app x) y)) ). 
+           (θ := (fun '(x, y) => ψ (fst_app x) y)) ). 
   (* clondition on the condition *)
   exact X.
   (* condition on the first branch *)
@@ -88,8 +85,7 @@ Proof.
   apply (pp_ro_rw_prt_back).
 
   apply (pp_rw_cond_prt
-           (θ :=
-              (fun x y => ψ (snd_app x) (negb y)))). 
+           (θ := (fun '(x, y) => ψ (fst_app x) (negb y)))). 
   (* condition on the condition *)
   exact X.
   (* condition on the first branch *)

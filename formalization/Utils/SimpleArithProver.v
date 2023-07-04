@@ -30,20 +30,6 @@ Ltac auto_imp :=
        repeat destruct v2;
        repeat split;
        auto
-  |  |- asrt_imp2 _ _ =>
-       let v1 := fresh "tmp" in
-       let v2 := fresh "tmp" in
-       let v3 := fresh "tmp" in
-       let w1 := fresh "tmp" in
-       let w2 := fresh "tmp" in
-       let w3 := fresh "tmp" in
-       unfold_stuffs;
-       intros v1 v2 v3;
-       repeat destruct v1;
-       repeat destruct v2;
-       repeat destruct v3;
-       repeat split;
-       auto
   end.
 
        
@@ -67,17 +53,17 @@ Ltac proves_simple_arithmetical :=
 
       pose proof (simple_arithmetical_prt Γ e τ v3 v1) as v4;
 
-      apply (pp_ro_prt_pose_readonly (Γ := Γ) (τ := τ) ϕ) in v4;
+      apply (pp_ro_prt_pose_readonly (Γ := Γ) (τ := τ) (ψ := patf) ϕ) in v4;
 
       simpl in v4;
       
-      apply (pp_ro_imply_prt v4); clear v4;
+      apply (pp_ro_imply_prt (ψ := patf) (ψ' := patf) v4); clear v4;
 
       try (auto_imp; fail);
       rewrite <- v2; clear v2;
       easy_rewrite_uip;
       reduce_tedious;
-      intros y x;
+      intros [y x];
       
       reduce_tedious;
 
@@ -123,11 +109,11 @@ Ltac proves_simple_arithmetical :=
 
       pose proof (simple_arithmetical_tot _ v1 _ _  v3) as v4;
       
-      apply (pp_ro_tot_pose_readonly (Γ := Γ)  (τ := τ) ϕ) in v4;
+      apply (pp_ro_tot_pose_readonly (Γ := Γ) (τ := τ) (ψ := patf) ϕ) in v4;
 
       simpl in v4;
       
-      apply (pp_ro_imply_tot v4); clear v4;
+      apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) v4); clear v4;
       rewrite <- v2; clear v2; easy_rewrite_uip;
       [
         intro x;
@@ -157,7 +143,7 @@ Ltac proves_simple_arithmetical :=
           auto          
         ]
       |               
-        intros y x;
+        intros [y x];
         reduce_tedious;
         intros [v p];
 
@@ -194,23 +180,23 @@ Ltac proves_simple_arithmetical :=
 
 Lemma pp_rw_assign_simple_arithmetical_tot
   e (p : simple_arithmetical e) Γ Δ k τ
-  (we : (Δ ++ Γ) |- e : τ)
+  (we : (Γ +++ Δ) |- e : τ)
   (a : assignable Δ τ k)
-  (ϕ : rwpre) (ψ : rwpost) :
-  (forall x, ϕ (snd_app x) (fst_app x) -> fst (simple_arithmetical_value_tot _ p _ _ we) x) ->
-  (forall γ δ, ϕ γ δ ->
-      ψ γ (update k (snd (simple_arithmetical_value_tot _ p _ _ we) (δ; γ)) δ a) tt) ->
-  [γ : Γ ;;; δ : Δ]||- {{ϕ γ δ}} (LET k := e) {{y : UNIT | ψ γ δ y }}ᵗ.
+  (ϕ : pred) (ψ : pred) :
+  (forall x, ϕ (fst_app x, snd_app x) -> fst (simple_arithmetical_value_tot _ p _ _ we) x) ->
+  (forall γ δ, ϕ (γ, δ) ->
+      ψ (γ, (update k (snd (simple_arithmetical_value_tot _ p _ _ we) (γ; δ)) δ a, tt))) ->
+  [γ : Γ ;;; δ : Δ]||- {{ϕ (γ, δ)}} (LET k := e) {{y : UNIT | ψ (γ, (δ, y)) }}ᵗ.
 Proof.
   intros.
   pose proof (simple_arithmetical_tot e p (Δ ++ Γ) τ we).
-  apply (pp_ro_tot_pose_readonly (fun x => ϕ (snd_app x) (fst_app x))) in X.
+  apply (pp_ro_tot_pose_readonly (ψ := patf) (fun x => ϕ (fst_app x, snd_app x))) in X.
   apply (pp_rw_assign_tot_util τ
-           (θ := fun x y => y = (snd (simple_arithmetical_value_tot _ p _ _ we) x)) a).
-  apply (pp_ro_imply_tot X).
+           (θ := fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p _ _ we) x)) a).
+  apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X).
   intros x y.
   split; auto.
-  intros h1 h2 [h3 _]; auto.
+  intros [h1 h2] [h3 _]; auto.
   intros.
   rewrite H2; apply H0.
   auto.

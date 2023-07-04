@@ -24,28 +24,29 @@ Proof.
   intros.
   apply (pp_ro_rw_tot_back).
   apply (pp_rw_case_tot
-           (θ1 := (fun x b => b = true ->
-                              Rabs (var_access _ _ _ wk (snd_app x)) <
-                                (var_access _ _ _ wδ (snd_app x))))
-           (θ2 := (fun x b => b = true ->
-                              (var_access _ _ _ wδ (snd_app x)) / 2 < 
-                                Rabs (var_access _ _ _ wk (snd_app x))))           
+           (θ1 := (fun '(x, b) => b = true ->
+                              Rabs (var_access _ _ _ wk (fst_app x)) <
+                                (var_access _ _ _ wδ (fst_app x))))
+           (θ2 := (fun '(x, b) => b = true ->
+                              (var_access _ _ _ wδ (fst_app x)) / 2 < 
+                                Rabs (var_access _ _ _ wk (fst_app x))))           
            (ϕ1 := (fun x => 
-                      Rabs (var_access _ _ _ wk (snd_app x)) <
-                        (var_access _ _ _ wδ (snd_app x))))
+                      Rabs (var_access _ _ _ wk (fst_app x)) <
+                        (var_access _ _ _ wδ (fst_app x))))
            (ϕ2 := (fun x => 
-                     (var_access _ _ _ wδ (snd_app x)) / 2 < 
-                       Rabs (var_access _ _ _ wk (snd_app x))))); simpl.
+                     (var_access _ _ _ wδ (fst_app x)) / 2 < 
+                       Rabs (var_access _ _ _ wk (fst_app x))))); simpl.
   {
     apply (pp_ro_real_comp_lt_prt
-             (fun x y => y = Rabs (var_access _ _ _ wk x))
-             (fun x y => y = (var_access _ _ _ wδ x))).
+             (fun '(x, y) => y = Rabs (var_access _ _ _ wk x))
+             (fun '(x, y) => y = (var_access _ _ _ wδ x))).
     {
       apply (pp_ro_imply_prt
+               (ψ := patf)
                (pp_ro_tot_prt
                   (clerical_abs_correct _ _ wk))).
       intros h1 h2; auto.
-      intros h1 h2 h3; auto.
+      intros [h1 h2] h3; auto.
     }
 
     proves_simple_arithmetical.
@@ -54,7 +55,7 @@ Proof.
 
     intros.
     apply (proj1 (Rltb''_prop _ _)) in H2.
-    unfold snd_app; simpl .
+    reduce_tedious.
     rewrite <- H0.
     rewrite <- H.
     exact H2.
@@ -62,8 +63,8 @@ Proof.
 
   {   
     apply (pp_ro_real_comp_lt_prt
-             (fun x y => y = (var_access _ _ _ wδ x) / 2 )
-             (fun x y => y = Rabs (var_access _ _ _ wk x))).
+             (fun '(x, y) => y = (var_access _ _ _ wδ x) / 2 )
+             (fun '(x, y) => y = Rabs (var_access _ _ _ wk x))).
     proves_simple_arithmetical.
     rewrite val.
     rewrite Rmult_1_r.
@@ -71,16 +72,16 @@ Proof.
     reflexivity.
 
     {
-      apply (pp_ro_imply_prt
+      apply (pp_ro_imply_prt (ψ := patf)
                (pp_ro_tot_prt
                   (clerical_abs_correct _ _ wk))).
       intros h1 h2; auto.
-      intros h1 h2 h3; auto.
+      intros [h1 h2] h3; auto.
     }
 
     intros.    
     apply (proj1 (Rltb''_prop _ _)) in H2.
-    unfold snd_app; simpl .
+    reduce_tedious.
     rewrite <- H0.
     rewrite <- H.
     exact H2.
@@ -104,15 +105,15 @@ Proof.
 
   {
     apply (pp_ro_real_comp_lt_tot
-             (fun x y => y = Rabs (var_access _ _ _ wk x) /\ Rabs (var_access _ _ _ wk x) < (var_access _ _ _ wδ x))
-             (fun x y => y = (var_access _ _ _ wδ x))).
+             (fun '(x, y) => y = Rabs (var_access _ _ _ wk x) /\ Rabs (var_access _ _ _ wk x) < (var_access _ _ _ wδ x))
+             (fun '(x, y) => y = (var_access _ _ _ wδ x))).
     {
-      apply (pp_ro_imply_tot
-               (pp_ro_tot_pose_readonly
+      apply (pp_ro_imply_tot (ψ := patf)
+               (pp_ro_tot_pose_readonly (ψ := patf)
                   (fun x => Rabs (var_access _ _ _ wk x) < (var_access _ _ _ wδ x)) 
                   (clerical_abs_correct _ _ wk))).
       intros h1 h2; split; auto.
-      intros h1 h2 h3; auto.
+      intros [h1 h2] h3; auto.
     }
 
     proves_simple_arithmetical.
@@ -129,8 +130,8 @@ Proof.
 
   {
     apply (pp_ro_real_comp_lt_tot
-             (fun x y => y = (var_access _ _ _ wδ x)/2 /\ (var_access _ _ _ wδ x)/2 <Rabs (var_access _ _ _ wk x))
-             (fun x y => y = Rabs (var_access _ _ _ wk x))).
+             (fun '(x, y) => y = (var_access _ _ _ wδ x)/2 /\ (var_access _ _ _ wδ x)/2 <Rabs (var_access _ _ _ wk x))
+             (fun '(x, y) => y = Rabs (var_access _ _ _ wk x))).
     {
       proves_simple_arithmetical.
       split; auto.
@@ -140,12 +141,12 @@ Proof.
       reflexivity.
     }
     
-    apply (pp_ro_imply_tot
-             (pp_ro_tot_pose_readonly
+    apply (pp_ro_imply_tot (ψ := patf)
+             (pp_ro_tot_pose_readonly (ψ := patf)
                 (fun x => (var_access _ _ _ wδ x)/2 <Rabs (var_access _ _ _ wk x)) 
                 (clerical_abs_correct _ _ wk))).
     intros h1 h2; split; auto.
-    intros h1 h2 h3; auto.
+    intros [h1 h2] h3; auto.
     destruct h3.
     exact H.
 

@@ -18,18 +18,18 @@ Lemma clerical_abs_correct :
 Proof.
   intros.
   apply (pp_ro_lim_tot_util_known_limit (fun x =>  Rabs (var_access Γ k REAL w x)));
-    try (intros h1 h2 [_ h3]; auto; fail).
+    try (intros [h1 h2] [_ h3]; auto; fail).
   apply (pp_ro_rw_tot_back).
   apply (pp_rw_case_tot
-           (Γ := (INTEGER :: Γ))
-           (θ1 := (fun x b => b = true -> (var_access _ _ _ w (snd (snd_app x))) <
-                                      pow2 (- ((fst (snd_app x))) - 1)%Z))
-           (θ2 := (fun x b => b = true -> - (var_access _ _ _ w (snd (snd_app x))) <
-                                      pow2 (- ((fst (snd_app x))) - 1)%Z))
+           (Γ := Γ ::: INTEGER)
+           (θ1 := (fun '(x, b) => b = true -> (var_access _ _ _ w (fst (fst_app x))) <
+                                      pow2 (- ((snd (fst_app x))) - 1)%Z))
+           (θ2 := (fun '(x, b) => b = true -> - (var_access _ _ _ w (fst (fst_app x))) <
+                                      pow2 (- ((snd (fst_app x))) - 1)%Z))
            
-           (ϕ1 := (fun x =>  (var_access _ _ _ w (snd (snd_app x))) <
-                         pow2 (- ((fst (snd_app x))) - 1)%Z))
-           (ϕ2 := (fun x =>  - pow2 (- ((fst (snd_app x))) - 1)%Z < (var_access _ _ _ w (snd (snd_app x)))))
+           (ϕ1 := (fun x =>  (var_access _ _ _ w (fst (fst_app x))) <
+                         pow2 (- ((snd (fst_app x))) - 1)%Z))
+           (ϕ2 := (fun x =>  - pow2 (- ((snd (fst_app x))) - 1)%Z < (var_access _ _ _ w (fst (fst_app x)))))
         ); simpl.
 
   {

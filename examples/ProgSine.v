@@ -1,7 +1,7 @@
 From Clerical Require Import Clerical.
 
 Require Import Coq.Program.Equality.
-Require Import ZArith Reals Lra List.
+Require Import ZArith Reals Lra List Lia.
 Open Scope R.
 
 From Examples Require Import ProgAbs ProgLogic ProgBounded.
@@ -72,28 +72,28 @@ Lemma clerical_sine_correct :
     [x : Γ] |- {{True}} clerical_sine k {{y : REAL | y = sin (var_access Γ k REAL w x) }}ᵗ.
 Proof.
   intros.
-  apply (pp_ro_lim_tot_util_known_limit (fun x =>  sin (var_access Γ k REAL w x)));
-    try (intros h1 h2 [_ h3]; auto; fail).
+  apply (pp_ro_lim_tot_util_known_limit (fun x => sin (var_access Γ k REAL w x)));
+    try (intros [h1 h2] [_ h3]; auto; fail).
 
   apply (pp_ro_rw_tot_back).
 
-  assert ((nil  ++  (INTEGER :: Γ)) |- VAR 0 : INTEGER) as w' by auto_typing.
-  apply (pp_rw_new_var_tot_util2 REAL (fun x y => y = pow2 (- var_access _ _ _ w' x))).
+  assert (((Γ ::: INTEGER) +++ nil) |- VAR 0 : INTEGER) as w' by auto_typing.
+  apply (pp_rw_new_var_tot_util2 REAL (fun '(x, y) => y = pow2 (- var_access _ _ _ w' x))).
   {
     (* prove the assigned expression [EXP (:-: (VAR 0))] *)
     proves_simple_arithmetical.
     reduce_var_access val; reduce_var_access; exact val.
   }
   (* prove the rest *)
-  apply (pp_rw_new_var_tot_util2 INTEGER (fun x y => y = 0%Z)).
+  apply (pp_rw_new_var_tot_util2 INTEGER (fun '(x, y) => y = 0%Z)).
   {
     (* prove the assigned expression [INT 0] *)
     proves_simple_arithmetical.
   }
   (* prove the rest *)
     
-  assert (((INTEGER :: REAL :: nil)  ++  (INTEGER :: Γ)) |- VAR (3 + k) : REAL) as w'' by auto_typing.
-  apply (pp_rw_new_var_tot_util2 REAL (fun x y => y = var_access _ _ _ w'' x)).
+  assert ((( Γ ::: INTEGER) +++ ((nil ::: REAL) ::: INTEGER)) |- VAR (3 + k) : REAL) as w'' by auto_typing.
+  apply (pp_rw_new_var_tot_util2 REAL (fun '(x, y) => y = var_access _ _ _ w'' x)).
   {
     (* prove the assigned expression [VAR (3 + k)] *)
     proves_simple_arithmetical.
@@ -103,11 +103,12 @@ Proof.
   (* prove the rest *)
   
   assert (((REAL :: INTEGER :: REAL :: nil)  ++  (INTEGER :: Γ)) |- VAR (4 + k) : REAL) as w''' by auto_typing.
-  apply (pp_rw_new_var_tot_util2 REAL (fun x y => y = sin_q 1 (var_access _ _ _ w''' x))).
+  apply (pp_rw_new_var_tot_util2 REAL (fun '(x, y) => y = sin_q 1 (var_access _ _ _ w''' x))).
   {
     (* prove the assigned expression [;-; VAR (4 + k) ;*; VAR (4 + k) ;*; VAR (4 + k) ;/; RE (INT 6)] *)
     proves_simple_arithmetical.
-    destruct y as [A [j [δ [m γ]]]].
+    simpl.
+    destruct y as [[[[γ m] δ] j] A].
     simpl in pre, val.
     rewrite val.
     rewrite (var_access_typing_irrl _ _ _  h6 w''').
@@ -123,23 +124,23 @@ Proof.
 
   apply (pp_rw_sequence_tot
            (θ := [γ : (INTEGER :: Γ) ;;; δ : (REAL :: REAL :: INTEGER :: REAL :: nil)] ||-
-                 {{_ : UNIT | let A := fst (snd δ) in
-                   Rabs (A - sin (var_access Γ k REAL w (snd γ))) < pow2 (- fst γ) }} )).
+                 {{_ : UNIT | let A := snd (fst δ) in
+                   Rabs (A - sin (var_access Γ k REAL w (fst γ))) < pow2 (- snd γ) }} )).
 
-  pose (ϕ := [(m, γ) : (INTEGER :: Γ) ;;; (q, (A, (j, (δ, _)))) : (REAL :: REAL :: INTEGER :: REAL :: nil)] ||-
+  pose (ϕ := [(γ, m) : (INTEGER :: Γ) ;;; ((((_, δ), j), A), q) : (REAL :: REAL :: INTEGER :: REAL :: nil)] ||-
              {{
                 let x := var_access _ _ _ w γ in
                 exists n : nat,
                   Z.of_nat n = j /\
                     δ = pow2 (- m) /\ q = sin_q (S n) x /\ A = sin_A n x}}).
   
-  pose (θ := [(q, (A, (j, (δ, (m, γ))))) : ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ))]
+  pose (θ := [ (((((γ, m), δ), j), A), q) : ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ (INTEGER :: Γ))]
                |- {{y : BOOL | (y = true -> δ / 2 < Rabs q) /\ (y = false -> Rabs q < δ)}}).
 
-  pose (ψ := [ (m, γ') : ((INTEGER :: Γ) ++  (REAL :: REAL :: INTEGER :: REAL :: nil)) ;;;
-              (q, (A, (j, (δ, _)))) : (REAL :: REAL :: INTEGER :: REAL :: nil)] ||-
-               {{let j' := fst (snd (snd (snd_app γ'))) in
-                 let x := var_access _ _ _ w (fst_app γ') in
+  pose (ψ := [ (γ', m) : ((INTEGER :: Γ) ++  (REAL :: REAL :: INTEGER :: REAL :: nil)) ;;;
+              ((((_, δ), j), A), q) : (REAL :: REAL :: INTEGER :: REAL :: nil)] ||-
+               {{let j' := snd (fst (fst (fst_app γ'))) in
+                 let x := var_access _ _ _ w (snd_app γ') in
                  exists n : nat,
                    Z.of_nat n = j' /\ 
                      (j = j' + 1)%Z /\ pow2 (- m - 1) < Rabs (sin_q (S n) x)}}).
@@ -150,18 +151,18 @@ Proof.
     assert (wk : ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ INTEGER :: Γ) |- VAR 0 : REAL) by auto_typing.
     assert (wδ : ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ INTEGER :: Γ) |- VAR 3 : REAL) by auto_typing.
     pose proof (clerical_neg_correct_tot _ _ _ _  (clerical_bounded_correct  ((REAL :: REAL :: INTEGER :: REAL :: nil) ++ INTEGER :: Γ) 0 3 wk wδ)).
-    apply (pp_ro_tot_pose_readonly (fun x => ϕ (snd_app x) (fst_app x))) in X.
-    apply (pp_ro_imply_tot X).
+    apply (pp_ro_tot_pose_readonly (ψ := patf) (fun x => ϕ (fst_app x, snd_app x))) in X.
+    apply (pp_ro_imply_tot (ψ := patf) X).
     intros h1 h2; split; auto.
-    destruct h1 as [q [A [j [δ [m γ]]]]].
+    destruct h1 as [[[[[γ m] δ] j] A] q].
     simpl in h2.
-    destruct h2.
+    destruct h2. 
     destruct H as [_ [H _]].
     reduce_var_access.
     rewrite H.
     apply pow2_positive.
 
-    intros [q [A [j [δ [m γ]]]]] h1 [[h2 h3] h4].
+    intros [[[[[[γ m] δ] j] A] q] h1]  [[h2 h3] h4].
     simpl in h2, h3, h4.
     reduce_var_access h3.
     reduce_var_access h2.
@@ -176,7 +177,7 @@ Proof.
   {
     (* proving loop invariant ϕ *)
       apply (pp_rw_sequence_tot
-            (θ := [(m, γ) : (INTEGER :: Γ) ;;; (q, (A, (j, (δ, _)))) : (REAL :: REAL :: INTEGER :: REAL :: nil)] ||-
+            (θ := [(γ, m) : (INTEGER :: Γ) ;;; ((((_, δ), j), A), q) : (REAL :: REAL :: INTEGER :: REAL :: nil)] ||-
             {{_ : UNIT |  let x := var_access _ _ _ w γ in
                           exists n : nat,
                             Z.of_nat n = (j - 1)%Z /\
@@ -184,7 +185,7 @@ Proof.
       {
         (* j := j + 1 *)
         proves_assign_simple_arithemtical INTEGER.
-        intros [m γ] [q [A [j [δ t]]]].
+        intros [γ m] [[[[t δ] j] A] q].
         reduce_update.
         reduce_var_access.
         intros [[l [p1 [p2 [p3 p4]]]] [h1 h2]].
@@ -195,7 +196,7 @@ Proof.
       }
       
       apply (pp_rw_sequence_tot
-             (θ := [(m, γ) : (INTEGER :: Γ) ;;; (q, (A, (j, (δ, _)))) : (REAL :: REAL :: INTEGER :: REAL :: nil)] ||-
+             (θ := [(γ, m) : (INTEGER :: Γ) ;;; ((((_, δ), j), A), q)  : (REAL :: REAL :: INTEGER :: REAL :: nil)] ||-
                    {{_ : UNIT | 
                     let x := var_access _ _ _ w γ in
                     exists n : nat,
@@ -204,7 +205,7 @@ Proof.
       {
         (* A := A + q *)
         proves_assign_simple_arithemtical REAL.
-        intros [m γ] [q [A [j [δ t]]]] [l [p1 [p2 [p3 p4]]]].
+        intros [γ m] [[[[t δ] j] A] q] [l [p1 [p2 [p3 p4]]]].
         reduce_update.
         reduce_var_access.
         exists l.
@@ -218,11 +219,9 @@ Proof.
         (* q := - q * x * x / (2 j + 2) (2 j  + 3)  *)
         proves_assign_simple_arithemtical REAL.
 
-        Require Import Lia.
-
         {
           (* safety condition for evaluating the assigned expression *)
-          intros [q [A [j [δ [m γ]]]]] [l [p1 [p2 [p3 p4]]]].
+          intros [[[[[γ m] δ] j] A] q] [l [p1 [p2 [p3 p4]]]].
           reduce_var_access.
           repeat split; auto.
           (* prove 2 j + 2 ≠ 0 *)
@@ -242,7 +241,7 @@ Proof.
         
         {
           (* condition for the assigned value *)
-          intros [m γ] [q [A [j [δ t]]]] [l [p1 [p2 [p3 p4]]]].
+          intros [γ m] [[[[t δ] j] A] q] [l [p1 [p2 [p3 p4]]]].
           reduce_update.
           reduce_var_access.
           exists (S l).
@@ -301,15 +300,15 @@ Proof.
     (* proving variant *)
     apply (pp_rw_sequence_tot
              (θ :=
-                [(m, γ') : ((INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: REAL :: nil) ;;;
-                        (q, (A, (j, (δ, _)))) : (REAL :: REAL :: INTEGER :: REAL :: nil)]
-                  ||- {{_ : UNIT | let j' := fst (snd (snd (snd_app γ'))) in
-                                   let x := var_access Γ k REAL w (fst_app γ') in
+                [(γ', m) : ((INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: REAL :: nil) ;;;
+                        ((((_, δ), j), A), q) : (REAL :: REAL :: INTEGER :: REAL :: nil)]
+                  ||- {{_ : UNIT | let j' := snd (fst (fst (fst_app γ'))) in
+                                   let x := var_access Γ k REAL w (snd_app γ') in
                                    exists n : nat, Z.of_nat n = j' /\ j = (j' + 1)%Z /\ pow2 (- m - 1) < Rabs (sin_q (S n) x)}})).
     {
       (* j := j + 1 *)
       proves_assign_simple_arithemtical INTEGER.
-      intros [m γ'] [q [A [n [δ t]]]].
+      intros [γ' m] [[[[t δ] j] A] q].
       simpl.
       reduce_var_access.
       reduce_update.
@@ -331,15 +330,15 @@ Proof.
       
     apply (pp_rw_sequence_tot
                (θ :=
-                [(m, γ') : ((INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: REAL :: nil) ;;;
-                        (q, (A, (j, (δ, _)))) : (REAL :: REAL :: INTEGER :: REAL :: nil)]
-                  ||- {{_ : UNIT | let j' := fst (snd (snd (snd_app γ'))) in
-                                   let x := var_access Γ k REAL w (fst_app γ') in
+                [(γ', m) : ((INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: REAL :: nil) ;;;
+                        ((((_, δ), j), A), q) : (REAL :: REAL :: INTEGER :: REAL :: nil)]
+                  ||- {{_ : UNIT | let j' := snd (fst (fst (fst_app γ'))) in
+                                   let x := var_access Γ k REAL w (snd_app γ') in
                      exists n : nat, Z.of_nat n = j' /\ j = (j' + 1)%Z /\ pow2 (- m - 1) < Rabs (sin_q (S n) x)}})).
     {
       (* A := A + q *)
       proves_assign_simple_arithemtical REAL.
-      intros [m γ'] [q [A [n [δ t]]]].
+      intros [γ' m] [[[[t δ] j] A] q].
       reduce_var_access.
       reduce_update.
       intros [l [p1 [p2 p3]]].
@@ -354,25 +353,25 @@ Proof.
       proves_assign_simple_arithemtical REAL.
 
       {
-        intros [q [A [n [δ [m γ']]]]].
+        intros [[[[[γ' m] δ] j] A] q].
         reduce_var_access.
         intros [l [p1 [p2 p3]]].
         repeat split; auto.
-        enough (IZR (2 * n + 2) <> 0) by auto.
+        enough (IZR (2 * j + 2) <> 0) by auto.
         apply not_0_IZR.
         pose proof (Zle_0_nat l).
-        assert (0 < n)%Z by lia.
+        assert (0 < j)%Z by lia.
         lia.
         
         (* prove 2 j + 3 ≠ 0 *)
-        enough (IZR (2 * n + 3) <> 0) by auto.
+        enough (IZR (2 * j + 3) <> 0) by auto.
         apply not_0_IZR.
         pose proof (Zle_0_nat l).
-        assert (0 < n)%Z by lia.
+        assert (0 < j)%Z by lia.
         lia.
       }
       
-      intros [m γ'] [q [A [n [δ t]]]].
+      intros [γ' m] [[[[t δ] j] A] q].
       reduce_update.
       intros [l [p1 [p2 p3]]].
       exists l.
@@ -387,9 +386,9 @@ Proof.
     intro.
     destruct H0.
     destruct H0.
-    destruct δ as [A0 [q0 [j0 [δ0 t]]]].    
+    destruct δ as [[[[t δ0] j0] A0] q0].     
     assert (forall n,
-               fst (snd (snd (x n))) = Z.of_nat n + j0)%Z.
+               snd (fst (fst (x n))) = Z.of_nat n + j0)%Z.
     {
       intro.
       induction n.
@@ -400,7 +399,7 @@ Proof.
       unfold ψ in H2.
       destruct γ.
       simpl in H2.
-      destruct (x (S n)) as [A' [q' [j' [δ' tt]]]].    
+      destruct (x (S n)) as [[[[tt δ'] j'] A'] q'].
       destruct H2.
       destruct H2.
       rewrite <- H2 in H3.
@@ -417,13 +416,13 @@ Proof.
 
     
       
-    destruct γ as [m γ].
+    destruct γ as [γ m].
     pose proof (Rconverge (var_access _ _ _ w γ) (m + 1)) as [l h].
     destruct H as [j0n [hj _]].
     simpl in hj.
     pose proof (H1 (l)%nat).
     simpl in H.
-    destruct (x (S l)) as [A' [q' [j' [δ' tt]]]].    
+    destruct (x (S l)) as [[[[tt δ'] j'] A'] q'].
     reduce_tedious H.
     destruct H.
     destruct H.
@@ -444,8 +443,9 @@ Proof.
     intros x.
     intros.
     destruct x.
-    destruct y as [A' [q' [j' [δ' tt]]]].    
+    destruct s0 as [[[[tt δ'] j'] A'] q'].
     simpl.
+    destruct s.
     exists O.
     simpl.
     simpl in H.
@@ -463,7 +463,7 @@ Proof.
     (* after exiting the loop *)
 
     
-    intros [m γ] [q [A [n [δ t]]]] _ [h1 h2]. 
+    intros [[γ m] [[[[[t δ] j] A] q] _]] [h1 h2]. 
     simpl.
     destruct h2 as [_ h3].
     pose proof (h3 eq_refl); clear h3.
@@ -484,7 +484,7 @@ Proof.
   proves_simple_arithmetical.
   rewrite val.
   clear val.
-  destruct y as [q [A [n [δ [m γ]]]]].
+  destruct y as [[[[[γ m] δ] j] A] q].
   simpl.
   simpl in pre.
   reduce_var_access.

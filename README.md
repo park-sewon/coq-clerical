@@ -1,5 +1,5 @@
 # Clerical Coq Formalization
-This repository provides a full formalization of the imperative programming language Clerical in Coq. 
+This repository provides a full formalization of the imperative programming language [Clerical](https://github.com/andrejbauer/clerical) in Coq.
 It includes syntax, type system, denotational semantics, specifications, reasoning rules, soundness proofs, and some examples.
 
 ## Installation
@@ -24,7 +24,7 @@ and those surrounded by `; ;` denote real operations.
 The definition `clerical_abs k` (for each natural number `k`) is a Clerical expression 
 that computes the absolute value of the real number that the variable `k` stores. 
 Though in this example only binary nondeterministim is used, 
-the formalization provides arbitrarily many guarded expressions using the grammar 
+our formalization provides arbitrarily many guarded expressions using the grammar 
 `CASE e1 ==> c1 | .. | en ==> cn END`.
 
 Using our prove rules, in the same file, we prove the correctness of the expression:
@@ -33,15 +33,15 @@ Lemma clerical_abs_correct :
   forall Γ k (w : Γ |- VAR k : REAL),
     [γ : Γ] |-  {{True}} clerical_abs k {{y : REAL | y = Rabs (var_access Γ k REAL w γ) }}ᵗ.	  
 ```
-Here, `var_access Γ k REAL w x` denotes accessing the variable `k` of a state `γ : sem_ctx Γ`.
+Here, `var_access Γ k REAL w γ` denotes accessing the variable `k` of a state `γ : sem_ctx Γ`.
 The triple denotes the total correctness of `clerical_abs k` in the sense that for any state `γ` satisfying `True`,
 the expression `clerical_abs k` always terminates yielding a value `y : REAL` such that 
-`y = |Variable k|`. 
+`y = Rabs (var_access Γ k REAL w γ)`. 
 
-In [Examples.ProgLogic](./examples/ProgLogic.v), we define and prove Boolean negation,
+There are other examples as well. In [Examples.ProgLogic](./examples/ProgLogic.v), we define and prove Boolean negation,
 in [Examples.ProgBounded](./examples/ProgBounded.v), we define and prove the soft boundedness test,
-in [Examples.ProgSine](./examples/ProgSine.v), we define and prove the sine function, and 
-in [Examples.ProgPi](./examples/ProgPi.v), we define and prove a closed expression computing `π`:
+in [Examples.ProgSine](./examples/ProgSine.v), we define and prove the sine function. 
+In [Examples.ProgPi](./examples/ProgPi.v), we define and prove a closed expression computing `π`:
 ```coq
 Lemma clerical_pi_correct :
   [_ : nil] |- {{True}} clerical_pi  {{y : REAL | y = PI}}.
@@ -55,10 +55,9 @@ or admitted in [Examples.Mathematics](./examples/Mathematics.v).
 
 ### Formalization
 The formalization is in the `formalization` directory that corresponds to the `Clerical` logical path. 
-The `formalization` directory consists of the subdirectories: `Preliminaries`, `Powerdomain`, and `Utils`. 
-The base axioms of our type theory including what makes `Prop` classical, some preliminary mathematical facts and some basic tactics are declared or defined in the `Preliminaries`.
-Based on that, in the `Powerdomain`, we define a powerdomain as a monad `pdom : Type -> Type` and prove various properties including its ω-completeness. There, we also define various functions that are used later in the semantic construction.
-In `Utils` we define various tactics that are to be used by the users later. 
+The `formalization` directory consists of the subdirectories: `Preliminaries` and `Powerdomain`. 
+The base axioms of our type theory including what makes `Prop` classical, some preliminary mathematical facts and some basic tactics are declared or defined in `Preliminaries`.
+Based on that, in `Powerdomain`, we define a powerdomain as a monad `pdom : Type -> Type` and prove various properties including its ω-completeness. There, we also define various functions that are used later in the semantic construction.
 
 Files in the `formalization` directory formalize Clerical:
 
@@ -70,12 +69,44 @@ There, the notations
 Γ |- e : τ 
 Γ ;;; Δ ||- e : τ
 ```
-are defined. `Γ |- e : τ` means that a Clerical expression `e` has type `τ` under a read-only context `Γ` and `Γ ;;; Δ ||- e : τ` means that a Clerical expression `e` has type `τ` under a read-only context `Γ` and a read-write context `Δ`.
+are defined. `Γ |- e : τ` means that a Clerical expression `e` has type `τ` under a read-only context `Γ` and `Γ ;;; Δ ||- e : τ` means that a Clerical expression `e` has type `τ` under a read-write context `Γ ;;; Δ` where `Γ` is for read-only variabes
+and `Δ` is for read-write variables.
+
+Since Coq's standard list notation adds elements from the left: `x :: l`.
+Since we want to add elements from the right, we define and use the new notations:
+```coq
+Notation "a ::: b" := (cons b a) (at level 60, left associativity).
+Notation "a +++ b" := (app b a) (right associativity, at level 60).
+```
+They are in [Clerical.Preliminaries.ListConstr](./formalization/Preliminaries/ListConstr.v).
+Thanks to the new notation, we have more intuitive typing rules. For example, we have
+```coq
+ (Γ +++ Δ) |- e : BOOL -> 
+ Γ ;;; Δ ||- c1 : τ -> 
+ Γ ;;; Δ ||- c2 : τ -> 
+ (*——————————-——————————*) 
+ Γ ;;; Δ ||- IF e THEN c1 ELSE c2 END : τ
+```
+instead of having `Δ ++ Γ`.
 
 In [Clerical.TypingProperties](./formalization/TypingProperties.v), various properties of our type system are proven including that our typing rules are unambiguous.
 
 #### Semantics
-In [Clerical.Semantics](./formalization/Semantics.v), we define the denotational semantics of Clerical expressions using the aforementioned powerdomain recursively on well-typedness.
+In [Clerical.Semantics](./formalization/Semantics.v), we define the denotational semantics of Clerical datatypes, contexts, and expressions.
+The datatypes denotes the standard types:
+```coq
+sem_datatype : datatype -> Type
+```
+
+The semantics of contexts is defined recursively as
+```coq
+sem_ctx Γ := match Γ with 
+  | nil => unit
+  | Γ' ::: τ => sem_ctx Γ' * sem_datatype τ
+  end.
+```
+
+Using the powerdomain, recursively on well-typedness of expressions, we define the denotational semantics of well-typed expressions.
 ```coq
 sem_exp_ro Γ e τ (w : Γ |- e : τ) : sem_ctx Γ -> pdom (sem_datatype τ)
 sem_exp_rw Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) :  sem_ctx Γ -> sem_ctx Δ -> pdom (sem_ctx Δ * sem_datatype τ)
@@ -88,41 +119,45 @@ have that their semantics are equal: `sem_exp_ro Γ e τ w1 γ = sem_exp_ro Γ e
 ### Specifications
 In [Clerical.Specification](./formalization/Specification.v), we define specifications. 
 For a well-typed read-only expression `w : Γ |- e : τ`, a pre-condition `ϕ : sem_ctx Γ -> Prop`, and a post-condition 
-`ψ : sem_ctx Γ ->  sem_datatype τ -> Prop`, `[| γ : Γ |]  |= w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵖ` denotes its partial correctness specification.
-And, `[| γ : Γ |] |= {{ϕ γ}} e {{y : τ | ψ γ y}}ᵗ` denotes its total correctness.
+`ψ : sem_ctx Γ *  sem_datatype τ -> Prop`, `[| γ : Γ |]  |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ` denotes its partial correctness specification.
+And, `[| γ : Γ |] |= {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ` denotes its total correctness.
 
 Specifications of read-write expressions are defined similarly: 
-for a well-typed read-write expression `w : Γ ;;; Δ ||- e : τ`, a pre-condition `ϕ : sem_ctx Γ -> sem_ctx Δ  -> Prop`, and a post-condition 
-`ψ : sem_ctx Γ -> sem_ctx Δ  -> sem_datatype τ -> Prop`, `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵖ` denotes its partial correctness and `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵖ` denotes its total correctness.
+for a well-typed read-write expression `w : Γ ;;; Δ ||- e : τ`, a pre-condition 
+`ϕ : sem_ctx Γ * sem_ctx Δ  -> Prop`, and a post-condition 
+`ψ : sem_ctx Γ * (sem_ctx Δ  * sem_datatype τ) -> Prop`, `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ` denotes its partial correctness and `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ` denotes its total correctness.
 
 Furthermore, in the file, assertions' notations are defined:
-`[γ : Γ] |- {{ϕ}}` denotes `fun γ : sem_ctx Γ => ϕ`,
-`[γ : Γ] |- {{y : τ | ϕ}}` denotes `fun (γ : sem_ctx Γ) (y : sem_datatype τ) => ϕ`, `[γ : Γ ;;; δ : Δ] ||- {{ϕ}}` denotes `fun (γ : sem_ctx Γ) (δ : sem_ctx Δ) => ϕ`, and `[γ : Γ ;;; δ : Δ] ||- {{y : τ | ϕ}}` denotes `fun (γ : sem_ctx Γ) (δ : sem_ctx Δ) (y : sem_datatype τ) => ϕ`.
-
+- `[γ : Γ] |- {{ϕ}}` denotes `fun γ : sem_ctx Γ => ϕ`,
+- `[γ : Γ] |- {{y : τ | ϕ}}` denotes `fun '((γ, y) : sem_ctx Γ * sem_datatype τ) => ϕ`, 
+- `[γ : Γ ;;; δ : Δ] ||- {{ϕ}}` denotes  `fun '((γ, y) : sem_ctx Γ * δ : sem_ctx Δ) => ϕ`, 
+- and `[γ : Γ ;;; δ : Δ] ||- {{y : τ | ϕ}}` denotes `fun '((γ, (δ, y)) : sem_ctx Γ * (sem_ctx Δ * sem_datatype τ)) => ϕ`.
 
 
 ### Reasoning Rules
 In [Clerical.ReasoningRules](./formalization/ReasoningRules.v), we define the verification calculus inductively: 
 for a well-typed read-only expression `w : Γ |- e : τ`, a pre-condition `ϕ`, and a post-condition 
-`ψ`, `[γ : Γ]  |- w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵖ` denotes that calculus proves the partial correctness and 
-`[γ : Γ]  |- w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵗ` denotes that calculus proves the total correctness of the read-only expression.
+`ψ`, 
+- `[γ : Γ]  |- w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ` denotes that calculus proves the partial correctness and 
+- `[γ : Γ]  |- w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ` denotes that calculus proves the total correctness of the read-only expression.
+
 Similarly, for a well-typed read-write expression `w : Γ ;;; Δ ||- e : τ`, 
-`[γ : Γ ;;; δ : Δ] ||- {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵖ` denotes that calculus proves the partial correctness and 
-`[γ : Γ ;;; δ : Δ] ||- {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵗ` denotes that calculus proves the total correctness of the read-write expression.
+- `[γ : Γ ;;; δ : Δ] ||- {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ` denotes that calculus proves the partial correctness and 
+- `[γ : Γ ;;; δ : Δ] ||- {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵗ` denotes that calculus proves the total correctness of the read-write expression.
 
 The soundness of the proof rules is proved in [Clerical.ReasoningSoundness](./formalization/ReasoningSoundness.v).
 ```coq
 Lemma proves_ro_prt_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, 
-  [γ : Γ]  |- w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵖ -> [γ : Γ]  |= w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵖ.
+  [γ : Γ]  |- w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ -> [γ : Γ]  |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ.
   
 with proves_ro_tot_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, 
-  [γ : Γ]  |- w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵗ -> [γ : Γ]  |= w {{ϕ γ}} e {{y : τ | ψ γ y}}ᵗ.
+  [γ : Γ]  |- w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ -> [γ : Γ]  |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ.
   
 with proves_rw_prt_sound : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ, 
-  [γ : Γ ;;; δ : Δ] ||- {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵖ -> [γ : Γ ;;; δ : Δ] ||= {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵖ.
+  [γ : Γ ;;; δ : Δ] ||- {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ -> [γ : Γ ;;; δ : Δ] ||= {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ.
   
 with proves_rw_tot_sound : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ, 
-  [γ : Γ ;;; δ : Δ] ||- {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵗ -> [γ : Γ ;;; δ : Δ] ||= {{ϕ γ δ}} e {{y : τ | ψ γ δ y}}ᵗ.
+  [γ : Γ ;;; δ : Δ] ||- {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵗ -> [γ : Γ ;;; δ : Δ] ||= {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵗ.
 ```
 
 In [Clerical.ReasoningAdmissible](./formalization/ReasoningAdmissible.v) proves some admissible rules.
@@ -133,11 +168,11 @@ That is why the triples hold evidence `w` of well-typedness and this affects als
 Alternatively, we can have triples without well-typedness and have a side lemma that says every triple derived from our proof rules are well-typed. Or, equivalently, we can have another triple which is paired with the well-typedness and prove the proof rules for the new triples.
 For example, we define
 ```coq
-[γ : Γ] |- {{ϕ x}} e {{y : τ | ψ γ y}}ᵗ
+[γ : Γ] |- {{ϕ x}} e {{y : τ | ψ (γ, y)}}ᵗ
 ```
 for
 ```coq
-{w : Γ |- e : τ & [γ : Γ] |- w {{ϕ x}} e {{y : τ | ψ γ y}}ᵗ }
+{w : Γ |- e : τ & [γ : Γ] |- w {{ϕ x}} e {{y : τ | ψ (γ, y)}}ᵗ }
 ```
 a pair of a well-typedness derivation `w` and the original triple where `w`is the evidence.
 
@@ -148,16 +183,24 @@ The rules for ty ***p*** e-paired tri ***p*** les has ___pp___ prefix. For examp
 ro_skip_prt : forall Γ (w : Γ |- SKIP : UNIT) ψ,
     
   (*——————————-——————————-——————————-——————————-——————————-*)
-  [x : Γ] |- w {{ψ x tt}} SKIP {{y : UNIT | ψ x y}}ᵖ
+  [x : Γ] |- w {{ψ (x, tt)}} SKIP {{y : UNIT | ψ (x, y)}}ᵖ
 ```
 has its counterpart 
 ```coq 
 Lemma pp_ro_skip_prt {Γ} {ψ} :
-[γ : Γ] |- {{ψ γ tt}} SKIP {{y : UNIT | ψ γ y}}ᵖ.
+[γ : Γ] |- {{ψ (γ, tt)}} SKIP {{y : UNIT | ψ (γ, y)}}ᵖ.
 ```
 as a lemma in [Clerical.ReasoningTyPaired](./formalization/ReasoningTyPaired.v).
 
 In [Clerical.ReasoningUtils](./formalization/ReasoningUtils.v), various utility functions in applying proof rules are defined. 
+
+To use the rules, when the pre or post-conditions that we use are in the form of functions on patterns, 
+Coq's inference engine often fails.
+For example, when we have `fun '(γ, δ) => γ = δ` as a pre-condition, in some case, applying a rule may 
+complain that it cannot infer it. In the case, use `patf` as a placeholder to teach Coq engine that the 
+argument is supposed to be a function of the form `fun '(?, ?) => ?`. 
+Similarly,  use `pattf` for `fun '(?, (?, ?)) => ?`.
+They are notatations that are defined in [Clerical.ReasoningRules](./formalization/ReasoningRules.v).
 
 ## Base setting of the underlying type theory
 
@@ -293,11 +336,13 @@ For example, there we define the limit operator using `pdom` and Coq's standard 
 We often concatenate states.
 Given `γ : sem_ctx Γ` and `δ : sem_ctx Δ`,
 to feed the states into a read-only expression's semantics, we need to merge them 
-to be `sem_ctx (Δ ++ Γ)`. The concatenation is recursively defined 
-and we denote it by `(δ; γ) : sem_ctx (Γ ++ Δ)`.
+to be `sem_ctx (Γ +++ Δ)`. 
+The concatenation is recursively defined 
+and we denote it by `(γ ; δ) : sem_ctx (Γ +++ Δ)`.
 Also, we have to often split the merged states. 
-They are also defined recursively and denoted by `fst_add : sem_ctx (Γ ++ Δ) -> sem_ctx Γ` and  
-`snd_add : sem_ctx (Γ ++ Δ) -> sem_ctx Δ`.
+They are also defined recursively and denoted by 
+`fst_app : sem_ctx (Γ +++ Δ) -> sem_ctx Γ` and  
+`snd_app : sem_ctx (Γ +++ Δ) -> sem_ctx Δ`.
 Now, there are very tedious equalities such as
 `(fst_app x ; snd_app x) = x`, or `fst_app (x ; y) = x`.
 They are defined in the `TediousList` section of [Clerical.Semantics](./formalization/Semantics.v).
@@ -324,18 +369,18 @@ Inductive ForallT {A : Type} (P : A -> Type): list A -> Type :=
 | ForallT_nil : ForallT P nil
 | ForallT_cons : forall x l, P x -> ForallT P l -> ForallT P (x::l).
 ```
-and write `ForallT (fun ec : exp * exp => ((Δ ++ Γ) |- fst ec : BOOL) * (Γ ;;; Δ ||- snd ec : τ)) l` in 
+and write `ForallT (fun ec : exp * exp => ((Γ +++ Δ) |- fst ec : BOOL) * (Γ ;;; Δ ||- snd ec : τ)) l` in 
 the premise of the typing rule of `CaseList l`.
 
 In [Clerical.ReasoningRules](./formalization/ReasoningRules.v), to write down the proof rule of case expression, 
 for a list `l : list (exp * exp)`, 
 we require `l` dependent list of well-typednesses using the `ForallT`:
 ```coq
-wty_l : ForallT (fun ec => ((Δ ++ Γ) |- fst ec : BOOL) * (Γ;;;Δ ||- snd ec : τ)) l
+wty_l : ForallT (fun ec => ((Γ +++ Δ) |- fst ec : BOOL) * (Γ ;;; Δ ||- snd ec : τ)) l
 ```
 also a `l` dependent list of postconditions 
 ```
-θ : ForallT (fun ec => bool -> sem_ro_ctx (Δ ++ Γ) -> Prop) l
+θ : ForallT (fun ec => sem_ro_ctx (Γ +++ Δ) * bool -> Prop) l
 ```
 and a list of premise specifications which is a list dependent on `wty_l` and `θ`
 which are `l` dependent lists. To express this we define the inductive type:
@@ -348,8 +393,8 @@ We write
 ```coq
 ForallT2 _ _ 
   (fun ec wty_l θ  =>
-    ([x : Δ ++ Γ] |- {{ϕ (snd_app x) (fst_app x)}} fst ec {{y : BOOL | θ x y}}ᵖ) *
-    ([γ : Γ ;;; δ : Δ] ||- {{θ (δ; γ) true}} snd ec {{y : τ | ψ γ δ y}}ᵖ)) l θ
+    ([x : Δ ++ Γ] |- {{ϕ (fst_app x, snd_app x)}} fst ec {{y : BOOL | θ x y}}ᵖ) *
+    ([γ : Γ ;;; δ : Δ] ||- {{θ ((γ; δ), true)}} snd ec {{y : τ | ψ (γ, (δ, y))}}ᵖ)) l θ
 ```
 as the premise. 
 
@@ -394,11 +439,7 @@ If it is, it derives the correctness triple
 `[γ : Γ] |- {{P γ}} e {{y : τ | y = f γ}}ᵗ`.
 Then, the tactic applies the admissible rule for posing additional conditions on a read-only context to get
 `[γ : Γ] |- {{P γ /\ ϕ γ}} e {{y : τ | y = f γ /\ ϕ γ}}ᵗ`.
-Applying the IMPLY rule, the tactic reduces the original triple to two implications:
-```coq
-forall γ, ϕ γ -> P γ.
-forall γ y, y = f γ -> ϕ γ -> ψ γ y.
-```
+Applying the IMPLY rule, the tactic reduces the original triple to implications.
 
 This tactic works also for partial correctness goals.
 
