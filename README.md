@@ -38,9 +38,8 @@ The triple denotes the total correctness of `clerical_abs k` in the sense that f
 the expression `clerical_abs k` always terminates yielding a value `y : REAL` such that 
 `y = Rabs (var_access Γ k REAL w γ)`. 
 
-There are other examples as well. In [Examples.ProgLogic](./examples/ProgLogic.v), we define and prove Boolean negation,
-in [Examples.ProgBounded](./examples/ProgBounded.v), we define and prove the soft boundedness test,
-in [Examples.ProgSine](./examples/ProgSine.v), we define and prove the sine function. 
+There are soem other examples as well. In [Examples.ProgSine](./examples/ProgSine.v), 
+we define and prove the sine function. 
 In [Examples.ProgPi](./examples/ProgPi.v), we define and prove a closed expression computing `π`:
 ```coq
 Lemma clerical_pi_correct :

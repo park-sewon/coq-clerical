@@ -3,8 +3,8 @@
 -R . Examples
 
 ProgAbs.v
-ProgBounded.v
-ProgLogic.v
+# ProgBounded.v
+# ProgLogic.v
 ProgSine.v
 ProgPi.v
 
