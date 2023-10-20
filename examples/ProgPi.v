@@ -3,7 +3,7 @@ From Clerical Require Import Clerical.
 Require Import Coq.Program.Equality.
 Require Import ZArith Reals Lra Lia List.
 Open Scope R.
-From Examples Require Import ProgAbs ProgLogic ProgBounded ProgSine.
+From Examples Require Import ProgAbs ProgSine.
 From Examples Require Import Mathematics.
 
 Definition clerical_pi :=
@@ -13,7 +13,7 @@ Definition clerical_pi :=
       NEWVAR RE (INT 4) IN (* u *)
       WHILE VAR 2 :<: VAR 3 DO
         (NEWVAR (VAR 0 ;+; VAR 1) ;*; EXP (INT -1) IN
-          IF RE (INT 0) ;<; clerical_sine 0
+          IF RE (INT 0) ;<; clerical_sin 0
           THEN
             LET 2 := VAR 0
           ELSE
@@ -101,7 +101,7 @@ Proof.
           proves_simple_arithmetical.
 
           assert (((REAL :: REAL :: REAL :: INTEGER :: nil) ++ INTEGER :: nil) |- VAR 0 : REAL) by auto_typing. 
-          pose proof (clerical_sine_correct ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ INTEGER :: nil) 0 H).
+          pose proof (clerical_sin_correct ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ INTEGER :: nil) 0 H).
           apply (pp_ro_imply_tot (ψ := patf) X).
           intros h1 h2; auto.
           intros [h1 h2] h3; auto.
@@ -242,7 +242,7 @@ Proof.
           proves_simple_arithmetical.
 
           assert ((((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil) ++ REAL :: REAL :: INTEGER :: nil) |- VAR 0 : REAL)) by auto_typing. 
-          pose proof (clerical_sine_correct _ 0 H).
+          pose proof (clerical_sin_correct _ 0 H).
           apply (pp_ro_imply_tot (ψ := patf) X).
           intros h1 h2; auto.
           intros [h1 h2] h3.
