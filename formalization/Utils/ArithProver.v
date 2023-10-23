@@ -5,7 +5,7 @@ From Clerical.Utils Require Import TypingTactic SimpleArith ReducingTactic.
 Require Import Coq.Program.Equality.
 Require Import ZArith Reals List.
 
-Ltac decide_simple_arithmetic e X Xdefi :=
+Ltac decide_arithmetic e X Xdefi :=
   let v := fresh "tmp" in 
   case_eq (simple_arithmetical_dec
              e
@@ -33,7 +33,7 @@ Ltac auto_imp :=
   end.
 
        
-Ltac proves_simple_arithmetical :=
+Ltac prove_arith :=
   lazymatch goal with
   | |- proves_ro_prt_pp ?Γ ?e ?τ ?ϕ ?ψ =>
       
@@ -47,7 +47,7 @@ Ltac proves_simple_arithmetical :=
       let v := fresh "val" in
       let p := fresh "pre" in
 
-      decide_simple_arithmetic e v1 v2;
+      decide_arithmetic e v1 v2;
 
       assert (Γ |- e : τ) as v3 by auto_typing;
 
@@ -103,7 +103,7 @@ Ltac proves_simple_arithmetical :=
       let v := fresh "val" in
       let p := fresh "pre" in
 
-      decide_simple_arithmetic e v1 v2;
+      decide_arithmetic e v1 v2;
 
       assert (Γ |- e : τ) as v3 by auto_typing;
 
@@ -168,11 +168,11 @@ Ltac proves_simple_arithmetical :=
 
   | |- proves_rw_tot_pp ?Γ ?Δ ?e ?τ ?ϕ ?ψ =>
       apply (pp_rw_ro_tot_back (τ := τ));
-      proves_simple_arithmetical
+      prove_arith
 
   | |- proves_rw_prt_pp ?Γ ?Δ ?e ?τ ?ϕ ?ψ =>
       apply (pp_rw_ro_prt_back (τ := τ));
-      proves_simple_arithmetical
+      prove_arith
 
   | _ => idtac "bbb"
   end.
@@ -219,7 +219,7 @@ Ltac proves_assign_simple_arithemtical t :=
       let v := fresh "val" in
       let p := fresh "pre" in
 
-      decide_simple_arithmetic e v1 v2;
+      decide_arithmetic e v1 v2;
 
       assert (assignable Δ t k) as a by (repeat constructor; auto);
       

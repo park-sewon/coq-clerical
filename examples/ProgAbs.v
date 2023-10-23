@@ -34,7 +34,7 @@ Proof.
 
   {
     (* prove the first guard's condition θ1 *)
-    proves_simple_arithmetical.  
+    prove_arith.  
     intro e.
     rewrite e in val.
     apply eq_sym in val.
@@ -48,7 +48,7 @@ Proof.
   
   {
     (* prove the second guard's condition θ1 *)  
-    proves_simple_arithmetical.
+    prove_arith.
     intro e.
     rewrite e in val.
     apply eq_sym in val.
@@ -62,7 +62,7 @@ Proof.
 
   {
     (* prove the first branch *)
-    proves_simple_arithmetical.
+    prove_arith.
     destruct y.  
     pose proof (pre eq_refl).
     rewrite val.
@@ -88,7 +88,7 @@ Proof.
   {
     (* prove the second branch *)
 
-    proves_simple_arithmetical.
+    prove_arith.
     destruct y.
     pose proof (pre eq_refl).
     rewrite val.
@@ -110,7 +110,7 @@ Proof.
 
   {
     (* prove the first guard's termination and holding condition ϕ1 *)
-    proves_simple_arithmetical.
+    prove_arith.
     repeat split; auto.
     destruct x.  
     rewrite var_access_Var_S, var_access_Var_0.
@@ -130,7 +130,7 @@ Proof.
   {
     (* prove the second guard's termination and holding condition ϕ2 *)
 
-    proves_simple_arithmetical.
+    prove_arith.
     repeat split; auto.
     destruct x.  
     rewrite var_access_Var_S, var_access_Var_0.

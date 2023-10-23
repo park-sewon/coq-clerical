@@ -4,78 +4,78 @@ From Clerical Require Import Syntax Typing TypingProperties Semantics ReasoningT
 Require Import Coq.Program.Equality.
 Require Import ZArith Reals.
 
-Inductive simple_arithmetical : forall e, Type :=
-  SA_Var : forall k, simple_arithmetical (VAR k)
-| SA_int_op_plus : forall e1 e2, simple_arithmetical e1 -> simple_arithmetical e2 -> simple_arithmetical (e1 :+: e2)
-| SA_int_op_minus : forall e1 e2, simple_arithmetical e1 -> simple_arithmetical e2 -> simple_arithmetical (e1 :-: e2)
-| SA_int_op_mult : forall e1 e2, simple_arithmetical e1 -> simple_arithmetical e2 -> simple_arithmetical (e1 :*: e2)
-| SA_int_comp_lt : forall e1 e2, simple_arithmetical e1 -> simple_arithmetical e2 -> simple_arithmetical (e1 :<: e2)
-| SA_int_comp_eq : forall e1 e2, simple_arithmetical e1 -> simple_arithmetical e2 -> simple_arithmetical (e1 :=: e2)
-| SA_real_op_plus : forall e1 e2, simple_arithmetical e1 -> simple_arithmetical e2 -> simple_arithmetical (e1 ;+; e2)
-| SA_real_op_minus : forall e1 e2, simple_arithmetical e1 -> simple_arithmetical e2 -> simple_arithmetical (e1 ;-; e2)
-| SA_real_op_mult : forall e1 e2, simple_arithmetical e1 -> simple_arithmetical e2 -> simple_arithmetical (e1 ;*; e2)
-| SA_real_comp_lt : forall e1 e2, simple_arithmetical e1 -> simple_arithmetical e2 -> simple_arithmetical (e1 ;<; e2)
-| SA_real_recip : forall e, simple_arithmetical e -> simple_arithmetical (;/; e)
+Inductive arith : forall e, Type :=
+  Arith_Var : forall k, arith (VAR k)
+| Arith_int_op_plus : forall e1 e2, arith e1 -> arith e2 -> arith (e1 :+: e2)
+| Arith_int_op_minus : forall e1 e2, arith e1 -> arith e2 -> arith (e1 :-: e2)
+| Arith_int_op_mult : forall e1 e2, arith e1 -> arith e2 -> arith (e1 :*: e2)
+| Arith_int_comp_lt : forall e1 e2, arith e1 -> arith e2 -> arith (e1 :<: e2)
+| Arith_int_comp_eq : forall e1 e2, arith e1 -> arith e2 -> arith (e1 :=: e2)
+| Arith_real_op_plus : forall e1 e2, arith e1 -> arith e2 -> arith (e1 ;+; e2)
+| Arith_real_op_minus : forall e1 e2, arith e1 -> arith e2 -> arith (e1 ;-; e2)
+| Arith_real_op_mult : forall e1 e2, arith e1 -> arith e2 -> arith (e1 ;*; e2)
+| Arith_real_comp_lt : forall e1 e2, arith e1 -> arith e2 -> arith (e1 ;<; e2)
+| Arith_real_recip : forall e, arith e -> arith (;/; e)
 
-| SA_coerce : forall e, simple_arithmetical e -> simple_arithmetical (RE e)
-| SA_exp : forall e, simple_arithmetical e -> simple_arithmetical (EXP e)
-| SA_int : forall k, simple_arithmetical (INT k)
-| SA_true : simple_arithmetical TRUE
-| SA_false : simple_arithmetical FALSE
+| Arith_coerce : forall e, arith e -> arith (RE e)
+| Arith_exp : forall e, arith e -> arith (EXP e)
+| Arith_int : forall k, arith (INT k)
+| Arith_true : arith TRUE
+| Arith_false : arith FALSE
 .
 
-Fixpoint simple_arithmetical_value_prt e (p : simple_arithmetical e) Γ τ (w : Γ |- e :τ) : sem_ctx Γ -> sem_datatype τ.
+Fixpoint arith_val e (p : arith e) Γ τ : (Γ |- e : τ) -> sem_ctx Γ -> sem_datatype τ.
 Proof.
-  dependent destruction p.
+  intro w; dependent destruction p.
   exact (var_access _ _ _ w).
 
   induction (eq_sym (has_type_ro_OpZplus_infer _ _ _ _ w)).
   pose proof (has_type_ro_OpZplus_inverse _ _ _ w) as [w1 w2].  
-  exact (fun x => (simple_arithmetical_value_prt _ p1 _ _ w1 x) + (simple_arithmetical_value_prt _ p2 _ _ w2 x))%Z.
+  exact (fun x => (arith_val _ p1 _ _ w1 x) + (arith_val _ p2 _ _ w2 x))%Z.
 
   induction (eq_sym (has_type_ro_OpZminus_infer _ _ _ _ w)).
   pose proof (has_type_ro_OpZminus_inverse _ _ _ w) as [w1 w2].  
-  exact (fun x => (simple_arithmetical_value_prt _ p1 _ _ w1 x) - (simple_arithmetical_value_prt _ p2 _ _ w2 x))%Z.
+  exact (fun x => (arith_val _ p1 _ _ w1 x) - (arith_val _ p2 _ _ w2 x))%Z.
 
   induction (eq_sym (has_type_ro_OpZmult_infer _ _ _ _ w)).
   pose proof (has_type_ro_OpZmult_inverse _ _ _ w) as [w1 w2].  
-  exact (fun x => (simple_arithmetical_value_prt _ p1 _ _ w1 x) * (simple_arithmetical_value_prt _ p2 _ _ w2 x))%Z.
+  exact (fun x => (arith_val _ p1 _ _ w1 x) * (arith_val _ p2 _ _ w2 x))%Z.
 
   induction (eq_sym (has_type_ro_OpZlt_infer _ _ _ _ w)).
   pose proof (has_type_ro_OpZlt_inverse _ _ _ w) as [w1 w2].  
-  exact (fun x => (simple_arithmetical_value_prt _ p1 _ _ w1 x) <? (simple_arithmetical_value_prt _ p2 _ _ w2 x))%Z.
+  exact (fun x => (arith_val _ p1 _ _ w1 x) <? (arith_val _ p2 _ _ w2 x))%Z.
 
   induction (eq_sym (has_type_ro_OpZeq_infer _ _ _ _ w)).
   pose proof (has_type_ro_OpZeq_inverse _ _ _ w) as [w1 w2].  
-  exact (fun x => (simple_arithmetical_value_prt _ p1 _ _ w1 x) =? (simple_arithmetical_value_prt _ p2 _ _ w2 x))%Z.
+  exact (fun x => (arith_val _ p1 _ _ w1 x) =? (arith_val _ p2 _ _ w2 x))%Z.
 
   induction (eq_sym (has_type_ro_OpRplus_infer _ _ _ _ w)).
   pose proof (has_type_ro_OpRplus_inverse _ _ _ w) as [w1 w2].  
-  exact (fun x => (simple_arithmetical_value_prt _ p1 _ _ w1 x) + (simple_arithmetical_value_prt _ p2 _ _ w2 x))%R.
+  exact (fun x => (arith_val _ p1 _ _ w1 x) + (arith_val _ p2 _ _ w2 x))%R.
 
   induction (eq_sym (has_type_ro_OpRminus_infer _ _ _ _ w)).
   pose proof (has_type_ro_OpRminus_inverse _ _ _ w) as [w1 w2].  
-  exact (fun x => (simple_arithmetical_value_prt _ p1 _ _ w1 x) - (simple_arithmetical_value_prt _ p2 _ _ w2 x))%R.
+  exact (fun x => (arith_val _ p1 _ _ w1 x) - (arith_val _ p2 _ _ w2 x))%R.
 
   induction (eq_sym (has_type_ro_OpRmult_infer _ _ _ _ w)).
   pose proof (has_type_ro_OpRmult_inverse _ _ _ w) as [w1 w2].  
-  exact (fun x => (simple_arithmetical_value_prt _ p1 _ _ w1 x) * (simple_arithmetical_value_prt _ p2 _ _ w2 x))%R.
+  exact (fun x => (arith_val _ p1 _ _ w1 x) * (arith_val _ p2 _ _ w2 x))%R.
 
   induction (eq_sym (has_type_ro_OpRlt_infer _ _ _ _ w)).
   pose proof (has_type_ro_OpRlt_inverse _ _ _ w) as [w1 w2].  
-  exact (fun x => Rltb'' (simple_arithmetical_value_prt _ p1 _ _ w1 x) (simple_arithmetical_value_prt _ p2 _ _ w2 x)).
+  exact (fun x => Rltb'' (arith_val _ p1 _ _ w1 x) (arith_val _ p2 _ _ w2 x)).
 
   induction (eq_sym (has_type_ro_OpRrecip_infer _ _ _ w)).
   pose proof (has_type_ro_OpRrecip_inverse _ _ w) as w1.  
-  exact (fun x => / (simple_arithmetical_value_prt _ p _ _ w1 x))%R.
+  exact (fun x => / (arith_val _ p _ _ w1 x))%R.
 
   induction (eq_sym (has_type_ro_OpZRcoerce_infer _ _ _ w)).
   pose proof (has_type_ro_OpZRcoerce_inverse _ _ w) as w1.  
-  exact (fun x => IZR (simple_arithmetical_value_prt _ p _ _ w1 x))%R.
+  exact (fun x => IZR (arith_val _ p _ _ w1 x))%R.
 
   induction (eq_sym (has_type_ro_OpZRexp_infer _ _ _ w)).
   pose proof (has_type_ro_OpZRexp_inverse _ _ w) as w1.  
-  exact (fun x => pow2 (simple_arithmetical_value_prt _ p _ _ w1 x))%R.
+  exact (fun x => pow2 (arith_val _ p _ _ w1 x))%R.
 
   induction (eq_sym (has_type_ro_Int_infer _ _ _ w)).
   exact (fun x => k).
@@ -88,8 +88,8 @@ Proof.
 Defined.
 
 Require Import ReasoningRules.
-Fixpoint simple_arithmetical_prt Γ e τ (w : Γ |- e : τ) (p : simple_arithmetical e) :
-  [x : Γ] |- {{True}} e {{y : τ | y = simple_arithmetical_value_prt e p Γ τ w x}}ᵖ.
+Fixpoint arith_prt Γ e τ (w : Γ |- e : τ) (p : arith e) :
+  [x : Γ] |- {{True}} e {{y : τ | y = arith_val e p Γ τ w x}}ᵖ.
 Proof.
   dependent destruction p; simpl.
   {
@@ -102,14 +102,14 @@ Proof.
     case_eq ( (has_type_ro_OpZplus_inverse _ _ _ w)). intros w1 w2 e.    
     apply (
         pp_ro_int_op_plus_prt
-          (fun '(x, y) => y = ( (simple_arithmetical_value_prt _ p1 _ _ w1) x))
-          (fun '(x, y) => y = ( (simple_arithmetical_value_prt _ p2 _ _ w2) x))
+          (fun '(x, y) => y = ( (arith_val _ p1 _ _ w1) x))
+          (fun '(x, y) => y = ( (arith_val _ p2 _ _ w2) x))
       ).
     
-    pose proof (simple_arithmetical_prt _ _ _ w1 p1).
+    pose proof (arith_prt _ _ _ w1 p1).
     apply (pp_ro_imply_prt (ψ := patf) (ψ' := patf) X);
       try intros x1 x2; auto; try intros x1 x2 x3; auto.
-    pose proof (simple_arithmetical_prt _ _ _ w2 p2).
+    pose proof (arith_prt _ _ _ w2 p2).
     apply (pp_ro_imply_prt (ψ := patf) (ψ' := patf) X);
       try intros x1 x2; auto; try intros x1 x2 x3; auto.
     intros x1 x2 x3 h1 h2.
@@ -123,11 +123,11 @@ Proof.
     destruct (eq_sym (has_type_ro_OpZminus_infer _ _ _ _ w)).
     case_eq ( (has_type_ro_OpZminus_inverse _ _ _ w)); intros w1 w2 e.    
     apply (pp_ro_int_op_minus_prt
-             (fun '(x, y) => y = simple_arithmetical_value_prt e1 p1 Γ INTEGER w1 x)
-             (fun '(x, y) => y = simple_arithmetical_value_prt e2 p2 Γ INTEGER w2 x)
+             (fun '(x, y) => y = arith_val e1 p1 Γ INTEGER w1 x)
+             (fun '(x, y) => y = arith_val e2 p2 Γ INTEGER w2 x)
           ).
-    apply simple_arithmetical_prt.
-    apply simple_arithmetical_prt.
+    apply arith_prt.
+    apply arith_prt.
     intros.
     rewrite H, H0.
     simpl.
@@ -140,11 +140,11 @@ Proof.
     destruct (eq_sym (has_type_ro_OpZmult_infer _ _ _ _ w)).
     case_eq ( (has_type_ro_OpZmult_inverse _ _ _ w)); intros w1 w2 e.    
     apply (pp_ro_int_op_mult_prt
-             (fun '(x, y) => y = simple_arithmetical_value_prt e1 p1 Γ INTEGER w1 x)
-             (fun '(x, y) => y = simple_arithmetical_value_prt e2 p2 Γ INTEGER w2 x)
+             (fun '(x, y) => y = arith_val e1 p1 Γ INTEGER w1 x)
+             (fun '(x, y) => y = arith_val e2 p2 Γ INTEGER w2 x)
           ).
-    apply simple_arithmetical_prt.
-    apply simple_arithmetical_prt.
+    apply arith_prt.
+    apply arith_prt.
     intros.
     rewrite H, H0.
     simpl.
@@ -157,11 +157,11 @@ Proof.
     destruct (eq_sym (has_type_ro_OpZlt_infer _ _ _ _ w)).
     case_eq ( (has_type_ro_OpZlt_inverse _ _ _ w)); intros w1 w2 e.    
     apply (pp_ro_int_comp_lt_prt
-             (fun '(x, y) => y = simple_arithmetical_value_prt e1 p1 Γ INTEGER w1 x)
-             (fun '(x, y) => y = simple_arithmetical_value_prt e2 p2 Γ INTEGER w2 x)
+             (fun '(x, y) => y = arith_val e1 p1 Γ INTEGER w1 x)
+             (fun '(x, y) => y = arith_val e2 p2 Γ INTEGER w2 x)
           ).
-    apply simple_arithmetical_prt.
-    apply simple_arithmetical_prt.
+    apply arith_prt.
+    apply arith_prt.
     intros.
     rewrite H, H0.
     simpl.
@@ -174,11 +174,11 @@ Proof.
     destruct (eq_sym (has_type_ro_OpZeq_infer _ _ _ _ w)).
     case_eq ( (has_type_ro_OpZeq_inverse _ _ _ w)) ; intros w1 w2 e.    
     apply (pp_ro_int_comp_eq_prt
-             (fun '(x, y) => y = simple_arithmetical_value_prt e1 p1 Γ INTEGER w1 x)
-             (fun '(x, y) => y = simple_arithmetical_value_prt e2 p2 Γ INTEGER w2 x)
+             (fun '(x, y) => y = arith_val e1 p1 Γ INTEGER w1 x)
+             (fun '(x, y) => y = arith_val e2 p2 Γ INTEGER w2 x)
           ).
-    apply simple_arithmetical_prt.
-    apply simple_arithmetical_prt.
+    apply arith_prt.
+    apply arith_prt.
     intros.
     rewrite H, H0.
     simpl.
@@ -191,11 +191,11 @@ Proof.
     destruct (eq_sym (has_type_ro_OpRplus_infer _ _ _ _ w)).
     case_eq ( (has_type_ro_OpRplus_inverse _ _ _ w)); intros w1 w2 e.    
     apply (pp_ro_real_op_plus_prt
-             (fun '(x, y) => y = simple_arithmetical_value_prt e1 p1 Γ REAL w1 x)
-             (fun '(x, y) => y = simple_arithmetical_value_prt e2 p2 Γ REAL w2 x)
+             (fun '(x, y) => y = arith_val e1 p1 Γ REAL w1 x)
+             (fun '(x, y) => y = arith_val e2 p2 Γ REAL w2 x)
           ).
-    apply simple_arithmetical_prt.
-    apply simple_arithmetical_prt.
+    apply arith_prt.
+    apply arith_prt.
     intros.
     rewrite H, H0.
     simpl.
@@ -208,11 +208,11 @@ Proof.
     destruct (eq_sym (has_type_ro_OpRminus_infer _ _ _ _ w)).
     case_eq ( (has_type_ro_OpRminus_inverse _ _ _ w)) ; intros w1 w2 e.    
     apply (pp_ro_real_op_minus_prt
-             (fun '(x, y) => y = simple_arithmetical_value_prt e1 p1 Γ REAL w1 x)
-             (fun '(x, y) => y = simple_arithmetical_value_prt e2 p2 Γ REAL w2 x)
+             (fun '(x, y) => y = arith_val e1 p1 Γ REAL w1 x)
+             (fun '(x, y) => y = arith_val e2 p2 Γ REAL w2 x)
           ).
-    apply simple_arithmetical_prt.
-    apply simple_arithmetical_prt.
+    apply arith_prt.
+    apply arith_prt.
     intros.
     rewrite H, H0.
     simpl.
@@ -225,11 +225,11 @@ Proof.
     destruct (eq_sym (has_type_ro_OpRmult_infer _ _ _ _ w)).
     case_eq ( (has_type_ro_OpRmult_inverse _ _ _ w)) ; intros w1 w2 e.    
     apply (pp_ro_real_op_mult_prt
-             (fun '(x, y) => y = simple_arithmetical_value_prt e1 p1 Γ REAL w1 x)
-             (fun '(x, y) => y = simple_arithmetical_value_prt e2 p2 Γ REAL w2 x)
+             (fun '(x, y) => y = arith_val e1 p1 Γ REAL w1 x)
+             (fun '(x, y) => y = arith_val e2 p2 Γ REAL w2 x)
           ).
-    apply simple_arithmetical_prt.
-    apply simple_arithmetical_prt.
+    apply arith_prt.
+    apply arith_prt.
     intros.
     rewrite H, H0.
     simpl.
@@ -242,11 +242,11 @@ Proof.
     destruct (eq_sym (has_type_ro_OpRlt_infer _ _ _ _ w)).
     case_eq ( (has_type_ro_OpRlt_inverse _ _ _ w)) ; intros w1 w2 e.    
     apply (pp_ro_real_comp_lt_prt
-             (fun '(x, y) => y = simple_arithmetical_value_prt e1 p1 Γ REAL w1 x)
-             (fun '(x, y) => y = simple_arithmetical_value_prt e2 p2 Γ REAL w2 x)
+             (fun '(x, y) => y = arith_val e1 p1 Γ REAL w1 x)
+             (fun '(x, y) => y = arith_val e2 p2 Γ REAL w2 x)
           ).
-    apply simple_arithmetical_prt.
-    apply simple_arithmetical_prt.
+    apply arith_prt.
+    apply arith_prt.
     intros.
     rewrite H, H0.
     simpl.
@@ -259,7 +259,7 @@ Proof.
     destruct (eq_sym (has_type_ro_OpRrecip_infer Γ e τ w)).
     pose ((has_type_ro_OpRrecip_inverse _ _ w)) as w1.    
     apply (pp_ro_recip_prt_back).
-    pose proof (simple_arithmetical_prt _ _ _ w1 p).
+    pose proof (arith_prt _ _ _ w1 p).
     apply (pp_ro_imply_prt (ψ := patf) (ψ' := patf) X).
     intros x1 x2; auto.
     intros [x1 x2] h.
@@ -274,7 +274,7 @@ Proof.
     destruct (eq_sym (has_type_ro_OpZRcoerce_infer Γ e τ w)).
     pose ((has_type_ro_OpZRcoerce_inverse _ _ w)) as w1.    
     apply (pp_ro_coerce_prt).
-    pose proof (simple_arithmetical_prt _ _ _ w1 p).
+    pose proof (arith_prt _ _ _ w1 p).
     apply (pp_ro_imply_prt (ψ := patf) (ψ' := patf) X).
     intros x1 x2; auto.
     intros [x1 x2] h.
@@ -288,7 +288,7 @@ Proof.
     destruct (eq_sym (has_type_ro_OpZRexp_infer Γ e τ w)).
     pose ((has_type_ro_OpZRexp_inverse _ _ w)) as w1.    
     apply (pp_ro_exp_prt).
-    pose proof (simple_arithmetical_prt _ _ _ w1 p).
+    pose proof (arith_prt _ _ _ w1 p).
     apply (pp_ro_imply_prt (ψ := patf) (ψ' := patf) X).
     intros x1 x2; auto.
     intros [x1 x2] h.
@@ -323,109 +323,83 @@ Proof.
 Defined.
 
 
-Fixpoint simple_arithmetical_value_tot e (p : simple_arithmetical e) Γ τ (w : Γ |- e : τ)  :
-  (sem_ctx Γ -> Prop) * (sem_ctx Γ -> sem_datatype τ).
+Fixpoint arith_cond e (p : arith e) Γ τ :
+  (Γ |- e : τ) -> sem_ctx Γ -> Prop.
 Proof.
-  dependent destruction p.
-  exact (fun _ => True, var_access _ _ _ w).
-
+  intro w; dependent destruction p.
+  exact (fun _ => True).
+        
   destruct (eq_sym (has_type_ro_OpZplus_infer _ _ _ _ w)).
-  destruct ( (has_type_ro_OpZplus_inverse _ _ _ w)) as [w1 w2].    
-  exact (
-      (fun x => fst (simple_arithmetical_value_tot _ p1 _ _ w1) x /\ fst (simple_arithmetical_value_tot  _ p2 _ _ w2) x,  
-         fun x => snd (simple_arithmetical_value_tot _ p1 _ _ w1) x + snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))%Z.
+  destruct ((has_type_ro_OpZplus_inverse _ _ _ w)) as [w1 w2].    
+  exact  (fun x =>  (arith_cond _ p1 _ _ w1) x /\  (arith_cond  _ p2 _ _ w2) x)%Z.
 
   destruct (eq_sym (has_type_ro_OpZminus_infer _ _ _ _ w)).
   destruct ( (has_type_ro_OpZminus_inverse _ _ _ w)) as [w1 w2].    
-  exact (
-      (fun x => fst (simple_arithmetical_value_tot _ p1 _ _ w1) x /\ fst (simple_arithmetical_value_tot  _ p2 _ _ w2) x,  
-         fun x => snd (simple_arithmetical_value_tot _ p1 _ _ w1) x - snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))%Z.
-
+  exact (fun x => (arith_cond _ p1 _ _ w1) x /\ (arith_cond  _ p2 _ _ w2) x).
+  
   destruct (eq_sym (has_type_ro_OpZmult_infer _ _ _ _ w)).
-  destruct ( (has_type_ro_OpZmult_inverse _ _ _ w)) as [w1 w2].    
-  exact (
-      (fun x => fst (simple_arithmetical_value_tot _ p1 _ _ w1) x /\ fst (simple_arithmetical_value_tot  _ p2 _ _ w2) x,  
-         fun x => snd (simple_arithmetical_value_tot _ p1 _ _ w1) x * snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))%Z.
-
+  destruct (has_type_ro_OpZmult_inverse _ _ _ w) as [w1 w2].    
+  exact (fun x => (arith_cond _ p1 _ _ w1) x /\ (arith_cond  _ p2 _ _ w2) x).
+    
   destruct (eq_sym (has_type_ro_OpZlt_infer _ _ _ _ w)).
   destruct ( (has_type_ro_OpZlt_inverse _ _ _ w)) as [w1 w2].    
-  exact (
-      (fun x => fst (simple_arithmetical_value_tot _ p1 _ _ w1) x /\ fst (simple_arithmetical_value_tot  _ p2 _ _ w2) x,  
-         fun x => snd (simple_arithmetical_value_tot _ p1 _ _ w1) x <? snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))%Z.
-
+  exact (fun x => (arith_cond _ p1 _ _ w1) x /\ (arith_cond  _ p2 _ _ w2) x).   
+        
   destruct (eq_sym (has_type_ro_OpZeq_infer _ _ _ _ w)).
   destruct ( (has_type_ro_OpZeq_inverse _ _ _ w)) as [w1 w2].    
-  exact (
-      (fun x => fst (simple_arithmetical_value_tot _ p1 _ _ w1) x /\ fst (simple_arithmetical_value_tot  _ p2 _ _ w2) x,  
-         fun x => snd (simple_arithmetical_value_tot _ p1 _ _ w1) x =? snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))%Z.
-
+  exact (fun x => (arith_cond _ p1 _ _ w1) x /\ (arith_cond  _ p2 _ _ w2) x).
+  
   destruct (eq_sym (has_type_ro_OpRplus_infer _ _ _ _ w)).
   destruct ( (has_type_ro_OpRplus_inverse _ _ _ w)) as [w1 w2].    
-  exact (
-      (fun x => fst (simple_arithmetical_value_tot _ p1 _ _ w1) x /\ fst (simple_arithmetical_value_tot  _ p2 _ _ w2) x,  
-         fun x => snd (simple_arithmetical_value_tot _ p1 _ _ w1) x + snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))%R.
-
+  exact (fun x => (arith_cond _ p1 _ _ w1) x /\ (arith_cond  _ p2 _ _ w2) x).
+  
   destruct (eq_sym (has_type_ro_OpRminus_infer _ _ _ _ w)).
   destruct ( (has_type_ro_OpRminus_inverse _ _ _ w)) as [w1 w2].    
-  exact (
-      (fun x => fst (simple_arithmetical_value_tot _ p1 _ _ w1) x /\ fst (simple_arithmetical_value_tot  _ p2 _ _ w2) x,  
-         fun x => snd (simple_arithmetical_value_tot _ p1 _ _ w1) x - snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))%R.
-
+  exact  (fun x => (arith_cond _ p1 _ _ w1) x /\ (arith_cond  _ p2 _ _ w2) x).
+  
   destruct (eq_sym (has_type_ro_OpRmult_infer _ _ _ _ w)).
   destruct ( (has_type_ro_OpRmult_inverse _ _ _ w)) as [w1 w2].    
-  exact (
-      (fun x => fst (simple_arithmetical_value_tot _ p1 _ _ w1) x /\ fst (simple_arithmetical_value_tot  _ p2 _ _ w2) x,  
-         fun x => snd (simple_arithmetical_value_tot _ p1 _ _ w1) x * snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))%R.
-
+  exact (fun x => (arith_cond _ p1 _ _ w1) x /\ (arith_cond  _ p2 _ _ w2) x).
+  
   destruct (eq_sym (has_type_ro_OpRlt_infer _ _ _ _ w)).
   destruct ( (has_type_ro_OpRlt_inverse _ _ _ w)) as [w1 w2].    
-  exact (
-      (fun x => fst (simple_arithmetical_value_tot _ p1 _ _ w1) x /\ fst (simple_arithmetical_value_tot  _ p2 _ _ w2) x /\
-                  (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x) <> (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x)
-         ,  
-         fun x => Rltb'' (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x) (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x)))%R.
-
+  exact (fun x => (arith_cond _ p1 _ _ w1) x /\ (arith_cond  _ p2 _ _ w2) x /\
+                  ( (arith_val _ p1 _ _ w1) x) <> ( (arith_val _ p2 _ _ w2) x)).
+        
   destruct (eq_sym (has_type_ro_OpRrecip_infer _ _ _ w)).
   pose proof (has_type_ro_OpRrecip_inverse _ _ w) as w1.    
-  exact (
-      (fun x => fst (simple_arithmetical_value_tot _ p _ _ w1) x /\
-                  (snd (simple_arithmetical_value_tot _ p _ _ w1) x <> 0%R)
-         ,
-         fun x => / snd (simple_arithmetical_value_tot _ p _ _ w1) x))%R.
+  exact (fun x => (arith_cond _ p _ _ w1) x /\
+                  ((arith_val _ p _ _ w1) x <> 0%R)).
 
   destruct (eq_sym (has_type_ro_OpZRcoerce_infer _ _ _ w)).
   pose proof (has_type_ro_OpZRcoerce_inverse _ _ w) as w1.    
-  exact (
-      (fun x => fst (simple_arithmetical_value_tot _ p _ _ w1) x
-         ,
-         fun x => IZR (snd (simple_arithmetical_value_tot _ p _ _ w1) x)))%R.
+  exact ((fun x => (arith_cond _ p _ _ w1) x)).
 
   destruct (eq_sym (has_type_ro_OpZRexp_infer _ _ _ w)).
   pose proof (has_type_ro_OpZRexp_inverse _ _ w) as w1.    
   exact (
-      (fun x => fst (simple_arithmetical_value_tot _ p _ _ w1) x
-         ,
-         fun x => pow2 (snd (simple_arithmetical_value_tot _ p _ _ w1) x)))%R.
+      (fun x => (arith_cond _ p _ _ w1) x)).
 
   destruct (eq_sym (has_type_ro_Int_infer _ _ _ w)).
   exact (
-      (fun x => True,
-         fun x => k))%Z.
+      (fun x => True)).
   
   destruct (eq_sym (has_type_ro_True_infer _ _ w)).
   exact (
-      (fun x => True,
-         fun x => true))%Z.
-
+      (fun x => True)).
+    
   destruct (eq_sym (has_type_ro_False_infer _ _ w)).
   exact (
-      (fun x => True,
-         fun x => false))%Z.
-
+      (fun x => True)). 
 Defined.
 
-Fixpoint simple_arithmetical_tot e (p : simple_arithmetical e) Γ τ (w : Γ |- e : τ) :
-  [x : Γ] |- {{fst (simple_arithmetical_value_tot _ p _ _ w) x}} e {{y : τ | y = snd (simple_arithmetical_value_tot _ p _ _ w) x}}ᵗ.
+Lemma arith_val_typing_irrl : forall e (p : arith e) Γ τ (w1 w2 : Γ |- e : τ),
+  forall x, arith_val _ p _ _ w1 x = arith_val _ p _ _ w2 x.
+Admitted.
+
+
+Fixpoint arith_tot e (p : arith e) Γ τ (w : Γ |- e : τ) :
+  [x : Γ] |- {{ arith_cond _ p _ _ w x }} e {{y : τ | y = arith_val _ p _ _ w x}}ᵗ.
 Proof.
   dependent destruction p; simpl.
   {
@@ -439,20 +413,23 @@ Proof.
     destruct ( (has_type_ro_OpZplus_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_int_op_plus_tot
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun '(x, y) => y = ( (arith_val _ p1 _ _ w1) x))
+          (fun '(x, y) => y = ( (arith_val _ p2 _ _ w2) x))
       ).
-    pose proof (simple_arithmetical_tot _ p1 _ _ w1).
+    pose proof (arith_tot _ p1 _ _ w1).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; auto.
     intro h; auto.
-    pose proof (simple_arithmetical_tot _ p2 _ _ w2).
+    pose proof (arith_tot _ p2 _ _ w2).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; auto.
     intro h; auto.
     intros x1 x2 x3 h1 h2.
     rewrite h1, h2.
     simpl.
+    destruct (has_type_ro_OpZplus_inverse Γ e1 e2 w).
+    rewrite (arith_val_typing_irrl _ _ _ _ w1 h).
+    rewrite (arith_val_typing_irrl _ _ _ _ w2 h0).
     reflexivity.
   }
   {
@@ -460,18 +437,21 @@ Proof.
     destruct ((has_type_ro_OpZminus_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_int_op_minus_tot
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun '(x, y) => y = ( (arith_val _ p1 _ _ w1) x))
+          (fun '(x, y) => y = ( (arith_val _ p2 _ _ w2) x))
       ).
-    pose proof (simple_arithmetical_tot _ p1 _ _ w1).
+    pose proof (arith_tot _ p1 _ _ w1).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; intro h; auto.
-    pose proof (simple_arithmetical_tot _ p2 _ _ w2).
+    pose proof (arith_tot _ p2 _ _ w2).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; intro h; auto.
     intros x1 x2 x3 h1 h2.
     rewrite h1, h2.
     simpl.
+    destruct ((has_type_ro_OpZminus_inverse _ _ _ w)) as [www1 www2].    
+    rewrite (arith_val_typing_irrl _ _ _ _ w1 www1).
+    rewrite (arith_val_typing_irrl _ _ _ _ w2 www2).
     reflexivity.
   }
   {
@@ -479,18 +459,21 @@ Proof.
     destruct ( (has_type_ro_OpZmult_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_int_op_mult_tot
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun '(x, y) => y = ( (arith_val _ p1 _ _ w1) x))
+          (fun '(x, y) => y = ( (arith_val _ p2 _ _ w2) x))
       ).
-    pose proof (simple_arithmetical_tot _ p1 _ _ w1).
+    pose proof (arith_tot _ p1 _ _ w1).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; intro h; auto.
-    pose proof (simple_arithmetical_tot _ p2 _ _ w2).
+    pose proof (arith_tot _ p2 _ _ w2).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; intro h; auto.
     intros x1 x2 x3 h1 h2.
     rewrite h1, h2.
     simpl.
+    destruct ( (has_type_ro_OpZmult_inverse _ _ _ w)) as [www1 www2].    
+    rewrite (arith_val_typing_irrl _ _ _ _ w1 www1).
+    rewrite (arith_val_typing_irrl _ _ _ _ w2 www2).
     reflexivity.
   }
   {
@@ -498,18 +481,21 @@ Proof.
     destruct ( (has_type_ro_OpZlt_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_int_comp_lt_tot
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun '(x, y) => y = ((arith_val _ p1 _ _ w1) x))
+          (fun '(x, y) => y = ((arith_val _ p2 _ _ w2) x))
       ).
-    pose proof (simple_arithmetical_tot _ p1 _ _ w1).
+    pose proof (arith_tot _ p1 _ _ w1).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; intro h; auto.
-    pose proof (simple_arithmetical_tot _ p2 _ _ w2).
+    pose proof (arith_tot _ p2 _ _ w2).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; intro h; auto.
     intros x1 x2 x3 h1 h2.
     rewrite h1, h2.
     simpl.
+    destruct ( (has_type_ro_OpZlt_inverse _ _ _ w)) as [www1 www2].    
+    rewrite (arith_val_typing_irrl _ _ _ _ w1 www1).
+    rewrite (arith_val_typing_irrl _ _ _ _ w2 www2).
     reflexivity.
   }
   {
@@ -517,93 +503,105 @@ Proof.
     destruct ( (has_type_ro_OpZeq_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_int_comp_eq_tot
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun '(x, y) => y = ((arith_val _ p1 _ _ w1) x))
+          (fun '(x, y) => y = ((arith_val _ p2 _ _ w2) x))
       ).
-    pose proof (simple_arithmetical_tot _ p1 _ _ w1).
+    pose proof (arith_tot _ p1 _ _ w1).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; intro h; auto.
-    pose proof (simple_arithmetical_tot _ p2 _ _ w2).
+    pose proof (arith_tot _ p2 _ _ w2).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; intro h; auto.
     intros x1 x2 x3 h1 h2.
     rewrite h1, h2.
     simpl.
-    reflexivity.
+       destruct ( (has_type_ro_OpZeq_inverse _ _ _ w)) as [www1 www2].    
+     rewrite (arith_val_typing_irrl _ _ _ _ w1 www1).
+    rewrite (arith_val_typing_irrl _ _ _ _ w2 www2).
+reflexivity.
   }
   {
     destruct (eq_sym (has_type_ro_OpRplus_infer _ _ _ _ w)).
     destruct ( (has_type_ro_OpRplus_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_real_op_plus_tot
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun '(x, y) => y = ((arith_val _ p1 _ _ w1) x))
+          (fun '(x, y) => y = ((arith_val _ p2 _ _ w2) x))
       ).
-    pose proof (simple_arithmetical_tot _ p1 _ _ w1).
+    pose proof (arith_tot _ p1 _ _ w1).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; intro h; auto.
-    pose proof (simple_arithmetical_tot _ p2 _ _ w2).
+    pose proof (arith_tot _ p2 _ _ w2).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; intro h; auto.
     intros x1 x2 x3 h1 h2.
     rewrite h1, h2.
     simpl.
-    reflexivity.
+       destruct ( (has_type_ro_OpRplus_inverse _ _ _ w)) as [www1 www2].    
+    rewrite (arith_val_typing_irrl _ _ _ _ w1 www1).
+    rewrite (arith_val_typing_irrl _ _ _ _ w2 www2).
+ reflexivity.
   }
   {
     destruct (eq_sym (has_type_ro_OpRminus_infer _ _ _ _ w)).
     destruct ( (has_type_ro_OpRminus_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_real_op_minus_tot
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun '(x, y) => y = ((arith_val _ p1 _ _ w1) x))
+          (fun '(x, y) => y = ((arith_val _ p2 _ _ w2) x))
       ).
-    pose proof (simple_arithmetical_tot _ p1 _ _ w1).
+    pose proof (arith_tot _ p1 _ _ w1).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; intro h; auto.
-    pose proof (simple_arithmetical_tot _ p2 _ _ w2).
+    pose proof (arith_tot _ p2 _ _ w2).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; intro h; auto.
     intros x1 x2 x3 h1 h2.
     rewrite h1, h2.
     simpl.
-    reflexivity.
+    destruct ( (has_type_ro_OpRminus_inverse _ _ _ w)) as [www1 www2].    
+        rewrite (arith_val_typing_irrl _ _ _ _ w1 www1).
+    rewrite (arith_val_typing_irrl _ _ _ _ w2 www2).
+reflexivity.
   }
   {
     destruct (eq_sym (has_type_ro_OpRmult_infer _ _ _ _ w)).
     destruct ( (has_type_ro_OpRmult_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_real_op_mult_tot
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x))
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun '(x, y) => y = ((arith_val _ p1 _ _ w1) x))
+          (fun '(x, y) => y = ((arith_val _ p2 _ _ w2) x))
       ).
-    pose proof (simple_arithmetical_tot _ p1 _ _ w1).
+    pose proof (arith_tot _ p1 _ _ w1).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; intro h; auto.
-    pose proof (simple_arithmetical_tot _ p2 _ _ w2).
+    pose proof (arith_tot _ p2 _ _ w2).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; intro h; auto.
     intros x1 x2 x3 h1 h2.
     rewrite h1, h2.
     simpl.
-    reflexivity.
+    destruct ( (has_type_ro_OpRmult_inverse _ _ _ w)) as [www1 www2].    
+        rewrite (arith_val_typing_irrl _ _ _ _ w1 www1).
+    rewrite (arith_val_typing_irrl _ _ _ _ w2 www2).
+reflexivity.
   }
   {
     destruct (eq_sym (has_type_ro_OpRlt_infer _ _ _ _ w)).
     destruct ( (has_type_ro_OpRlt_inverse _ _ _ w)) as [w1 w2].    
     apply (
         pp_ro_real_comp_lt_tot
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x) /\  y <> (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
-          (fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p2 _ _ w2) x))
+          (fun '(x, y) => y = ((arith_val _ p1 _ _ w1) x) /\  y <> ((arith_val _ p2 _ _ w2) x))
+          (fun '(x, y) => y = ((arith_val _ p2 _ _ w2) x))
       ).
 
-    pose proof (simple_arithmetical_tot _ p1 _ _ w1).
+    pose proof (arith_tot _ p1 _ _ w1).
     simpl in X.
     apply (pp_ro_tot_pose_readonly
              (ψ := patf)
              (fun x =>
-                (snd (simple_arithmetical_value_tot _ p1 _ _ w1) x) <>
-                  (snd (simple_arithmetical_value_tot _ p2 _ _  w2) x))) in X.
+                ( (arith_val _ p1 _ _ w1) x) <>
+                  ( (arith_val _ p2 _ _  w2) x))) in X.
              
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 x3]; auto; try intros x1 x2 x3; auto.
@@ -619,7 +617,7 @@ Proof.
     rewrite H; exact H0.
 
     
-    pose proof (simple_arithmetical_tot _ p2 _ _ w2).
+    pose proof (arith_tot _ p2 _ _ w2).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 [x3 x4]]; auto; try intros x1 x2 x3; auto.
     intro h; auto.
@@ -629,17 +627,24 @@ Proof.
     rewrite <- h2 in H0.
     exact H0.    
     rewrite H, h2; auto.
+    destruct ( (has_type_ro_OpRlt_inverse _ _ _ w)) as [www1 www2].
+    simpl.
+    destruct ( (has_type_ro_OpRlt_inverse _ _ _ w)) as [wwww1 wwww2].
+    rewrite (arith_val_typing_irrl _ _ _ _ w2 wwww2).
+    rewrite (arith_val_typing_irrl _ _ _ _ w1 wwww1).
+    reflexivity.
+
   }
   {
     destruct (eq_sym (has_type_ro_OpRrecip_infer _ _ _ w)).
     pose ( (has_type_ro_OpRrecip_inverse _ _ w)) as w1.    
     
     apply (pp_ro_recip_tot_back).
-    pose proof (simple_arithmetical_tot _ p _ _ w1).
+    pose proof (arith_tot _ p _ _ w1).
     apply (pp_ro_tot_pose_readonly
              (ψ := patf)
              (fun x => 
-                (snd (simple_arithmetical_value_tot _ p _ _ w1) x) <> 0%R)) in X.
+                ((arith_val _ p _ _ w1) x) <> 0%R)) in X.
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 [x3 x4]]; auto; try intros x1 x2 x3; auto.
     intro.
@@ -661,7 +666,7 @@ Proof.
     pose ( (has_type_ro_OpZRcoerce_inverse _ _ w)) as w1.    
     
     apply (pp_ro_coerce_tot).
-    pose proof (simple_arithmetical_tot _ p _ _ w1).
+    pose proof (arith_tot _ p _ _ w1).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 [x3 x4]]; auto; try intros [x1 x2] x3; auto.
     intro.
@@ -677,7 +682,7 @@ Proof.
     pose ( (has_type_ro_OpZRexp_inverse _ _ w)) as w1.    
     
     apply (pp_ro_exp_tot).
-    pose proof (simple_arithmetical_tot _ p _ _ w1).
+    pose proof (arith_tot _ p _ _ w1).
     apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X);
       try intros x1 [x2 [x3 x4]]; auto; try intros [x1 x2] x3; auto.
     intro.
@@ -709,14 +714,14 @@ Proof.
 Defined.
 
 
-Fixpoint simple_arithmetical_dec e : simple_arithmetical e + (simple_arithmetical e -> False).
+Fixpoint arith_dec e : arith e + (arith e -> False).
 Proof.
   dependent destruction e;
     try (left; constructor; auto; fail);
     try (destruct b; left; constructor; auto; fail).
 
-  destruct (simple_arithmetical_dec e1).
-  destruct (simple_arithmetical_dec e2).
+  destruct (arith_dec e1).
+  destruct (arith_dec e2).
   destruct b; constructor; auto; constructor; auto.
   right.
   intro.
@@ -725,7 +730,7 @@ Proof.
   intro.
   dependent destruction H; apply f; auto.
   
-  destruct (simple_arithmetical_dec e).
+  destruct (arith_dec e).
   left; destruct u; constructor; auto.
   right.
   intro.

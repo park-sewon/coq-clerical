@@ -83,7 +83,7 @@ Proof.
   apply (pp_rw_new_var_tot_util2 INTEGER (fun '(x, y) => y = 0%Z)).
   {
     (* prove the assigned expression [INT 0] *)
-    proves_simple_arithmetical.
+    prove_arith.
   }
   (* prove the rest *)
     
@@ -91,7 +91,7 @@ Proof.
   apply (pp_rw_new_var_tot_util2 REAL (fun '(x, y) => y = var_access _ _ _ w'' x)).
   {
     (* prove the assigned expression [VAR (3 + k)] *)
-    proves_simple_arithmetical.
+    prove_arith.
     rewrite (var_access_typing_irrl _ _ _ w'' tmp1).
     exact val.
   }
@@ -101,7 +101,7 @@ Proof.
   apply (pp_rw_new_var_tot_util2 REAL (fun '(x, y) => y = sin_q 1 (var_access _ _ _ w''' x))).
   {
     (* prove the assigned expression [;-; VAR (3 + k) ;*; VAR (3 + k) ;*; VAR (3 + k) ;/; RE (INT 6)] *)
-    proves_simple_arithmetical.
+    prove_arith.
     simpl.
     destruct y as [[[γ m] j] A].
     simpl in pre, val.
@@ -165,7 +165,7 @@ Proof.
              (fun '(x, y) => y = Rabs (var_access _ _ _ w0 ( x)))).
     
 
-    proves_simple_arithmetical.
+    prove_arith.
     rewrite val.
     rewrite (var_access_typing_irrl _ _ _ h2 w3).
     auto.
@@ -205,7 +205,7 @@ Proof.
     }
 
     
-    proves_simple_arithmetical.
+    prove_arith.
     rewrite val.
     rewrite (var_access_typing_irrl _ _ _ h0 w3).
     auto.
@@ -221,7 +221,7 @@ Proof.
   }
 
   {
-    proves_simple_arithmetical.
+    prove_arith.
     destruct y as [[[[t1 m] t2] t3] q].
     split; intro h.
     pose proof (pre (eq_refl _)).
@@ -231,7 +231,7 @@ Proof.
   }
 
   {
-    proves_simple_arithmetical.
+    prove_arith.
     destruct y as [[[[t1 m] t2] t3] q].
     split; intro h.
     rewrite val in h; contradict h; discriminate.
@@ -245,7 +245,7 @@ Proof.
              (fun '(x, y) => y = pow2 (- (var_access _ _ _ w3 x) - 1) /\ pow2 (- (var_access _ _ _ w3 x) - 1) < Rabs (var_access _ _ _ w0 x))
              (fun '(x, y) => y = Rabs (var_access _ _ _ w0 x))).
     {
-      proves_simple_arithmetical.
+      prove_arith.
       rewrite val.
       split.
       rewrite (var_access_typing_irrl _ _ _ h2 w3).
@@ -280,7 +280,7 @@ Proof.
                 (clerical_abs_correct _ _ w0))).
     intros h1 h2; split; auto.
     intros [h1 h2] h3; auto.
-    proves_simple_arithmetical.
+    prove_arith.
     rewrite val.
     rewrite (var_access_typing_irrl _ _ _ h0 w3).
     auto.
@@ -605,7 +605,7 @@ Proof.
   }
 
   
-  proves_simple_arithmetical.
+  prove_arith.
   rewrite val.
   clear val.
   destruct y as [[[[γ m] j] A] q].

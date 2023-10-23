@@ -405,14 +405,14 @@ The list-dependent types are defined in [Clerical.Preliminaries.ListConstr](./fo
 The library provides binary case expressions separately. It will be removed and replaced by the general case expression soon.
 
 
-## Simple Arithmetical Expressions
+## Arithmetical Expressions
 There are proof rules for each construct of expressions. 
 For example, to prove something about `42 + 42 + 42`, we need to apply
 proof rules for each `42` and the additions. 
 
-A Clerical expression is called simple arithmetical when it is simple arithmetical. 
-See  [Clerical.Utils.SimpleArith](./formalization/Utils/SimpleArith.v).
-In the file, we prove that when an expression `e` is simple arithmetical, and if it is well-typed
+A Clerical expression is called arithmetical when it is arithmetical... 
+See  [Clerical.Utils.Arith](./formalization/Utils/Arith.v).
+In the file, we prove that when an expression `e` is arithmetical, and if it is well-typed
 `w : Γ |- e : τ`, there (constructively) exists a function 
 `f : sem_ctx Γ -> sem_datatype τ` such that
 
@@ -421,22 +421,22 @@ In the file, we prove that when an expression `e` is simple arithmetical, and if
 ```
 holds.
 
-Again constructively, there is a predicate `P : sem_ctx Γ -> Prop` and a function `f : sem_ctx Γ -> sem_datatype τ`
+Again constructively, there is a predicate `P : sem_ctx Γ -> Prop` 
 such that 
 ```coq
 [γ : Γ] |- {{P γ}} e {{y : τ | y = f γ}}ᵗ
 ```
 holds. The safety predicate `P` tracks division-by-zero and real number comparisons in `e`.
 
-We prove that it is decidable if an expression is simple arithmetical or not.
+We prove that it is decidable if an expression is arithmetical or not.
 
 Using the constructions of the predicates, functions and correctness lemmas, 
-in [Clerical.Utils.SimpleArithProver](./formalization/Utils/SimpleArithProver.v),
-we define a tactic that derives a correctness triple of a simple arithmetical expression and 
+in [Clerical.Utils.ArithProver](./formalization/Utils/ArithProver.v),
+we define a tactic `prove_arith` that derives a correctness triple of an arithmetical expression and 
 automatically applies IMPLY rule.
 For example, when we face a goal of type 
 `[γ : Γ] |- {{ϕ γ}} e {{y : τ | ψ γ y}}ᵗ`
-the tactic `proves_simple_arithmetical` first judges if `e` is simple arithmetical. 
+the tactic first judges if `e` is arithmetical. 
 If it is, it derives the correctness triple
 `[γ : Γ] |- {{P γ}} e {{y : τ | y = f γ}}ᵗ`.
 Then, the tactic applies the admissible rule for posing additional conditions on a read-only context to get
@@ -446,7 +446,7 @@ Applying the IMPLY rule, the tactic reduces the original triple to implications.
 This tactic works also for partial correctness goals.
 
 A similar tactic `proves_assign_simple_arithemtical τ` is defined to prove a triple for 
-assigning a simple arithmetical expression of type `τ` to a variable. It calls `proves_simple_arithmetical` internally.
+assigning an arithmetical expression of type `τ` to a variable. It calls `prove_arith` internally.
 
 
 

@@ -28,8 +28,8 @@ formalization/ReasoningTyPaired.v
 
 formalization/Utils/ReducingTactic.v
 formalization/Utils/TypingTactic.v
-formalization/Utils/SimpleArith.v
-formalization/Utils/SimpleArithProver.v
+formalization/Utils/Arith.v
+formalization/Utils/ArithProver.v
 
 
 

@@ -30,13 +30,13 @@ Proof.
   apply pp_ro_rw_tot_back.
   
   apply (pp_rw_new_var_tot_util2 INTEGER (fun '(_, y) => y = 0%Z)).
-  proves_simple_arithmetical.
+  prove_arith.
 
   apply (pp_rw_new_var_tot_util2 REAL (fun '(_, y) => y = 3)).
-  proves_simple_arithmetical.
+  prove_arith.
 
   apply (pp_rw_new_var_tot_util2 REAL (fun '(_, y) => y = 4)).
-  proves_simple_arithmetical.
+  prove_arith.
 
   apply (pp_rw_sequence_tot
            (θ :=  [(_, p) : (INTEGER :: nil) ;;; (((_, k), l), u) : (REAL :: REAL :: INTEGER :: nil)] ||-
@@ -56,7 +56,7 @@ Proof.
     apply (pp_rw_while_tot_back_util ϕ θ ψ). 
     {
       (* loop condition *)
-      proves_simple_arithmetical.
+      prove_arith.
       destruct y as [[[[t p] j] l] u].
       simpl in pre.
       rewrite val.
@@ -76,7 +76,7 @@ Proof.
                {{y : REAL | y = (l + u) / 2}})).      
       {
         (* assigned expression *)
-        proves_simple_arithmetical.
+        prove_arith.
         rewrite val.
         destruct y as [[[[t p] j] l] u].
         reduce_var_access.
@@ -98,7 +98,7 @@ Proof.
                       let x := snd (snd_app δγ) in 
                       y = sin x)).
           
-          proves_simple_arithmetical.
+          prove_arith.
 
           assert (((REAL :: REAL :: REAL :: INTEGER :: nil) ++ INTEGER :: nil) |- VAR 0 : REAL) by auto_typing. 
           pose proof (clerical_sin_correct ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ INTEGER :: nil) 0 H).
@@ -219,7 +219,7 @@ Proof.
                   {{y : REAL | y = (l + u) / 2}})).
       {
         (* assigned expression *)
-        proves_simple_arithmetical.
+        prove_arith.
         rewrite val.
         destruct y as [[[[[[[t k'] l'] u'] p] k] l] u].
         reduce_var_access.
@@ -239,7 +239,7 @@ Proof.
                       let x := snd (snd_app δγ) in                   
                       y = sin x)).
           
-          proves_simple_arithmetical.
+          prove_arith.
 
           assert ((((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil) ++ REAL :: REAL :: INTEGER :: nil) |- VAR 0 : REAL)) by auto_typing. 
           pose proof (clerical_sin_correct _ 0 H).
@@ -409,7 +409,7 @@ Proof.
   
   {
     (* the final return value (l + u) / 2 is a valid approx.   *)
-    proves_simple_arithmetical.
+    prove_arith.
 
     destruct y as [[[[t p] k] l] u]. 
     simpl; simpl in pre.
