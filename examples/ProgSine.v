@@ -7,6 +7,7 @@ Open Scope R.
 From Examples Require Import ProgAbs.
 From Examples Require Import Mathematics.
 
+
 (*
   The specifications of our sine function rely on the theory
   of trigonometric functions in Coq Standard library:
@@ -67,10 +68,13 @@ Lemma clerical_sin_correct :
     [x : Γ] |- {{True}} clerical_sin k {{y : REAL | y = sin (var_access Γ k REAL w x) }}ᵗ.
 Proof.
   intros.
-  apply (pp_ro_lim_tot_util_known_limit (fun x => sin (var_access Γ k REAL w x)));
+  apply (ro_lim_tot_util_known_limit (fun x => sin (var_access Γ k REAL w x)) (ψ := patf));
     try (intros [h1 h2] [_ h3]; auto; fail).
 
-  apply (pp_ro_rw_tot_back).
+  apply (ro_rw_tot_back (ψ :=
+[(γ, z) : (Γ ::: INTEGER)]|-
+        {{y : REAL
+  | (Rabs (y - sin (var_access Γ k REAL w γ)) < pow2 (- z)) }})).
 
   (* (* assert (((Γ ::: INTEGER) +++ nil) |- VAR 0 : INTEGER) as w' by auto_typing. *) *)
   (* apply (pp_rw_new_var_tot_util2 INTEGER (fun '(x, y) => y = 0%Z)). *)
@@ -80,7 +84,7 @@ Proof.
   (*   reduce_var_access val; reduce_var_access; exact val. *)
   (* } *)
   (* (* prove the rest *) *)
-  apply (pp_rw_new_var_tot_util2 INTEGER (fun '(x, y) => y = 0%Z)).
+  apply (rw_new_var_tot_util2 INTEGER (fun '((x, y) : (sem_ctx ((Γ ::: INTEGER) +++ nil)) * sem_datatype INTEGER) => y = 0%Z) (ϕ := patf) (ψ := pattf)).
   {
     (* prove the assigned expression [INT 0] *)
     prove_arith.
@@ -88,7 +92,7 @@ Proof.
   (* prove the rest *)
     
   assert ((( Γ ::: INTEGER) +++ (nil ::: INTEGER)) |- VAR (2 + k) : REAL) as w'' by auto_typing.
-  apply (pp_rw_new_var_tot_util2 REAL (fun '(x, y) => y = var_access _ _ _ w'' x)).
+  apply (rw_new_var_tot_util2 REAL (fun '(x, y) => y = var_access _ _ _ w'' x) (ϕ:= patf) (ψ := pattf)).
   {
     (* prove the assigned expression [VAR (3 + k)] *)
     prove_arith.
@@ -98,7 +102,7 @@ Proof.
   (* prove the rest *)
   
   assert (((REAL :: INTEGER ::  nil)  ++  (INTEGER :: Γ)) |- VAR (3 + k) : REAL) as w''' by auto_typing.
-  apply (pp_rw_new_var_tot_util2 REAL (fun '(x, y) => y = sin_q 1 (var_access _ _ _ w''' x))).
+  apply (rw_new_var_tot_util2 REAL (fun '(x, y) => y = sin_q 1 (var_access _ _ _ w''' x)) (ϕ:= patf) (ψ := pattf)).
   {
     (* prove the assigned expression [;-; VAR (3 + k) ;*; VAR (3 + k) ;*; VAR (3 + k) ;/; RE (INT 6)] *)
     prove_arith.
@@ -117,10 +121,10 @@ Proof.
   }
   (* prove the rest *)
 
-  apply (pp_rw_sequence_tot
-           (θ := [γ : (INTEGER :: Γ) ;;; δ : (REAL :: REAL :: INTEGER :: nil)] ||-
+  apply (rw_sequence_tot _ _ _ _ _ patf
+           ( [γ : (INTEGER :: Γ) ;;; δ : (REAL :: REAL :: INTEGER :: nil)] ||-
                  {{_ : UNIT | let A := snd (fst δ) in
-                   Rabs (A - sin (var_access Γ k REAL w (fst γ))) < pow2 (- snd γ) }} )).
+                   Rabs (A - sin (var_access Γ k REAL w (fst γ))) < pow2 (- snd γ) }} ) pattf).
 
   pose (ϕ := [(γ, m) : (INTEGER :: Γ) ;;; (((_, j), A), q) : (REAL :: REAL :: INTEGER :: nil)] ||-
              {{
@@ -139,14 +143,14 @@ Proof.
                    Z.of_nat n = j' /\ 
                      (j = j' + 1)%Z /\ pow2 (- m - 1) < Rabs (sin_q (S n) x)}}).
 
-  apply (pp_rw_while_tot_back_util ϕ θ ψ).                
+  apply (rw_while_tot_back_util ϕ θ ψ (ϕ' := patf) (ψ' := pattf)).
   {
     (* proving loop condition θ *)
     clear ψ w'' w'''.
     assert (((Γ ::: INTEGER) +++ (nil ::: INTEGER ::: REAL ::: REAL)) |- VAR 3 : INTEGER) as w3 by auto_typing.
     assert (((Γ ::: INTEGER) +++ (nil ::: INTEGER ::: REAL ::: REAL)) |- VAR 0 : REAL) as w0 by auto_typing.
-    apply (pp_ro_rw_tot_back).
-    apply (pp_rw_case_tot
+    apply (ro_rw_tot_back).
+    apply (rw_case2_tot (ψ := pattf) (ϕ := patf)
            (θ1 := (fun '(x, b) => b = true ->
                                   pow2 (- (var_access _ _ _ w3 (fst_app x)) - 1) <
                                     Rabs (var_access _ _ _ w0 (fst_app x))))
@@ -159,25 +163,26 @@ Proof.
            (ϕ2 := (fun x => 
                      Rabs (var_access _ _ _ w0 (fst_app x)) <
                        pow2 (- (var_access _ _ _ w3 (fst_app x)))))); simpl.
-  {
-    apply (pp_ro_real_comp_lt_prt
-             (fun '(x, y) => y = pow2 (- (var_access _ _ _ w3 ( x)) - 1))
-             (fun '(x, y) => y = Rabs (var_access _ _ _ w0 ( x)))).
-    
-
-    prove_arith.
-    rewrite val.
-    rewrite (var_access_typing_irrl _ _ _ h2 w3).
-    auto.
-    
-
     {
-      apply (pp_ro_imply_prt
+      prove_lt
+             (fun '(x, y) => y = pow2 (- (var_access _ _ _ w3 ( x)) - 1))
+             (fun '(x, y) => y = Rabs (var_access _ _ _ w0 ( x)))
+      .
+
+      prove_arith.
+      rewrite val.
+      rewrite (var_access_typing_irrl _ _ _ h2 w3).
+      auto.
+    
+
+      {
+        pose proof (ro_tot_prt (clerical_abs_correct _ _ w0) (ψ := patf)).
+        apply (ro_imply_prt'
                (ψ := patf)
-               (pp_ro_tot_prt
-                  (clerical_abs_correct _ _ w0))).
-      intros h1 h2; auto.
-      intros [h1 h2] h3; auto.
+               (ψ' := patf)
+               X).
+        intros h1 h2; auto.
+        intros [h1 h2] h3; auto.
     }
 
     intros.
@@ -192,14 +197,15 @@ Proof.
   
   {
 
-    apply (pp_ro_real_comp_lt_prt
+    prove_lt
              (fun '(x, y) => y = Rabs (var_access _ _ _ w0 ( x)))
-             (fun '(x, y) => y = pow2 (- (var_access _ _ _ w3 ( x))))).
+             (fun '(x, y) => y = pow2 (- (var_access _ _ _ w3 ( x)))).
     {
-      apply (pp_ro_imply_prt
+      apply (ro_imply_prt'
                (ψ := patf)
-               (pp_ro_tot_prt
-                  (clerical_abs_correct _ _ w0))).
+               (ψ' := patf)
+               (ro_tot_prt
+                  (clerical_abs_correct _ _ w0) (ψ := patf) )).
       intros h1 h2; auto.
       intros [h1 h2] h3; auto.
     }
@@ -241,9 +247,10 @@ Proof.
   }
 
   {
-    apply (pp_ro_real_comp_lt_tot
-             (fun '(x, y) => y = pow2 (- (var_access _ _ _ w3 x) - 1) /\ pow2 (- (var_access _ _ _ w3 x) - 1) < Rabs (var_access _ _ _ w0 x))
-             (fun '(x, y) => y = Rabs (var_access _ _ _ w0 x))).
+    prove_lt
+      (fun '(x, y) => y = pow2 (- (var_access _ _ _ w3 x) - 1) /\ pow2 (- (var_access _ _ _ w3 x) - 1) < Rabs (var_access _ _ _ w0 x))
+      (fun '(x, y) => y = Rabs (var_access _ _ _ w0 x))
+    .
     {
       prove_arith.
       rewrite val.
@@ -252,12 +259,13 @@ Proof.
       auto.
       exact pre.
     }
-      apply (pp_ro_imply_tot (ψ := patf)
-               (pp_ro_tot_pose_readonly (ψ := patf)
+    
+      apply (ro_imply_tot' (ψ := patf) (ψ' := patf)
+               (ro_tot_pose_readonly (ψ := patf)
                   (fun x => pow2 (- (var_access _ _ _ w3 x) - 1) < Rabs (var_access _ _ _ w0 x)) 
                   (clerical_abs_correct _ _ w0))).
-      intros h1 h2; split; auto.
-      intros [h1 h2] h3; auto.
+    intros h1 h2; split; auto.
+    intros [h1 h2] h3; auto.
     destruct h3.
     auto.
     intros.
@@ -270,12 +278,12 @@ Proof.
   }
 
   {
-    apply (pp_ro_real_comp_lt_tot
-             (fun '(x, y) => y = Rabs (var_access _ _ _ w0 x) /\ Rabs (var_access _ _ _ w0 x) < pow2 (- (var_access _ _ _ w3 x)))
-             (fun '(x, y) => y = pow2 (- (var_access _ _ _ w3 x)) )).
+    prove_lt
+      (fun '(x, y) => y = Rabs (var_access _ _ _ w0 x) /\ Rabs (var_access _ _ _ w0 x) < pow2 (- (var_access _ _ _ w3 x)))
+      (fun '(x, y) => y = pow2 (- (var_access _ _ _ w3 x))).
 
-    apply (pp_ro_imply_tot (ψ := patf)
-             (pp_ro_tot_pose_readonly (ψ := patf)
+    apply (ro_imply_tot' (ψ := patf) (ψ' := patf)
+             (ro_tot_pose_readonly (ψ := patf)
                 (fun x => Rabs (var_access _ _ _ w0 x) < pow2 (- (var_access _ _ _ w3 x))) 
                 (clerical_abs_correct _ _ w0))).
     intros h1 h2; split; auto.
@@ -304,15 +312,15 @@ Proof.
   }
   {
     (* proving loop invariant ϕ *)
-      apply (pp_rw_sequence_tot
-            (θ := [(γ, m) : (INTEGER :: Γ) ;;; (((_, j), A), q) : (REAL :: REAL :: INTEGER :: nil)] ||-
+    prove_sequence
+            ([(γ, m) : (INTEGER :: Γ) ;;; (((_, j), A), q) : (REAL :: REAL :: INTEGER :: nil)] ||-
             {{_ : UNIT |  let x := var_access _ _ _ w γ in
                           exists n : nat,
                             Z.of_nat n = (j - 1)%Z /\
-                               q = sin_q (S n) x /\ A = sin_A n x}})).
+                               q = sin_q (S n) x /\ A = sin_A n x}}).
       {
         (* j := j + 1 *)
-        proves_assign_simple_arithemtical INTEGER.
+        prove_assign_arith INTEGER.
         intros [γ m] [[[t j] A] q].
         reduce_update.
         reduce_var_access.
@@ -322,16 +330,16 @@ Proof.
         rewrite p1.
         ring.
       }
-      
-      apply (pp_rw_sequence_tot
-             (θ := [(γ, m) : (INTEGER :: Γ) ;;; (((_, j), A), q)  : (REAL :: REAL :: INTEGER :: nil)] ||-
+
+      prove_sequence
+        ([(γ, m) : (INTEGER :: Γ) ;;; (((_, j), A), q)  : (REAL :: REAL :: INTEGER :: nil)] ||-
                    {{_ : UNIT | 
                     let x := var_access _ _ _ w γ in
                     exists n : nat,
-                      Z.of_nat n = (j - 1)%Z /\ q = sin_q (S n) x /\ A = sin_A (S n) x}})).
+                      Z.of_nat n = (j - 1)%Z /\ q = sin_q (S n) x /\ A = sin_A (S n) x}}).
       {
         (* A := A + q *)
-        proves_assign_simple_arithemtical REAL.
+        prove_assign_arith REAL.
         intros [γ m] [[[t j] A] q] [l [p1 [p2 p4]]].
         reduce_update.
         reduce_var_access.
@@ -344,7 +352,7 @@ Proof.
 
       {
         (* q := - q * x * x / (2 j + 2) (2 j  + 3)  *)
-        proves_assign_simple_arithemtical REAL.
+        prove_assign_arith REAL.
 
         {
           (* safety condition for evaluating the assigned expression *)
@@ -425,16 +433,15 @@ Proof.
   }
   {
     (* proving variant *)
-    apply (pp_rw_sequence_tot
-             (θ :=
-                [(γ', m) : ((INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: nil) ;;;
+    prove_sequence
+      ([(γ', m) : ((INTEGER :: Γ) ++ REAL :: REAL :: INTEGER :: nil) ;;;
                         (((_, j), A), q) : (REAL :: REAL :: INTEGER :: nil)]
                   ||- {{_ : UNIT | let j' := snd (fst (fst (fst_app γ'))) in
                                    let x := var_access Γ k REAL w (snd_app γ') in
-                                   exists n : nat, Z.of_nat n = j' /\ j = (j' + 1)%Z /\ pow2 (- m - 1) < Rabs (sin_q (S n) x)}})).
+                                   exists n : nat, Z.of_nat n = j' /\ j = (j' + 1)%Z /\ pow2 (- m - 1) < Rabs (sin_q (S n) x)}}).
     {
       (* j := j + 1 *)
-      proves_assign_simple_arithemtical INTEGER.
+      prove_assign_arith INTEGER.
       intros [γ' m] [[[t j] A] q].
       simpl.
       reduce_var_access.
@@ -453,17 +460,15 @@ Proof.
       exact h1.      
     }
     
-      
-    apply (pp_rw_sequence_tot
-               (θ :=
-                [(γ', m) : ((INTEGER :: Γ) ++ REAL :: REAL :: INTEGER ::  nil) ;;;
+    prove_sequence
+               ([(γ', m) : ((INTEGER :: Γ) ++ REAL :: REAL :: INTEGER ::  nil) ;;;
                         (((_, j), A), q) : (REAL :: REAL :: INTEGER ::  nil)]
                   ||- {{_ : UNIT | let j' := snd (fst (fst (fst_app γ'))) in
                                    let x := var_access Γ k REAL w (snd_app γ') in
-                     exists n : nat, Z.of_nat n = j' /\ j = (j' + 1)%Z /\ pow2 (- m - 1) < Rabs (sin_q (S n) x)}})).
+                     exists n : nat, Z.of_nat n = j' /\ j = (j' + 1)%Z /\ pow2 (- m - 1) < Rabs (sin_q (S n) x)}}).
     {
       (* A := A + q *)
-      proves_assign_simple_arithemtical REAL.
+      prove_assign_arith REAL.
       intros [γ' m] [[[t j] A] q].
       reduce_var_access.
       reduce_update.
@@ -476,7 +481,7 @@ Proof.
     {
       (* q := - q * x * x / (2 j + 2) (2 j  + 3)  *)
       pose proof (has_type_ro_add_auxiliary _ _ _ w (REAL :: REAL :: INTEGER :: nil)).
-      proves_assign_simple_arithemtical REAL.
+      prove_assign_arith REAL.
 
       {
         intros [[[[γ' m] j] A] q].

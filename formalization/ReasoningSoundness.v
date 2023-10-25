@@ -13,240 +13,6 @@ From Clerical Require Import ReasoningRules.
 
 Arguments existT {_} {_}.
 
-Fixpoint proves_ro_prt_well_typed Γ e τ ϕ ψ (t : [x : Γ] |- {{ϕ x}} e {{y : τ | ψ (x, y) }}ᵖ) : Γ |- e : τ
-with proves_ro_tot_well_typed Γ e τ ϕ ψ (t : [x : Γ] |- {{ϕ x}} e {{y : τ | ψ (x, y) }}ᵗ) : Γ |- e : τ
-with proves_rw_prt_well_typed Γ Δ e τ ϕ ψ (t : [x : Γ ;;; y : Δ] ||- {{ϕ (x, y)}} e {{z : τ | ψ (x, (y, z)) }}ᵖ) : Γ ;;; Δ ||- e : τ
-with proves_rw_tot_well_typed Γ Δ e τ ϕ ψ (t : [x : Γ ;;; y : Δ] ||- {{ϕ (x, y)}} e {{z : τ | ψ (x, (y, z)) }}ᵗ) : Γ ;;; Δ ||- e : τ.
-Proof.
-  dependent induction t.
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t).
-  exact h.
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t1).
-  exact w.
-  apply has_type_ro_Skip.
-  apply has_type_ro_True.
-  apply has_type_ro_False.
-  apply has_type_ro_Int.
-  constructor.
-  exact (proves_rw_prt_well_typed Γ nil _ _ ([γ : Γ ;;; _ : nil] ||- {{P (γ, tt)}}) ([γ : Γ;;; _ : nil]||- {{y : τ | Q (γ, (tt, y))}}) p).
-  apply has_type_ro_OpZRcoerce.
-  exact (proves_ro_prt_well_typed _ _ _ P (fun '((γ, y) : (sem_ctx Γ * sem_datatype INTEGER)) => Q (γ, IZR y)) t).
-  apply has_type_ro_OpZRexp.
-  exact (proves_ro_prt_well_typed _ _ _ P (fun '((γ, y) : (sem_ctx Γ * sem_datatype INTEGER)) => Q (γ, pow2 y)) t).
-  apply has_type_ro_OpZplus.
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_OpZmult.
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_OpZminus.
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_OpRplus.
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_OpRmult.
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_OpRminus.
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_OpRrecip.
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t).
-  apply has_type_ro_OpZeq.
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_OpZlt.
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_OpRlt.
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_prt_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_Lim.
-  exact (proves_ro_tot_well_typed (Γ ::: INTEGER) _ _ _
-                                  (fun '((γ, x), y) => θ (γ, x, y))
-                                  p).
-
-
-  dependent induction t.
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t).
-  exact h.
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t1).
-  exact w.
-  apply has_type_ro_Skip.
-  apply has_type_ro_True.
-  apply has_type_ro_False.
-  apply has_type_ro_Int.
-  constructor.
-  exact (proves_rw_tot_well_typed Γ nil _ _ ([γ : Γ ;;; _ : nil] ||- {{P (γ, tt)}}) ([γ : Γ;;; _ : nil]||- {{y : τ | Q (γ, (tt, y))}}) p).
-  apply has_type_ro_OpZRcoerce.
-  exact (proves_ro_tot_well_typed _ _ _ P (fun '((γ, y) : (sem_ctx Γ * sem_datatype INTEGER)) => Q (γ, IZR y)) t).
-  apply has_type_ro_OpZRexp.
-  exact (proves_ro_tot_well_typed _ _ _ P (fun '((γ, y) : (sem_ctx Γ * sem_datatype INTEGER)) => Q (γ, pow2 y)) t).
-  apply has_type_ro_OpZplus.
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_OpZmult.
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_OpZminus.
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_OpRplus.
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_OpRmult.
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_OpRminus.
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_OpRrecip.
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t).
-  apply has_type_ro_OpZeq.
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_OpZlt.
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_OpRlt.
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t1).
-  exact (proves_ro_tot_well_typed _ _ _ _ _ t2).
-  apply has_type_ro_Lim.
-  exact (proves_ro_tot_well_typed (Γ ::: INTEGER) _ _ _
-                                  (fun '((γ, x), y) => θ (γ, x, y))
-                                  t).
-
-  dependent induction t.
-  exact (proves_rw_prt_well_typed _ _ _ _ _ _ t).
-  exact w.
-  exact (proves_rw_prt_well_typed _ _ _ _ _ _ t1).
-  exact (proves_rw_prt_well_typed _ _ _ _ _ _ t1).
-  constructor.
-  exact (proves_ro_prt_well_typed _ _ _ _ _ p).
-  apply has_type_rw_Seq.
-  exact (proves_rw_prt_well_typed _ _ _ _ _ _ t1).
-  exact (proves_rw_prt_well_typed _ _ _ _
-                                  ([γ : Γ ;;; δ : Δ]||- {{θ (γ, (δ, tt))}})
-                                  ([γ : Γ ;;; δ : Δ]||- {{y : τ | ψ0 (γ, (δ, y)) }}) t2).
-  apply (has_type_rw_Newvar _ _ _ _ σ).
-  exact (proves_ro_prt_well_typed _ _ _ _ _ p).
-  exact (proves_rw_prt_well_typed _ _ _ _
-                                  ([γ : Γ ;;; (δ, x) : (Δ ::: σ)]||- {{θ ((γ; δ), x)}})
-                                  ([γ : Γ ;;; (δ, x) : (Δ ::: σ)]||- {{y : τ | ψ0 (γ, (δ, y)) }})
-                                  t).
-  apply (has_type_rw_Assign _ _ _ τ _ a).
-  exact (proves_ro_prt_well_typed _ _ _ _ _ p).
-  apply has_type_rw_Cond.
-  exact (proves_ro_prt_well_typed _ _ _ _ _ p).
-  exact (proves_rw_prt_well_typed _ _ _ _
-                                  ([γ : Γ ;;; δ : Δ]||- {{θ ((γ; δ), true)}})
-                                  ([γ : Γ ;;; δ : Δ]||- {{y : τ | ψ0 (γ, (δ, y)) }})
-                                  t1).
-  exact (proves_rw_prt_well_typed _ _ _ _
-                                  ([γ : Γ ;;; δ : Δ]||- {{θ ((γ; δ), false)}})
-                                  ([γ : Γ ;;; δ : Δ]||- {{y : τ | ψ0 (γ, (δ, y)) }})
-                                  t2).
-
-  apply has_type_rw_CaseList.
-  apply l0.
-  clear l0 x x0 ψ ϕ.
-  dependent induction f.
-  apply ForallT_nil.
-  apply ForallT_cons.
-  destruct r.
-  split.
-  exact (proves_ro_prt_well_typed _ _ _ _ _ p0).
-  exact (proves_rw_prt_well_typed _ _ _ _
-                                  ([γ : Γ ;;; δ : Δ]||- {{p ((γ; δ), true)}})
-                                  ([γ : Γ ;;; δ : Δ]||- {{y : τ | ψ0 (γ, (δ, y)) }})
-                                  p1).
-  apply IHf.
-
-  apply has_type_rw_While.
-  exact (proves_ro_prt_well_typed _ _ _ _ _ p).
-  exact (proves_rw_prt_well_typed _ _ _ _
-                                  ([γ : Γ ;;; δ : Δ]||- {{θ ((γ; δ), true)}})
-                                  ([γ : Γ ;;; δ : Δ]||- {{_ : UNIT | ϕ0 (γ, δ) }})
-                                  t).
-
-  dependent induction t.
-  exact (proves_rw_tot_well_typed _ _ _ _ _ _ t).
-  exact w.
-  exact (proves_rw_tot_well_typed _ _ _ _ _ _ t1).
-  exact (proves_rw_tot_well_typed _ _ _ _ _ _ t1).
-  constructor.
-  exact (proves_ro_tot_well_typed _ _ _ _ _ p).
-  apply has_type_rw_Seq.
-  exact (proves_rw_tot_well_typed _ _ _ _ _ _ t1).
-  exact (proves_rw_tot_well_typed _ _ _ _
-                                  ([γ : Γ ;;; δ : Δ]||- {{θ (γ, (δ, tt))}})
-                                  ([γ : Γ ;;; δ : Δ]||- {{y : τ | ψ0 (γ, (δ, y)) }}) t2).
-  apply (has_type_rw_Newvar _ _ _ _ σ).
-  exact (proves_ro_tot_well_typed _ _ _ _ _ p).
-  exact (proves_rw_tot_well_typed _ _ _ _
-                                  ([γ : Γ ;;; (δ, x) : (Δ ::: σ)]||- {{θ ((γ; δ), x)}})
-                                  ([γ : Γ ;;; (δ, x) : (Δ ::: σ)]||- {{y : τ | ψ0 (γ, (δ, y)) }})
-                                  t).
-  apply (has_type_rw_Assign _ _ _ τ _ a).
-  exact (proves_ro_tot_well_typed _ _ _ _ _ p).
-  apply has_type_rw_Cond.
-  exact (proves_ro_tot_well_typed _ _ _ _ _ p).
-  exact (proves_rw_tot_well_typed _ _ _ _
-                                  ([γ : Γ ;;; δ : Δ]||- {{θ ((γ; δ), true)}})
-                                  ([γ : Γ ;;; δ : Δ]||- {{y : τ | ψ0 (γ, (δ, y)) }})
-                                  t1).
-  exact (proves_rw_tot_well_typed _ _ _ _
-                                  ([γ : Γ ;;; δ : Δ]||- {{θ ((γ; δ), false)}})
-                                  ([γ : Γ ;;; δ : Δ]||- {{y : τ | ψ0 (γ, (δ, y)) }})
-                                  t2).
-
-  apply has_type_rw_CaseList.
-  apply l0.
-  clear l0 x x0 ψ ϕ f0.
-  dependent induction f.
-  apply ForallT_nil.
-  apply ForallT_cons.
-  destruct r.
-  destruct p0.
-  split.
-  exact (proves_ro_prt_well_typed _ _ _
-                                  ([x : (Γ +++ Δ)]|- {{ϕ0 (fst_app x, snd_app x)}})
-                                  ([x : (Γ +++ Δ)]|- {{y : BOOL | p (x, y) }})
-                                  p0).
-  exact (proves_rw_tot_well_typed _ _ _ _
-                                  ([γ : Γ ;;; δ : Δ]||- {{p ((γ; δ), true)}})
-                                  ([γ : Γ ;;; δ : Δ]||- {{y : τ | ψ0 (γ, (δ, y)) }})
-                                  p2).
-  apply IHf.
-  
-  apply has_type_rw_While.
-  exact (proves_ro_tot_well_typed _ _ _ _ _ p).
-  exact (proves_rw_tot_well_typed _ _ _ _
-                                  ([γ : Γ ;;; δ : Δ]||- {{θ ((γ; δ), true)}})
-                                  ([γ : Γ ;;; δ : Δ]||- {{_ : UNIT | ϕ0 (γ, δ) }})
-                                  t1).
-Defined.
-
-
-
-  
-(* Lemma sem_ro_prt_excludes_bot_is_tot : forall Γ e τ ϕ ψ (w : Γ |- e : τ),  *)
-(*     [|γ : Γ|] |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ ->  *)
-(*     (forall γ, ϕ γ -> ⊥ ∉ sem_ro_exp _ _ _ w γ) -> *)
-(*     [|γ : Γ|] |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ. *)
-(* Proof. *)
-(*   intros Γ e τ ϕ ψ w h1 h2 γ m; simpl; simpl in m. *)
-(*   destruct (h1 γ m) as [h3 h4]; split; auto. *)
-(*   intros v m'. *)
-(*   destruct v. *)
-(*   contradict (h2 _ m m'). *)
-(*   exists s; split; auto. *)
-(*   apply (h4 _ m' _ eq_refl). *)
-(* Qed. *)
-
 Fixpoint Var_sem_var_access_equiv k Γ τ (w : Γ |- Var k : τ) γ {struct w}: 
     sem_ro_exp _ _ _ w γ = pdom_unit (var_access _ _ _ w γ).
 Proof.
@@ -1203,7 +969,6 @@ Proof.
   {
     (* when there is no chooseable branch *)
     assert ( ϕ (fst_app (γ; δ), snd_app (γ; δ))) as m' by (reduce_tedious; auto).
-    Check pdom_case_list_bot_2.
     pose proof (H0 (γ; δ) m').
     clear H0 H.
     
@@ -4070,17 +3835,17 @@ Proof.
       (*     wty ||- [{ϕ}] While e c [{fun _ => (ϕ /\\ ro_to_rw_pre (θ false))}] *)
 
       apply proves_ro_tot_sound in p.
-      pose proof (proves_rw_tot_sound _ _ _ _ _
+      pose proof (proves_rw_tot_sound _ _ _ _ 
                     (fun '(γ, δ) => θ ((γ; δ), true))
                     (fun '(γ, (δ, y)) => ϕ0 (γ, δ))
                     trip1
         ).
-      pose proof (proves_rw_tot_sound _ _ _ _ _
+      pose proof (proves_rw_tot_sound _ _ _ _
                     (fun '(x, δ) => θ ((snd_app x; δ), true) /\ δ = fst_app x)
                     (fun '(x, (δ, y)) => ψ0 (x, δ))
                     trip2
         ).
 
-      apply (proves_rw_while_tot_sound _ _ _ _ _ _ _ _ _ _ _ p H H0 n).
+      apply (proves_rw_while_tot_sound _ _ _ _ _ _ _ p H H0 n).
 
 Defined.

@@ -17,10 +17,10 @@ Lemma clerical_abs_correct :
     [x : Γ] |- {{True}} clerical_abs k {{y : REAL | y = Rabs (var_access Γ k REAL w x) }}ᵗ.
 Proof.
   intros.
-  apply (pp_ro_lim_tot_util_known_limit (fun x =>  Rabs (var_access Γ k REAL w x)));
+  apply (ro_lim_tot_util_known_limit (fun x =>  Rabs (var_access Γ k REAL w x)) (ψ := patf));
     try (intros [h1 h2] [_ h3]; auto; fail).
-  apply (pp_ro_rw_tot_back).
-  apply (pp_rw_case_tot
+  apply (ro_rw_tot_back (ψ := patf)).
+  apply (rw_case2_tot
            (Γ := Γ ::: INTEGER)
            (θ1 := (fun '(x, b) => b = true -> (var_access _ _ _ w (fst (fst_app x))) <
                                       pow2 (- ((snd (fst_app x))) - 1)%Z))
@@ -30,11 +30,12 @@ Proof.
            (ϕ1 := (fun x =>  (var_access _ _ _ w (fst (fst_app x))) <
                          pow2 (- ((snd (fst_app x))) - 1)%Z))
            (ϕ2 := (fun x =>  - pow2 (- ((snd (fst_app x))) - 1)%Z < (var_access _ _ _ w (fst (fst_app x)))))
+           (ψ := pattf) (ϕ := patf)
         ); simpl.
 
   {
     (* prove the first guard's condition θ1 *)
-    prove_arith.  
+    prove_arith.
     intro e.
     rewrite e in val.
     apply eq_sym in val.
@@ -62,6 +63,7 @@ Proof.
 
   {
     (* prove the first branch *)
+    apply (rw_ro_tot_back (Γ := Γ ::: INTEGER) (Δ := nil) (τ := REAL) (ϕ := patf) (ψ := pattf)).
     prove_arith.
     destruct y.  
     pose proof (pre eq_refl).
@@ -87,7 +89,7 @@ Proof.
   
   {
     (* prove the second branch *)
-
+    apply (rw_ro_tot_back (Γ := Γ ::: INTEGER) (Δ := nil) (τ := REAL) (ϕ := patf) (ψ := pattf)).
     prove_arith.
     destruct y.
     pose proof (pre eq_refl).

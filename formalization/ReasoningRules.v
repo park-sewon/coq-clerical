@@ -199,7 +199,7 @@ Inductive proves_ro_prt : forall Γ e τ , ro_prt Γ e τ -> Type :=
     ' γ : Γ |- {{ ϕ γ }} e1 :<: e2  {{y : BOOL | ψ (γ, y)}}ᵖ
 
 (** real comparison  *)
-| ro_real_lt_prt : forall Γ e1 e2 ϕ ψ1 ψ2 (ψ : pred),
+| ro_real_comp_lt_prt : forall Γ e1 e2 ϕ ψ1 ψ2 (ψ : pred),
     
     ' γ : Γ |- {{ ϕ γ }} e1 {{y : REAL | ψ1 (γ, y)}}ᵖ -> 
     ' γ : Γ |- {{ ϕ γ }} e2 {{y : REAL | ψ2 (γ, y)}}ᵖ -> 
@@ -347,7 +347,7 @@ with proves_ro_tot : forall Γ e τ , ro_tot Γ e τ -> Type :=
     ' γ : Γ |- {{ ϕ γ }} e1 ;-; e2  {{y : REAL | ψ (γ, y)}}ᵗ
 
 (** reciprocal *)
-| ro_recip_tot : forall Γ e (w : Γ |- e : REAL) ϕ θ (ψ : pred),
+| ro_recip_tot : forall Γ e  ϕ θ (ψ : pred),
 
     ' γ : Γ |- {{ ϕ γ }} e {{y : REAL | θ (γ, y)}}ᵗ -> 
      (forall γ x, θ (γ, x) -> x <> 0%R /\ ψ (γ, (/x))%R) -> 
@@ -372,7 +372,7 @@ with proves_ro_tot : forall Γ e τ , ro_tot Γ e τ -> Type :=
     ' γ : Γ |- {{ ϕ γ }} e1 :<: e2  {{y : BOOL | ψ (γ, y)}}ᵗ
 
 (** real comparison  *)
-| ro_real_lt_tot : forall Γ e1 e2 ϕ ψ1 ψ2 (ψ : pred),
+| ro_real_comp_lt_tot : forall Γ e1 e2 ϕ ψ1 ψ2 (ψ : pred),
     
     ' γ : Γ |- {{ ϕ γ }} e1 {{y : REAL | ψ1 (γ, y)}}ᵗ -> 
     ' γ : Γ |- {{ ϕ γ }} e2 {{y : REAL | ψ2 (γ, y)}}ᵗ -> 

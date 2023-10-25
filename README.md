@@ -1,15 +1,18 @@
 # Clerical Coq Formalization
 This repository provides a full formalization of the imperative programming language [Clerical](https://github.com/andrejbauer/clerical) in Coq.
-It includes syntax, type system, denotational semantics, specifications, reasoning rules, soundness proofs, and some examples.
+It includes syntax, type system, denotational semantics, specifications and their proof rules, soundness proofs of the rules, and some examples and their proofs.
 
 ## Installation
-It is checked to compile by coq_makefile under the Coq Proof Assistant version 8.16.1 (compiled with OCaml 4.14.1). To compile the formalization part of this project, run `make` in the `clerical` directory. To compile the examples part of this project, run `make` in the `clerical/examples` directory.
+It is checked to compile by `coq_makefile` under the Coq Proof Assistant version 8.16.1 (compiled with OCaml 4.14.1). 
+To compile the formalization part of this project, run `make` in the `clerical` directory. 
+To compile the examples part of this project, run `make` in the `clerical/examples` directory.
 
 ## Overview of the project
 ### Examples
 
 The `clerical/examples` directory contains example programs and their proofs.
-For example, in [Examples.ProgAbs](./examples/ProgAbs.v), a clerical expression is parametrically defined 
+For example, in [Examples.ProgAbs](./examples/ProgAbs.v), a clerical expression defined parametically on `k`
+that computes the absolute value of the real number that the variable `k` stores:
 ```coq
 Definition clerical_abs (k : nat) :=
   Lim
@@ -21,13 +24,11 @@ Definition clerical_abs (k : nat) :=
 Here, `VAR k` denotes a variable with its De Bruijn index `k`.
 Mathematical symbols surrounded by `: :` denote integer operations 
 and those surrounded by `; ;` denote real operations.
-The definition `clerical_abs k` (for each natural number `k`) is a Clerical expression 
-that computes the absolute value of the real number that the variable `k` stores. 
 Though in this example only binary nondeterministim is used, 
 our formalization provides arbitrarily many guarded expressions using the grammar 
 `CASE e1 ==> c1 | .. | en ==> cn END`.
 
-Using our prove rules, in the same file, we prove the correctness of the expression:
+Using our prove rules, in the same file, we prove the correctness specification:
 ```coq
 Lemma clerical_abs_correct :
   forall Γ k (w : Γ |- VAR k : REAL),
@@ -117,19 +118,25 @@ have that their semantics are equal: `sem_exp_ro Γ e τ w1 γ = sem_exp_ro Γ e
 
 ### Specifications
 In [Clerical.Specification](./formalization/Specification.v), we define specifications. 
-For a well-typed read-only expression `w : Γ |- e : τ`, a pre-condition `ϕ : sem_ctx Γ -> Prop`, and a post-condition 
+For an expression `e`, a pre-condition `ϕ : sem_ctx Γ -> Prop`, and a post-condition 
 `ψ : sem_ctx Γ *  sem_datatype τ -> Prop`, 
-- `[| γ : Γ |]  |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ` denotes its partial correctness specification.
-- And, `[| γ : Γ |] |= {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ` denotes its total correctness.
+- partial correctness `[| γ : Γ |]  |= {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ` denotes that 
+there exists a witness of well-typedness `w : Γ |- e : τ` where for any `γ : sem_ctx Γ` such that `ϕ γ` holds,
+`sem_exp_ro Γ e τ w γ` is non-empty and for any `total v ∈ sem_exp_ro Γ e τ w γ`, the post-condition `ψ (γ, v)` holds. 
 
-Specifications of read-write expressions are defined similarly: 
-for a well-typed read-write expression `w : Γ ;;; Δ ||- e : τ`, a pre-condition 
+- total correctness `[| γ : Γ |] |= {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ` denotes the same and that 
+`⊥` is not in the semantics. 
+
+Specifications of read-write expressions are defined similarly.  
+For an expression `e`, a pre-condition 
 `ϕ : sem_ctx Γ * sem_ctx Δ  -> Prop`, and a post-condition 
 `ψ : sem_ctx Γ * (sem_ctx Δ  * sem_datatype τ) -> Prop`, 
-- `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ` denotes its partial correctness 
-- and `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ` denotes its total correctness.
+- partial correctness `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ` denotes 
+that there exists a witness `w : Γ ;;; Δ  ||- e : τ` where for any `γ : sem_ctx Γ` and `δ : sem_ctx Δ` such that `ϕ (γ, δ)` holds,
+`sem_exp_rw Γ Δ e τ w γ` is non-empty and for any `total (δ', v) ∈ sem_exp_ro Γ e τ w γ`, the post-condition `ψ (γ, (δ' v))` holds. 
+- total correctness  `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ` denotes the same and that `⊥` is not in the semantics.
 
-Furthermore, in the file, assertions' notations are defined:
+Furthermore in the same file assertions' notations are defined:
 - `[γ : Γ] |- {{ϕ}}` denotes `fun γ : sem_ctx Γ => ϕ`,
 - `[γ : Γ] |- {{y : τ | ϕ}}` denotes `fun '((γ, y) : sem_ctx Γ * sem_datatype τ) => ϕ`, 
 - `[γ : Γ ;;; δ : Δ] ||- {{ϕ}}` denotes  `fun '((γ, y) : sem_ctx Γ * δ : sem_ctx Δ) => ϕ`, 
@@ -137,62 +144,37 @@ Furthermore, in the file, assertions' notations are defined:
 
 
 ### Reasoning Rules
-In [Clerical.ReasoningRules](./formalization/ReasoningRules.v), we define the verification calculus inductively: 
-for a well-typed read-only expression `w : Γ |- e : τ`, a pre-condition `ϕ`, and a post-condition 
+In [Clerical.ReasoningRules](./formalization/ReasoningRules.v), we define our verification calculus inductively: 
+for a context `Gamma`, an  expression `e`, a data type `τ`,  a pre-condition `ϕ`, and a post-condition 
 `ψ`, 
-- `[γ : Γ]  |- w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ` denotes that calculus proves the partial correctness and 
-- `[γ : Γ]  |- w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ` denotes that calculus proves the total correctness of the read-only expression.
+- `[γ : Γ]  |- {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ` denotes that the calculus proves the partial correctness and 
+- `[γ : Γ]  |- {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ` denotes that the calculus proves the total correctness
+assuming that `e` is a read-only expression.
 
-Similarly, for a well-typed read-write expression `w : Γ ;;; Δ ||- e : τ`, 
-- `[γ : Γ ;;; δ : Δ] ||- {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ` denotes that calculus proves the partial correctness and 
-- `[γ : Γ ;;; δ : Δ] ||- {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵗ` denotes that calculus proves the total correctness of the read-write expression.
+Similarly, 
+- `[γ : Γ ;;; δ : Δ] ||- {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ` denotes that the calculus proves the partial correctness and 
+- `[γ : Γ ;;; δ : Δ] ||- {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵗ` denotes that the calculus proves the total correctness
+assuming that `e` is a read-write expression.
+
+Note that here we do not require `e` to be well-typed. Instead, we prove that
+all correctness triples derived from our calculus are well-typed implicitly in the soundness theorem.
 
 The soundness of the proof rules is proved in [Clerical.ReasoningSoundness](./formalization/ReasoningSoundness.v).
 ```coq
-Lemma proves_ro_prt_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, 
-  [γ : Γ]  |- w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ -> [γ : Γ]  |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ.
+Lemma proves_ro_prt_sound : forall Γ e τ ϕ ψ, 
+  [γ : Γ]  |- {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ -> [γ : Γ]  |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ.
   
-with proves_ro_tot_sound : forall Γ e τ (w : Γ |- e : τ) ϕ ψ, 
-  [γ : Γ]  |- w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ -> [γ : Γ]  |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ.
+with proves_ro_tot_sound : forall Γ e τ ϕ ψ, 
+  [γ : Γ]  |- {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ -> [γ : Γ]  |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ.
   
-with proves_rw_prt_sound : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ, 
+with proves_rw_prt_sound : forall Γ Δ e τ ϕ ψ, 
   [γ : Γ ;;; δ : Δ] ||- {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ -> [γ : Γ ;;; δ : Δ] ||= {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ.
   
-with proves_rw_tot_sound : forall Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) ϕ ψ, 
+with proves_rw_tot_sound : forall Γ Δ e τ ϕ ψ, 
   [γ : Γ ;;; δ : Δ] ||- {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵗ -> [γ : Γ ;;; δ : Δ] ||= {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵗ.
 ```
 
-In [Clerical.ReasoningAdmissible](./formalization/ReasoningAdmissible.v) proves some admissible rules.
-
-The original specifications require, from its definition, the expressions that the specifications specify to be well-typed. 
-That is why the triples hold evidence `w` of well-typedness and this affects also the proof rules as well.
-
-Alternatively, we can have triples without well-typedness and have a side lemma that says every triple derived from our proof rules are well-typed. Or, equivalently, we can have another triple which is paired with the well-typedness and prove the proof rules for the new triples.
-For example, we define
-```coq
-[γ : Γ] |- {{ϕ x}} e {{y : τ | ψ (γ, y)}}ᵗ
-```
-for
-```coq
-{w : Γ |- e : τ & [γ : Γ] |- w {{ϕ x}} e {{y : τ | ψ (γ, y)}}ᵗ }
-```
-a pair of a well-typedness derivation `w` and the original triple where `w`is the evidence.
-
-In [Clerical.ReasoningTyPaired](./formalization/ReasoningTyPaired.v),
-the new triples are defined and the prove rules are proved. 
-The rules for ty ***p*** e-paired tri ***p*** les has ___pp___ prefix. For example, the original rule for `SKIP` in [Clerical.ReasoningRules](./formalization/ReasoningRules.v)
-```coq
-ro_skip_prt : forall Γ (w : Γ |- SKIP : UNIT) ψ,
-    
-  (*——————————-——————————-——————————-——————————-——————————-*)
-  [x : Γ] |- w {{ψ (x, tt)}} SKIP {{y : UNIT | ψ (x, y)}}ᵖ
-```
-has its counterpart 
-```coq 
-Lemma pp_ro_skip_prt {Γ} {ψ} :
-[γ : Γ] |- {{ψ (γ, tt)}} SKIP {{y : UNIT | ψ (γ, y)}}ᵖ.
-```
-as a lemma in [Clerical.ReasoningTyPaired](./formalization/ReasoningTyPaired.v).
+In [Clerical.ReasoningAdmissible](./formalization/ReasoningAdmissible.v), we prove some admissible rules.
 
 In [Clerical.ReasoningUtils](./formalization/ReasoningUtils.v), various utility functions in applying proof rules are defined. 
 
@@ -202,7 +184,7 @@ For example, when we have `fun '(γ, δ) => γ = δ` as a pre-condition, in some
 complain that it cannot infer it. In the case, use `patf` as a placeholder to teach Coq engine that the 
 argument is supposed to be a function of the form `fun '(?, ?) => ?`. 
 Similarly,  use `pattf` for `fun '(?, (?, ?)) => ?`.
-They are notatations that are defined in [Clerical.ReasoningRules](./formalization/ReasoningRules.v).
+They are Coq notatations defined in [Clerical.ReasoningRules](./formalization/ReasoningRules.v).
 
 ## Base setting of the underlying type theory
 
@@ -445,7 +427,7 @@ Applying the IMPLY rule, the tactic reduces the original triple to implications.
 
 This tactic works also for partial correctness goals.
 
-A similar tactic `proves_assign_simple_arithemtical τ` is defined to prove a triple for 
+A similar tactic `prove_assign_arith τ` is defined to prove a triple for 
 assigning an arithmetical expression of type `τ` to a variable. It calls `prove_arith` internally.
 
 

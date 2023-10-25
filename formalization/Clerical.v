@@ -9,7 +9,6 @@ Require Export Clerical.Specification.
 Require Export Clerical.ReasoningRules.
 Require Export Clerical.ReasoningSoundness.
 Require Export Clerical.ReasoningAdmissible.
-Require Export Clerical.ReasoningTyPaired.
 Require Export Clerical.ReasoningUtils.
 From Clerical.Utils Require Export TypingTactic ArithProver Arith ReducingTactic.
 

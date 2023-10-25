@@ -1,13 +1,13 @@
 From Clerical Require Import Preliminaries.Preliminaries.
 From Clerical Require Import Powerdomain.Powerdomain.
-From Clerical Require Import Syntax Typing TypingProperties Semantics ReasoningTyPaired ReasoningRules ReasoningUtils.
-From Clerical.Utils Require Import TypingTactic SimpleArith ReducingTactic.
+From Clerical Require Import Syntax Typing TypingProperties Semantics Specification ReasoningRules ReasoningUtils.
+From Clerical.Utils Require Import TypingTactic Arith ReducingTactic.
 Require Import Coq.Program.Equality.
 Require Import ZArith Reals List.
 
 Ltac decide_arithmetic e X Xdefi :=
   let v := fresh "tmp" in 
-  case_eq (simple_arithmetical_dec
+  case_eq (arith_dec
              e
           );
   intros X v; [simpl in v; injection v; intro Xdefi; clear v |simpl in v; discriminate v].
@@ -32,10 +32,9 @@ Ltac auto_imp :=
        auto
   end.
 
-       
 Ltac prove_arith :=
   lazymatch goal with
-  | |- proves_ro_prt_pp ?Γ ?e ?τ ?ϕ ?ψ =>
+  | |- proves_ro_prt ?Γ ?e ?τ (@mk_ro_prt _ _ _ ?ϕ ?ψ) =>
       
       let v1 := fresh "tmp" in
       let v2 := fresh "tmp" in
@@ -51,13 +50,13 @@ Ltac prove_arith :=
 
       assert (Γ |- e : τ) as v3 by auto_typing;
 
-      pose proof (simple_arithmetical_prt Γ e τ v3 v1) as v4;
+      pose proof (arith_prt Γ e τ v3 v1) as v4;
 
-      apply (pp_ro_prt_pose_readonly (Γ := Γ) (τ := τ) (ψ := patf) ϕ) in v4;
+      apply (ro_prt_pose_readonly (Γ := Γ) (τ := τ) (ψ := patf) ϕ) in v4;
 
       simpl in v4;
       
-      apply (pp_ro_imply_prt (ψ := patf) (ψ' := patf) v4); clear v4;
+      apply (ro_imply_prt' (ψ := patf) (ψ' := patf) v4); clear v4;
 
       try (auto_imp; fail);
       rewrite <- v2; clear v2;
@@ -91,7 +90,7 @@ Ltac prove_arith :=
              
           
 
-  | |- proves_ro_tot_pp ?Γ ?e ?τ ?ϕ ?ψ =>
+  | |- proves_ro_tot ?Γ ?e ?τ (@mk_ro_tot _ _ _ ?ϕ ?ψ) =>
 
       let v1 := fresh "tmp" in
       let v2 := fresh "tmp" in
@@ -107,13 +106,13 @@ Ltac prove_arith :=
 
       assert (Γ |- e : τ) as v3 by auto_typing;
 
-      pose proof (simple_arithmetical_tot _ v1 _ _  v3) as v4;
+      pose proof (arith_tot _ v1 _ _  v3) as v4;
       
-      apply (pp_ro_tot_pose_readonly (Γ := Γ) (τ := τ) (ψ := patf) ϕ) in v4;
+      apply (ro_tot_pose_readonly (Γ := Γ) (τ := τ) (ψ := patf) ϕ) in v4;
 
       simpl in v4;
       
-      apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) v4); clear v4;
+      apply (ro_imply_tot' (ψ := patf) (ψ' := patf) v4); clear v4;
       rewrite <- v2; clear v2; easy_rewrite_uip;
       [
         intro x;
@@ -166,34 +165,34 @@ Ltac prove_arith :=
             simpl in v); auto
       ]
 
-  | |- proves_rw_tot_pp ?Γ ?Δ ?e ?τ ?ϕ ?ψ =>
-      apply (pp_rw_ro_tot_back (τ := τ));
+  | |- proves_rw_tot ?Γ ?Δ ?e ?τ (@mk_rw_tot _ _ _ _ ?ϕ ?ψ) =>
+      apply (rw_ro_tot_back (Γ := Γ) (Δ := Δ) (τ := τ) (ϕ := ϕ) (ψ := ψ));
       prove_arith
 
-  | |- proves_rw_prt_pp ?Γ ?Δ ?e ?τ ?ϕ ?ψ =>
-      apply (pp_rw_ro_prt_back (τ := τ));
+  | |- proves_rw_prt ?Γ ?Δ ?e ?τ (@mk_rw_prt _ _ _ ?ϕ ?ψ)=>
+      apply (rw_ro_prt_back (τ := τ) (ϕ := patf) (ψ := pattf));
       prove_arith
 
   | _ => idtac "bbb"
   end.
 
 
-Lemma pp_rw_assign_simple_arithmetical_tot
-  e (p : simple_arithmetical e) Γ Δ k τ
+Lemma rw_assign_arith_tot
+  e (p : arith e) Γ Δ k τ
   (we : (Γ +++ Δ) |- e : τ)
   (a : assignable Δ τ k)
   (ϕ : pred) (ψ : pred) :
-  (forall x, ϕ (fst_app x, snd_app x) -> fst (simple_arithmetical_value_tot _ p _ _ we) x) ->
+  (forall x, ϕ (fst_app x, snd_app x) -> arith_cond _ p _ _ we x) ->
   (forall γ δ, ϕ (γ, δ) ->
-      ψ (γ, (update k (snd (simple_arithmetical_value_tot _ p _ _ we) (γ; δ)) δ a, tt))) ->
+      ψ (γ, (update k (arith_val _ p _ _ we (γ; δ)) δ a, tt))) ->
   [γ : Γ ;;; δ : Δ]||- {{ϕ (γ, δ)}} (LET k := e) {{y : UNIT | ψ (γ, (δ, y)) }}ᵗ.
 Proof.
   intros.
-  pose proof (simple_arithmetical_tot e p (Δ ++ Γ) τ we).
-  apply (pp_ro_tot_pose_readonly (ψ := patf) (fun x => ϕ (fst_app x, snd_app x))) in X.
-  apply (pp_rw_assign_tot_util τ
-           (θ := fun '(x, y) => y = (snd (simple_arithmetical_value_tot _ p _ _ we) x)) a).
-  apply (pp_ro_imply_tot (ψ := patf) (ψ' := patf) X).
+  pose proof (arith_tot e p (Δ ++ Γ) τ we).
+  apply (ro_tot_pose_readonly (ψ := patf) (fun x => ϕ (fst_app x, snd_app x))) in X.
+  apply (rw_assign_tot_util τ
+           (θ := fun '(x, y) => y = (arith_val _ p _ _ we x)) a).
+  apply (ro_imply_tot' (ψ := patf) (ψ' := patf) X).
   intros x y.
   split; auto.
   intros [h1 h2] [h3 _]; auto.
@@ -203,9 +202,9 @@ Proof.
 Defined.
 
 
-Ltac proves_assign_simple_arithemtical t :=
+Ltac prove_assign_arith t :=
   match goal with
-  | |- proves_rw_tot_pp ?Γ ?Δ (Assign ?k ?e) ?τ ?ϕ ?ψ =>
+  | |- proves_rw_tot ?Γ ?Δ (Assign ?k ?e) ?τ (@mk_rw_tot _ _ _ _ ?ϕ ?ψ) =>
       let a := fresh "a" in
       let we := fresh "w" in
 
@@ -225,7 +224,7 @@ Ltac proves_assign_simple_arithemtical t :=
       
       assert ((Δ ++ Γ) |- e : t) as we by auto_typing;
 
-      apply (pp_rw_assign_simple_arithmetical_tot e v1 Γ Δ k t we a);
+      apply (rw_assign_arith_tot e v1 Γ Δ k t we a ϕ ψ);
       [
         rewrite <- v2;
         clear v1 v2;

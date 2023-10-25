@@ -24,23 +24,23 @@ Lemma clerical_pi_correct :
   [_ : nil] |- {{True}} clerical_pi {{y : REAL | y = PI}}ᵗ.
 Proof.
   intros.
-  apply (pp_ro_lim_tot_util_known_limit (fun _ => PI));
+  apply (ro_lim_tot_util_known_limit (fun _ => PI)  (ψ := patf));
     try (intros [h1 h2] [_ h3]; auto; fail).
 
-  apply pp_ro_rw_tot_back.
+  apply (ro_rw_tot_back (ψ := patf)).
   
-  apply (pp_rw_new_var_tot_util2 INTEGER (fun '(_, y) => y = 0%Z)).
+  apply (rw_new_var_tot_util2 INTEGER (fun '(_, y) => y = 0%Z) (ϕ:= patf) (ψ := pattf)).
   prove_arith.
 
-  apply (pp_rw_new_var_tot_util2 REAL (fun '(_, y) => y = 3)).
+  apply (rw_new_var_tot_util2 REAL (fun '(_, y) => y = 3) (ϕ:= patf) (ψ := pattf)).
   prove_arith.
 
-  apply (pp_rw_new_var_tot_util2 REAL (fun '(_, y) => y = 4)).
+  apply (rw_new_var_tot_util2 REAL (fun '(_, y) => y = 4) (ϕ:= patf) (ψ := pattf)).
   prove_arith.
 
-  apply (pp_rw_sequence_tot
-           (θ :=  [(_, p) : (INTEGER :: nil) ;;; (((_, k), l), u) : (REAL :: REAL :: INTEGER :: nil)] ||-
-                   {{_ : UNIT | Rabs (PI - (l + u) / 2) < pow2 (- p)}})).
+  prove_sequence
+           ([(_, p) : (INTEGER :: nil) ;;; (((_, k), l), u) : (REAL :: REAL :: INTEGER :: nil)] ||-
+                   {{_ : UNIT | Rabs (PI - (l + u) / 2) < pow2 (- p)}}).
   {
     
     pose (ϕ := [(_, p) : (INTEGER :: nil) ;;; (((_, k), l), u) : (REAL :: REAL :: INTEGER :: nil)] ||-
@@ -53,7 +53,7 @@ Proof.
                 (((_, k), l), u) : (REAL :: REAL :: INTEGER :: nil)] ||-
                 {{(k = k' + 1 /\ k' < p)%Z}}).                                              
     
-    apply (pp_rw_while_tot_back_util ϕ θ ψ). 
+    apply (rw_while_tot_back_util ϕ θ ψ (ϕ' := patf) (ψ' := pattf)). 
     {
       (* loop condition *)
       prove_arith.
@@ -66,12 +66,12 @@ Proof.
 
     {
       (* loop invariant *)
-      apply (pp_rw_sequence_tot
-               (θ := [(_, p) : (INTEGER :: nil) ;;; (((_, k), l), u) : (REAL :: REAL :: INTEGER :: nil)] ||-
+      prove_sequence
+               ([(_, p) : (INTEGER :: nil) ;;; (((_, k), l), u) : (REAL :: REAL :: INTEGER :: nil)] ||-
                       {{_ : UNIT | is_rational l /\ is_rational u /\
-                         3 <= l /\ l < PI < u /\ u <= 4 /\ u - l = pow2 (- (k + 1))}})).
+                         3 <= l /\ l < PI < u /\ u <= 4 /\ u - l = pow2 (- (k + 1))}}).
       
-      apply (pp_rw_new_var_tot_util2 _
+      apply (rw_new_var_tot_util2 _ (ϕ:= patf) (ψ := pattf)
              ([((((_, p), k), l), u) : ((REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)) ] |-
                {{y : REAL | y = (l + u) / 2}})).      
       {
@@ -87,22 +87,22 @@ Proof.
 
       {
         (* conditional *)
-        apply (pp_rw_cond_tot_util
+        apply (rw_cond_tot_util (ϕ:= patf) (ψ := pattf)
                  ([(((((_, p), k), l), u), x) : ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)) ] |-
                    {{y : BOOL | (y = true -> 0 < sin x) /\ (y = false -> sin x < 0)}})).
         {
           (* branch condition *)
-          apply (pp_ro_real_comp_lt_tot_util
-                   (fun '(_, y) => y = 0)
-                   (fun '((δγ, y) : sem_ctx ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)) * R )=>
+          prove_lt_add_pre
+            (fun '((_, y) : sem_ctx ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)) * R )=> y = 0)
+            (fun '((δγ, y) : sem_ctx ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil)) * R )=>
                       let x := snd (snd_app δγ) in 
-                      y = sin x)).
+                      y = sin x).
           
           prove_arith.
 
           assert (((REAL :: REAL :: REAL :: INTEGER :: nil) ++ INTEGER :: nil) |- VAR 0 : REAL) by auto_typing. 
           pose proof (clerical_sin_correct ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ INTEGER :: nil) 0 H).
-          apply (pp_ro_imply_tot (ψ := patf) X).
+          apply (ro_imply_tot' (ψ := patf) (ψ' := patf) X).
           intros h1 h2; auto.
           intros [h1 h2] h3; auto.
           rewrite h3.
@@ -150,7 +150,7 @@ Proof.
 
         {
           (* first branch *)
-          proves_assign_simple_arithemtical REAL.
+          prove_assign_arith REAL.
 
           intros [tmp1 γ]  [[[[tmp2 k] l] u] x] [[h1 [h2 h3]] [h4 _]].
           reduce_update.
@@ -175,7 +175,7 @@ Proof.
 
         {
           (* second branch *)
-          proves_assign_simple_arithemtical REAL.
+          prove_assign_arith REAL.
 
           intros [tmp1 γ]  [[[[tmp2 k] l] u] x] [[h1 [h2 h3]] [_ h4]].
           reduce_update.
@@ -201,19 +201,19 @@ Proof.
       }
       {
         (* after the local variable creatation, increase the counter *)
-        proves_assign_simple_arithemtical INTEGER.
+        prove_assign_arith INTEGER.
         intros [tmp1 γ] [[[tmp2 k] l] u] h1.
         reduce_update; reduce_var_access; auto.
       }
     }
     {
       (* loop invariant *)
-      apply (pp_rw_sequence_tot
-               (θ := [ ((((_, k'), l'), u'), p) : ((INTEGER :: nil) ++ (REAL :: REAL :: INTEGER :: nil)) ;;;
+      prove_sequence
+               ([ ((((_, k'), l'), u'), p) : ((INTEGER :: nil) ++ (REAL :: REAL :: INTEGER :: nil)) ;;;
                       (((_, k), l), u) : (REAL :: REAL :: INTEGER :: nil)] ||-
-                      {{_ : UNIT | (k < p /\ k = k')%Z}})).
+                      {{_ : UNIT | (k < p /\ k = k')%Z}}).
       
-      apply (pp_rw_new_var_tot_util2 _
+      apply (rw_new_var_tot_util2 _ (ϕ:= patf) (ψ := pattf)
               ([(((((((_, k'), l'), u'), p), k), l), u) :
                   ((REAL :: REAL :: INTEGER :: nil) ++ ((INTEGER :: nil) ++ (REAL :: REAL :: INTEGER :: nil)))] |-
                   {{y : REAL | y = (l + u) / 2}})).
@@ -228,22 +228,22 @@ Proof.
 
       {
         (* conditional *)
-        apply (pp_rw_cond_tot_util
+        apply (rw_cond_tot_util (ϕ:= patf) (ψ := pattf)
                  ([((((((((_, k'), l'), u'), p), k), l), u), x) :
                   ((REAL :: REAL :: REAL :: INTEGER :: nil) ++ ((INTEGER :: nil) ++ (REAL :: REAL :: INTEGER :: nil)))] |- {{y : BOOL | (y = true -> 0 < sin x) /\ (y= false -> sin x < 0)}})).
         {
           (* branch condition *)
-          apply (pp_ro_real_comp_lt_tot_util
-                   (fun '(_, y) => y = 0)
+          prove_lt_add_pre
+                   (fun '((_, y):  sem_ctx ((REAL ::REAL :: REAL :: INTEGER :: nil) ++ ((INTEGER :: nil) ++ ( REAL :: REAL :: INTEGER :: nil))) * R) => y = 0)
                    (fun '((δγ, y) :  sem_ctx ((REAL ::REAL :: REAL :: INTEGER :: nil) ++ ((INTEGER :: nil) ++ ( REAL :: REAL :: INTEGER :: nil))) * R)  => 
                       let x := snd (snd_app δγ) in                   
-                      y = sin x)).
+                      y = sin x).
           
           prove_arith.
 
           assert ((((REAL :: REAL :: REAL :: INTEGER :: nil) ++ (INTEGER :: nil) ++ REAL :: REAL :: INTEGER :: nil) |- VAR 0 : REAL)) by auto_typing. 
           pose proof (clerical_sin_correct _ 0 H).
-          apply (pp_ro_imply_tot (ψ := patf) X).
+          apply (ro_imply_tot' (ψ := patf) (ψ' := patf) X).
           intros h1 h2; auto.
           intros [h1 h2] h3.
           rewrite h3.
@@ -289,7 +289,7 @@ Proof.
 
         {
           (* first branch *)
-          proves_assign_simple_arithemtical REAL.
+          prove_assign_arith REAL.
 
           intros [[[[t j'] l'] u'] p] [[[[t' k] l] u] x] [h1 [h2 _]].
           reduce_tedious h1.
@@ -301,7 +301,7 @@ Proof.
         }
 
         {
-          proves_assign_simple_arithemtical REAL.
+          prove_assign_arith REAL.
 
           intros [[[[t j'] l'] u'] p] [[[[t' k] l] u] x] [h1 [_ h2]].
           reduce_tedious h1.
@@ -316,7 +316,7 @@ Proof.
                
       {
         (* after the local variable creatation, increase the counter *)
-        proves_assign_simple_arithemtical INTEGER.
+        prove_assign_arith INTEGER.
 
 
         intros [[[[t j'] l'] u'] p] [[[t' k] l] u] [h1 h2].
