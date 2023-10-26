@@ -7,8 +7,7 @@ It is checked to compile by `coq_makefile` under the Coq Proof Assistant version
 To compile the formalization part of this project, run `make` in the `clerical` directory. 
 To compile the examples part of this project, run `make` in the `clerical/examples` directory.
 
-## Overview of the project
-### Examples
+## Examples
 
 The `clerical/examples` directory contains example programs and their proofs.
 For example, in [Examples.ProgAbs](./examples/ProgAbs.v), a clerical expression defined parametically on `k`
@@ -39,7 +38,7 @@ The triple denotes the total correctness of `clerical_abs k` in the sense that f
 the expression `clerical_abs k` always terminates yielding a value `y : REAL` such that 
 `y = Rabs (var_access Γ k REAL w γ)`. 
 
-There are soem other examples as well. In [Examples.ProgSine](./examples/ProgSine.v), 
+There are other examples as well. In [Examples.ProgSine](./examples/ProgSine.v), 
 we define and prove the sine function. 
 In [Examples.ProgPi](./examples/ProgPi.v), we define and prove a closed expression computing `π`:
 ```coq
@@ -53,7 +52,7 @@ The mathematical knowledge required in our program proofs is partially proved
 or admitted in [Examples.Mathematics](./examples/Mathematics.v).
 
 
-### Formalization
+## Formalization
 The formalization is in the `formalization` directory that corresponds to the `Clerical` logical path. 
 The `formalization` directory consists of the subdirectories: `Preliminaries` and `Powerdomain`. 
 The base axioms of our type theory including what makes `Prop` classical, some preliminary mathematical facts and some basic tactics are declared or defined in `Preliminaries`.
@@ -61,8 +60,8 @@ Based on that, in `Powerdomain`, we define a powerdomain as a monad `pdom : Type
 
 Files in the `formalization` directory formalize Clerical:
 
-#### Syntax and Typing
-In [Clerical.Syntax](./formalization/Syntax.v), we define the Syntax of Clerical expressions and their typing rules are defined in [Clerical.Typing](./formalization/Typing.v). Both are defined inductively.
+### Syntax and Typing
+In [Syntax](./formalization/Syntax.v), we define the Syntax of Clerical expressions and their typing rules are defined in [Typing](./formalization/Typing.v). Both are defined inductively.
 
 There, the notations
 ```coq
@@ -78,7 +77,7 @@ Since we want to add elements from the right, we define and use the new notation
 Notation "a ::: b" := (cons b a) (at level 60, left associativity).
 Notation "a +++ b" := (app b a) (right associativity, at level 60).
 ```
-They are in [Clerical.Preliminaries.ListConstr](./formalization/Preliminaries/ListConstr.v).
+They are in [Preliminaries.ListConstr](./formalization/Preliminaries/ListConstr.v).
 Thanks to the new notation, we have more intuitive typing rules. For example, we have
 ```coq
  (Γ +++ Δ) |- e : BOOL -> 
@@ -89,10 +88,10 @@ Thanks to the new notation, we have more intuitive typing rules. For example, we
 ```
 instead of having `Δ ++ Γ`.
 
-In [Clerical.TypingProperties](./formalization/TypingProperties.v), various properties of our type system are proven including that our typing rules are unambiguous.
+In [TypingProperties](./formalization/TypingProperties.v), various properties of our type system are proven including that our typing rules are unambiguous.
 
-#### Semantics
-In [Clerical.Semantics](./formalization/Semantics.v), we define the denotational semantics of Clerical datatypes, contexts, and expressions.
+### Semantics
+In [Semantics](./formalization/Semantics.v), we define the denotational semantics of Clerical datatypes, contexts, and expressions.
 The datatypes denotes the standard types:
 ```coq
 sem_datatype : datatype -> Type
@@ -112,29 +111,42 @@ sem_exp_ro Γ e τ (w : Γ |- e : τ) : sem_ctx Γ -> pdom (sem_datatype τ)
 sem_exp_rw Γ Δ e τ (w : Γ ;;; Δ ||- e : τ) :  sem_ctx Γ -> sem_ctx Δ -> pdom (sem_ctx Δ * sem_datatype τ)
 ``` 
 
-In [Clerical.SemanticsProperties](./formalization/SemanticsProperties.v), various properties of our semantics are proven including that they are irrelevant to specific type derivations. For example when we have two type derivations `w1 : Γ |- e : τ` and `w2 : Γ |- e : τ`, we 
+In [SemanticsProperties](./formalization/SemanticsProperties.v), various properties of our semantics are proven including that they are irrelevant to specific type derivations. For example when we have two type derivations `w1 : Γ |- e : τ` and `w2 : Γ |- e : τ`, we 
 have that their semantics are equal: `sem_exp_ro Γ e τ w1 γ = sem_exp_ro Γ e τ w1 γ` for all `γ`.
 
 
 ### Specifications
-In [Clerical.Specification](./formalization/Specification.v), we define specifications. 
+In [Specification](./formalization/Specification.v), we define specifications. 
 For an expression `e`, a pre-condition `ϕ : sem_ctx Γ -> Prop`, and a post-condition 
 `ψ : sem_ctx Γ *  sem_datatype τ -> Prop`, 
-- partial correctness `[| γ : Γ |]  |= {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ` denotes that 
-there exists a witness of well-typedness `w : Γ |- e : τ` where for any `γ : sem_ctx Γ` such that `ϕ γ` holds,
+- partial correctness
+  ```coq
+  [| γ : Γ |]  |= {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ 
+  ```
+  denotes that there exists a witness of well-typedness `w : Γ |- e : τ` where for any `γ : sem_ctx Γ` such that `ϕ γ` holds,
 `sem_exp_ro Γ e τ w γ` is non-empty and for any `total v ∈ sem_exp_ro Γ e τ w γ`, the post-condition `ψ (γ, v)` holds. 
 
-- total correctness `[| γ : Γ |] |= {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ` denotes the same and that 
-`⊥` is not in the semantics. 
+- total correctness
+  ```coq
+  [| γ : Γ |] |= {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵗ
+  ```
+  denotes the same and that `⊥` is not in the semantics. 
 
 Specifications of read-write expressions are defined similarly.  
 For an expression `e`, a pre-condition 
 `ϕ : sem_ctx Γ * sem_ctx Δ  -> Prop`, and a post-condition 
 `ψ : sem_ctx Γ * (sem_ctx Δ  * sem_datatype τ) -> Prop`, 
-- partial correctness `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ` denotes 
-that there exists a witness `w : Γ ;;; Δ  ||- e : τ` where for any `γ : sem_ctx Γ` and `δ : sem_ctx Δ` such that `ϕ (γ, δ)` holds,
+- partial correctness
+  ```coq
+  [| γ : Γ ;;; δ : Δ |] ||= w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ
+  ```
+  denotes that there exists a witness `w : Γ ;;; Δ  ||- e : τ` where for any `γ : sem_ctx Γ` and `δ : sem_ctx Δ` such that `ϕ (γ, δ)` holds,
 `sem_exp_rw Γ Δ e τ w γ` is non-empty and for any `total (δ', v) ∈ sem_exp_ro Γ e τ w γ`, the post-condition `ψ (γ, (δ' v))` holds. 
-- total correctness  `[| γ : Γ ;;; δ : Δ |] ||= w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ` denotes the same and that `⊥` is not in the semantics.
+- total correctness
+  ```coq
+  [| γ : Γ ;;; δ : Δ |] ||= w {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵖ
+  ```
+  denotes the same and that `⊥` is not in the semantics.
 
 Furthermore in the same file assertions' notations are defined:
 - `[γ : Γ] |- {{ϕ}}` denotes `fun γ : sem_ctx Γ => ϕ`,
@@ -144,7 +156,7 @@ Furthermore in the same file assertions' notations are defined:
 
 
 ### Reasoning Rules
-In [Clerical.ReasoningRules](./formalization/ReasoningRules.v), we define our verification calculus inductively: 
+In [ReasoningRules](./formalization/ReasoningRules.v), we define our verification calculus inductively: 
 for a context `Gamma`, an  expression `e`, a data type `τ`,  a pre-condition `ϕ`, and a post-condition 
 `ψ`, 
 - `[γ : Γ]  |- {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ` denotes that the calculus proves the partial correctness and 
@@ -159,7 +171,7 @@ assuming that `e` is a read-write expression.
 Note that here we do not require `e` to be well-typed. Instead, we prove that
 all correctness triples derived from our calculus are well-typed implicitly in the soundness theorem.
 
-The soundness of the proof rules is proved in [Clerical.ReasoningSoundness](./formalization/ReasoningSoundness.v).
+The soundness of the proof rules is proved in [ReasoningSoundness](./formalization/ReasoningSoundness.v).
 ```coq
 Lemma proves_ro_prt_sound : forall Γ e τ ϕ ψ, 
   [γ : Γ]  |- {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ -> [γ : Γ]  |= w {{ϕ γ}} e {{y : τ | ψ (γ, y)}}ᵖ.
@@ -174,9 +186,9 @@ with proves_rw_tot_sound : forall Γ Δ e τ ϕ ψ,
   [γ : Γ ;;; δ : Δ] ||- {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵗ -> [γ : Γ ;;; δ : Δ] ||= {{ϕ (γ, δ)}} e {{y : τ | ψ (γ, (δ, y))}}ᵗ.
 ```
 
-In [Clerical.ReasoningAdmissible](./formalization/ReasoningAdmissible.v), we prove some admissible rules.
+In [ReasoningAdmissible](./formalization/ReasoningAdmissible.v), we prove some admissible rules.
 
-In [Clerical.ReasoningUtils](./formalization/ReasoningUtils.v), various utility functions in applying proof rules are defined. 
+In [ReasoningUtils](./formalization/ReasoningUtils.v), various utility functions in applying proof rules are defined. 
 
 To use the rules, when the pre or post-conditions that we use are in the form of functions on patterns, 
 Coq's inference engine often fails.
@@ -184,14 +196,14 @@ For example, when we have `fun '(γ, δ) => γ = δ` as a pre-condition, in some
 complain that it cannot infer it. In the case, use `patf` as a placeholder to teach Coq engine that the 
 argument is supposed to be a function of the form `fun '(?, ?) => ?`. 
 Similarly,  use `pattf` for `fun '(?, (?, ?)) => ?`.
-They are Coq notatations defined in [Clerical.ReasoningRules](./formalization/ReasoningRules.v).
+They are Coq notatations defined in [ReasoningRules](./formalization/ReasoningRules.v).
 
 ## Base setting of the underlying type theory
 
 We use Coq considering `Prop` to be a classical set of classical propositions.
 We assume some axioms that are considered valid under this interpretation.
 The axioms are declared in 
-[Clerical.Preliminaries.BaseAxioms](./formalization/Preliminaries/BaseAxioms.v).
+[Preliminaries.BaseAxioms](./formalization/Preliminaries/BaseAxioms.v).
 They are (1) Prop-level law of excluded middle, (2) Prop-level (dependently)countable choice, 
 (3) Prop-level dependent choice and (4) Prop-propositional extensionality.
 We also frequently use `dependent induction` and `dependent destruction` tactics which assume UIP which is derivable by the 
@@ -206,11 +218,11 @@ In the future, the unrealizable function `Rltb'' : R -> R -> bool` can be replac
 
 ## Powerdomain
 The `Powerdomain` project consists of several different source files. 
-The file [Clerical.Powerdomain.Powerdomain](./formalization/Powerdomain/Powerdomain.v) is the main file that exports everything.
+The file [Powerdomain.Powerdomain](./formalization/Powerdomain/Powerdomain.v) is the main file that exports everything.
 
 The powerdomain we use is a variant of the Plotkin powerdomain.
 That means we have to deal with something being _infinite_ very often.
-In the file [Clerical.Powerdomain.PowerdomainInfinite](./formalization/Powerdomain/PowerdomainInfinite.v),
+In the file [Powerdomain.PowerdomainInfinite](./formalization/Powerdomain/PowerdomainInfinite.v),
 we define a Prop-level definition of a type being infinite and prove various properties.
 We define a type `A` as being infinite by the classical existence of an injective mapping from `nat`. 
 By classical reasonings, we prove useful choice lemmas. 
@@ -225,7 +237,7 @@ a version of Pigeon hole principle, which says when a dependent pair type is inf
 
 
 Based on the definition of infinite types, we define our powerdomain 
-as a type-level mapping in [Clerical.Powerdomain.PowerdomainMonad](./formalization/Powerdomain/PowerdomainMonad.v)
+as a type-level mapping in [Powerdomain.PowerdomainMonad](./formalization/Powerdomain/PowerdomainMonad.v)
 and prove its monadic structure. They are
 ```coq
 pdom : Type -> Type
@@ -237,7 +249,7 @@ pdom_mult {X : Type} : pdom (pdom X) -> pdom X
 There, we also define the flat domain `flat : Type -> Type` inductively defined by 
 the two constructors `⊥ {X : Type} : flat X` and `total {X : Type} : X -> flat X`.
 The powerdomain `pdom X` is defined as a sigma type `{S : flat X -> Prop | infinite {x |S x } -> S ⊥}`.
-In [Clerical.Powerdomain.PowerdomainProperties](./formalization/Powerdomain/PowerdomainProperties.v)
+In [Powerdomain.PowerdomainProperties](./formalization/Powerdomain/PowerdomainProperties.v)
 we prove various useful properties about the monadic actions; e.g., `pdom_bind_empty_1` is a 
 lemma for a sufficient condition the result of a binding operation yielding the empty set.
 In contrast, `pdom_bind_empty_2` is a lemma for a necessary condition.
@@ -248,7 +260,7 @@ the library provides lemmas which are used to reason their behaviours:
 We consider the three properties: `P = empty` the result is empty, `P = bot` the result contains ⊥, and `P = total` the result 
 contains `total a` for any `a`.
 
-In [Clerical.Powerdomain.PowerdomainCompleteness](./formalization/Powerdomain/PowerdomainCompleteness.v),
+In [Powerdomain.PowerdomainCompleteness](./formalization/Powerdomain/PowerdomainCompleteness.v),
 we define partial orders on powerdomains
 ```coq
 pdom_le {X : Type} : pdom X -> pdom X -> Prop
@@ -265,19 +277,19 @@ In the file, we prove that both `pdom X` and `X -> pdom Y` for any `X` and `Y` a
 We first define `pdom_chain_sup` as a general operation on countable chains 
 and prove that for any countable chains, the subset generated by `pdom_chain_sup`
 is indeed the least upper bound of the chain. We do similarly to the function types.
-In [Clerical.Powerdomain.PowerdomainOrderProperties](./formalization/Powerdomain/PowerdomainOrderProperties.v)
+In [Powerdomain.PowerdomainOrderProperties](./formalization/Powerdomain/PowerdomainOrderProperties.v)
 we use various useful lemmas about supremum in the above fashion.
 (E.g., `pdom_chain_bot_2` is a lemma stating a necessary condition for a 
 supremum of a countable chain containing ⊥.)
 
 Finally, in 
-[Clerical.Powerdomain.PowerdomainFixedpoints](./formalization/Powerdomain/PowerdomainFixedpoints.v)
+[Powerdomain.PowerdomainFixedpoints](./formalization/Powerdomain/PowerdomainFixedpoints.v)
 we prove the Least Fixed-point theorem for powerdomains and function types to a powerdomain.
 Again, we define general operations on monotone endofunctions, which are to obtain 
 the supremum of the bottom chains, and prove that when the endofunctions are continuous, 
 the supremum is indeed a least fixed point.
 
-In [Clerical.Powerdomain.PowerdomainSemantics](./formalization/Powerdomain/PowerdomainSemantics.v)
+In [Powerdomain.PowerdomainSemantics](./formalization/Powerdomain/PowerdomainSemantics.v)
 we define powerdomain functions that are later used in the denotational semantics.
 Here, we define `pdom_case_list {X : Type} : (list ((pdom bool) * (pdom X))) -> pdom X` for 
 our nondeterministic construction.
@@ -311,7 +323,7 @@ Defined.
 Then, we define `pdom_while {X : Type} : (X -> pdom bool) -> (X -> pdom X) -> X -> pdom X.` 
 as the least fixed-point of the `pdom_W` operator.
 
-In [Clerical.Powerdomain.PowerdomainSemantics2](./formalization/Powerdomain/PowerdomainSemantics2.v)
+In [Powerdomain.PowerdomainSemantics2](./formalization/Powerdomain/PowerdomainSemantics2.v)
 we prepare various real numbers and integer operations using `pdom`. 
 For example, there we define the limit operator using `pdom` and Coq's standard real number library.
 
@@ -329,14 +341,14 @@ They are also defined recursively and denoted by
 `snd_app : sem_ctx (Γ +++ Δ) -> sem_ctx Δ`.
 Now, there are very tedious equalities such as
 `(fst_app x ; snd_app x) = x`, or `fst_app (x ; y) = x`.
-They are defined in the `TediousList` section of [Clerical.Semantics](./formalization/Semantics.v).
+They are defined in the `TediousList` section of [Semantics](./formalization/Semantics.v).
 
 Without proof, the tactics `reduce_tedious` and `reduce_tedious ident` reduce almost every expression.
 
 ## Finitely Dependent Types for Case
 
 The formal syntax of Clerical is defined in 
-[Clerical.Syntax](./formalization/Syntax.v).
+[Syntax](./formalization/Syntax.v).
 The expressions are defined as an inductive type `exp`.
 The nondeterministic case expression is supposed to have a list of pairs of expressions:
 ```coq
@@ -345,7 +357,7 @@ The nondeterministic case expression is supposed to have a list of pairs of expr
 An expression of the form `CaseList (e1, c1) :: (e2, c2) :: ... :: (en, cn) :: nil` denotes
 `CASE e1 ==> c1 | ... | en ==> cn END`.
 
-In [Clerical.Typing](./formalization/Typing.v) when we define the well-typedness of a case expression 
+In [Typing](./formalization/Typing.v) when we define the well-typedness of a case expression 
 `case e1 => c1 | ... | en => cn end` we want to make sure that each `ei` and `ci` are well-typed.
 To state this for an arbitrary `l` in `CaseList l`, we use the following inductive type
 ```coq
@@ -356,7 +368,7 @@ Inductive ForallT {A : Type} (P : A -> Type): list A -> Type :=
 and write `ForallT (fun ec : exp * exp => ((Γ +++ Δ) |- fst ec : BOOL) * (Γ ;;; Δ ||- snd ec : τ)) l` in 
 the premise of the typing rule of `CaseList l`.
 
-In [Clerical.ReasoningRules](./formalization/ReasoningRules.v), to write down the proof rule of case expression, 
+In [ReasoningRules](./formalization/ReasoningRules.v), to write down the proof rule of case expression, 
 for a list `l : list (exp * exp)`, 
 we require `l` dependent list of well-typednesses using the `ForallT`:
 ```coq
@@ -382,7 +394,7 @@ ForallT2 _ _
 ```
 as the premise. 
 
-The list-dependent types are defined in [Clerical.Preliminaries.ListConstr](./formalization/Preliminaries/ListCosntr.v).
+The list-dependent types are defined in [Preliminaries.ListConstr](./formalization/Preliminaries/ListCosntr.v).
 
 The library provides binary case expressions separately. It will be removed and replaced by the general case expression soon.
 
@@ -393,7 +405,7 @@ For example, to prove something about `42 + 42 + 42`, we need to apply
 proof rules for each `42` and the additions. 
 
 A Clerical expression is called arithmetical when it is arithmetical... 
-See  [Clerical.Utils.Arith](./formalization/Utils/Arith.v).
+See  [Utils.Arith](./formalization/Utils/Arith.v).
 In the file, we prove that when an expression `e` is arithmetical, and if it is well-typed
 `w : Γ |- e : τ`, there (constructively) exists a function 
 `f : sem_ctx Γ -> sem_datatype τ` such that
@@ -413,7 +425,7 @@ holds. The safety predicate `P` tracks division-by-zero and real number comparis
 We prove that it is decidable if an expression is arithmetical or not.
 
 Using the constructions of the predicates, functions and correctness lemmas, 
-in [Clerical.Utils.ArithProver](./formalization/Utils/ArithProver.v),
+in [Utils.ArithProver](./formalization/Utils/ArithProver.v),
 we define a tactic `prove_arith` that derives a correctness triple of an arithmetical expression and 
 automatically applies IMPLY rule.
 For example, when we face a goal of type 
