@@ -9,6 +9,7 @@ Require Import PowerdomainFixedpoints.
 
 Require Import Lia.
 Require Import List.
+Require Import PeanoNat.
 
 Section BinaryCase.
   (* this is a section for binary case.
@@ -85,7 +86,7 @@ Section BinaryCase.
                    (total true ∈ b1 /\ x n ∈ c1)
                  \/
                    (total true ∈ b2 /\ x n ∈ c2)
-                     
+
            )).
     intro n.
     destruct (H0 n) as [a [b [c d]]].
@@ -202,7 +203,7 @@ Section BinaryCase.
     contradict (H4 h).
     right; auto.
   Defined.
-  
+
   Lemma pdom_case2_total_1 {X : Type} (b1 b2 : pdom bool) (c1 c2 : pdom X) x :
     ~ (pdom_is_empty (pdom_case2 b1 b2 c1 c2)) ->
     (total true ∈ b1 /\ total x ∈ c1) \/ (total true ∈ b2 /\ total x ∈ c2) ->
@@ -235,7 +236,7 @@ Section BinaryCase.
     apply H.
     apply H1.
   Defined.
-  
+
 
   Lemma pdom_case2_total_2 {X : Type} (b1 b2 : pdom bool) (c1 c2 : pdom X) x :
     total x ∈ pdom_case2 b1 b2 c1 c2 ->
@@ -327,7 +328,7 @@ Section CaseList.
     simpl.
     rewrite <- e, <- e0; auto.
   Defined.
-  
+
   Definition pdom_case_list {X : Type} (l : list ((pdom bool) * (pdom X))) : pdom X.
   Proof.
     exists
@@ -341,7 +342,7 @@ Section CaseList.
          /\ ((Exists (fun ec => total true ∈ (fst ec) /\ x ∈ (snd ec)) l)
              (* bottom condition from nonselectable guard. Note that this isnt iff condition for bot *)
              \/ (x = ⊥ /\ Forall (fun ec => total false ∈ (fst ec) \/ ⊥ ∈ (fst ec)) l))).
-    
+
 
     (* now proving infinity -> contains bot *)
     intro.
@@ -354,7 +355,7 @@ Section CaseList.
       destruct H1 as [H1 _].
       auto.
     }
-    
+
     (* now we prove that if there is infinitely many elements, there is bot  *)
     destruct H.
     destruct H.
@@ -364,7 +365,7 @@ Section CaseList.
                \/ (Exists
                      (fun ec : {S : flat bool -> Prop | pset_infinite S -> S ⊥} * {S : flat X -> Prop | pset_infinite S -> S ⊥} =>
                         (total true ∈ fst ec) /\ x n ∈ snd ec) l
-                     
+
            )).
     intro n; destruct (H0 n); destruct H2; auto.
     clear H0.
@@ -374,13 +375,13 @@ Section CaseList.
     destruct H0.
     right.
     destruct H0; split; auto.
-    
+
     (* otherwise, the space {e : guard containing true & {x | x ∈ command gaurded by e} is infinite *)
     assert (infinite {ec' : {ec | In ec l /\ total true ∈ fst ec} &  {x | (proj1_sig (snd (proj1_sig ec')) x) } })%type.
     {
       clear H1.
       assert (forall a : nat,
-               exists ec, 
+               exists ec,
                  (total true ∈ fst ec) /\ x a ∈ snd ec /\ In ec l).
       intro n.
       pose proof (H0 n).
@@ -404,7 +405,7 @@ Section CaseList.
       injection e; intros.
       apply H; auto.
     }
-    clear  H H0 H1; rename x into H; rename H2 into H0. 
+    clear  H H0 H1; rename x into H; rename H2 into H0.
 
     (* by the infinity Pigeonhold principle, there is either
        (1) infintely many guards containing true or (2) one gaurd containing true whose guarded command has infintely many elements *)
@@ -426,7 +427,7 @@ Section CaseList.
 
     (* when there is a guard containing true whose command contains infintely many elements,
        since the guarded command is pdom, it contaisn bot. and the bot is in the overall case operation. *)
-    left.    
+    left.
     apply Exists_exists.
     destruct H0.
     destruct x.
@@ -450,8 +451,8 @@ Section CaseList.
   Proof.
     apply Forall_forall.
   Defined.
-  
-  
+
+
   Lemma pdom_case_list_empty_1 {X} : forall (l : list ((pdom bool) * (pdom X))),
       (Exists (fun ec => pdom_is_empty (fst ec) \/ (total true ∈ fst ec /\ pdom_is_empty (snd ec)))) l ->
         pdom_is_empty (pdom_case_list l).
@@ -469,8 +470,8 @@ Section CaseList.
     destruct H2.
     apply H1; auto.
   Defined.
-  
-      
+
+
   Lemma pdom_case_list_empty_2 {X} : forall (l : list ((pdom bool) * (pdom X))),
       pdom_is_empty (pdom_case_list l) ->
       (Exists (fun ec => pdom_is_empty (fst ec) \/ (total true ∈ fst ec /\ pdom_is_empty (snd ec)))) l.
@@ -524,7 +525,7 @@ Section CaseList.
 
     {
     (* when there is no true *)
-      
+
       apply (pdom_is_neg_empty_by_evidence _ ⊥).
       simpl.
       split.
@@ -564,7 +565,7 @@ Section CaseList.
       left; auto.
     }
   Defined.
-  
+
   Lemma pdom_case_list_total_1 {X} : forall (l : list ((pdom bool) * (pdom X))) x,
       (~ pdom_is_empty (pdom_case_list l)) ->
       (Exists (fun ec => total true ∈ fst ec /\ total x ∈ snd ec) l) ->
@@ -585,7 +586,7 @@ Section CaseList.
     exists x0.
     auto.
   Defined.
-  
+
   Lemma pdom_case_list_total_2 {X} : forall (l : list ((pdom bool) * (pdom X))) x,
       total x ∈ pdom_case_list l ->
       (Exists (fun ec => total true ∈ fst ec /\ total x ∈ snd ec) l).
@@ -598,7 +599,7 @@ Section CaseList.
     destruct H0.
     contradict (flat_total_neq_bot _ H0).
   Defined.
- 
+
   Lemma pdom_case_list_bot_1 {X} : forall (l : list ((pdom bool) * (pdom X))),
       (~ pdom_is_empty (pdom_case_list l)) ->
       (Exists (fun ec => total true ∈ fst ec /\ ⊥ ∈ snd ec) l) \/
@@ -617,11 +618,11 @@ Section CaseList.
     right.
     auto.
   Defined.
-  
+
   Lemma pdom_case_list_bot_2 {X} : forall (l : list ((pdom bool) * (pdom X))),
       ⊥ ∈ pdom_case_list l ->
       (Exists (fun ec => total true ∈ fst ec /\ ⊥ ∈ snd ec) l) \/
-        (Forall (fun ec => total false ∈ (fst ec) \/ ⊥ ∈ (fst ec)) l).     
+        (Forall (fun ec => total false ∈ (fst ec) \/ ⊥ ∈ (fst ec)) l).
   Proof.
     intros.
     simpl in H.
@@ -630,8 +631,8 @@ Section CaseList.
     destruct H0.
     right; auto.
   Defined.
- 
-  
+
+
 End CaseList.
 
 
@@ -641,7 +642,7 @@ Section While.
      At the end of this section, we prove that the semantic function for while loop is conintuous. *)
   Lemma pdom_bind_fst_monotone {X Y : Type} (f g: X -> pdom Y) (S : pdom X) :
     f ≤ g -> pdom_bind f S ⊑ pdom_bind g S.
-  Proof.    
+  Proof.
     intros.
     destruct (lem (proj1_sig (pdom_bind f S) (bot Y))).
     {
@@ -711,7 +712,7 @@ Section While.
         destruct H2.
         contradict (c _ H2).
       }
-      {      
+      {
         pose proof (pdom_bind_not_contain_bot _ _ H1 H0).
         assert (forall a, total a ∈ S -> f a = g a) as jj.
         {
@@ -719,7 +720,7 @@ Section While.
           destruct (H a); auto.
           destruct H4.
           contradict (H2 _ H3 H4).
-        }      
+        }
         left.
         apply pdom_bind_agree; auto.
       }
@@ -747,7 +748,8 @@ Section While.
     apply le_0_n.
     intros.
     destruct (IHn f H).
-    destruct (Lt.le_lt_or_eq_stt _ _ H0).
+
+    destruct (proj1 (Nat.lt_eq_cases _ _) H0).
     exists x.
     auto.
     clear H0.
@@ -756,7 +758,7 @@ Section While.
     apply H in e.
     lia.
     destruct (IHn _ H0).
-    destruct (Lt.le_lt_or_eq_stt _ _ H2).
+    destruct (proj1 (Nat.lt_eq_cases _ _) H2).
     exists (x + x0 + 1).
     auto.
     rewrite H3 in H1.
@@ -774,7 +776,7 @@ Section While.
     apply pdom_chain_bot_1.
     intro n.
     destruct i.
-    pose proof (nat_injective_unbounded n (fun n => proj1_sig (x n))).  
+    pose proof (nat_injective_unbounded n (fun n => proj1_sig (x n))).
     assert ( injective (fun n : nat => proj1_sig (x n)) ).
     intros i j e.
     apply proj1_sig_injective, H in e; auto.
@@ -798,7 +800,7 @@ Section While.
     apply pdom_le_asym.
     {
 
-      destruct (lem (pdom_is_empty (  pdom_bind (pdom_fun_chain_sup s c) S))).      
+      destruct (lem (pdom_is_empty (  pdom_bind (pdom_fun_chain_sup s c) S))).
       {
         (* when lhs is empty *)
         left.
@@ -874,8 +876,8 @@ Section While.
             exists 0.
             exact (H0 0).
             (* when y is total *)
-            
-            
+
+
             apply pdom_bind_total_2 in h.
             destruct h.
             destruct H2.
@@ -918,7 +920,7 @@ Section While.
           destruct H0.
           contradict (H0 (H1 x)).
         }
-        
+
         {
           (* when bot is not in the sup *)
           (* when lhs is non empty *)
@@ -928,7 +930,7 @@ Section While.
           {
             intros x e.
             contradict H.
-            apply pdom_bind_total_1.          
+            apply pdom_bind_total_1.
             split; auto.
             exists x; split; auto.
           }
@@ -960,7 +962,7 @@ Section While.
               destruct (lem (bot X ∈ S)).
               {
                 (* when the index set contains bot, then both sides contain bot anyway *)
-                apply pdom_bind_bot_1; auto.              
+                apply pdom_bind_bot_1; auto.
               }
               {
                 (* when the index set does not contain bot, things become complicated..
@@ -975,7 +977,7 @@ Section While.
                 {
                   intro n.
                   pose proof (pdom_chain_bot_2 _ _ H0 n).
-                  
+
                   apply pdom_bind_bot_2 in H3.
                   destruct H3.
                   contradict (H1 H3).
@@ -987,7 +989,7 @@ Section While.
                 pose (fun x : {y | total y ∈ S} => {n : nat | (total (proj1_sig x) ∈ S) /\ bot Y ∈ s n (proj1_sig x)}) as P.
                 pose proof (Pigeon P).
                 assert (infinite { a & P a}).
-                exists (fun n => existT _ (exist _ (choice n) (proj1 (p n))) (exist _ n (p n))).                
+                exists (fun n => existT _ (exist _ (choice n) (proj1 (p n))) (exist _ n (p n))).
                 intros i j e.
                 injection e.
                 intros.
@@ -1011,7 +1013,7 @@ Section While.
                 apply pdom_chain_infinite_bot_bot.
                 destruct i.
                 apply pset_infinite_subset_infinite.
-                
+
                 exists (fun n => proj1_sig  (x0 n)).
                 split.
                 intros i j e.
@@ -1020,23 +1022,23 @@ Section While.
                 destruct (x0 n).
                 simpl.
                 simpl in a.
-                destruct a; auto.              
+                destruct a; auto.
               }
             }
-            
+
             {
               (* when a is a total element *)
-              
+
               apply pdom_chain_membership_2 in H0.
               destruct H0.
               apply pdom_bind_total_1.
               split; auto.
-              
+
               apply pdom_bind_total_2 in H0.
               destruct H0 as [_ [p1 [p2 p3]]].
               exists p1; split; auto.
               unfold pdom_fun_chain_sup.
-              
+
               apply pdom_chain_membership_1.
               split; auto.
               unfold pdom_fun_chain_sup in H.
@@ -1044,13 +1046,13 @@ Section While.
               apply pdom_chain_empty_2 in H0.
               destruct H0.
               contradict (nempty1 x0 p1 p2 H0).
-              exists x; auto.              
+              exists x; auto.
             }
-          }        
+          }
         }
       }
     }
-    { 
+    {
       apply pdom_omega_complete.
       intros.
       apply pdom_bind_fst_monotone.
@@ -1101,13 +1103,13 @@ Section While.
     exact 0.
     apply H.
     intro; apply pdom_le_refl.
-  Defined.        
+  Defined.
 
   Definition pdom_W {X : Type} (b : X -> pdom bool) (c : X -> pdom X) : (X -> pdom X) -> X -> pdom X.
   Proof.
     intros f.
     intro x.
-    exact (pdom_bind (fun (b : bool) => if b then (pdom_bind f) (c x) else pdom_unit x) (b x)). 
+    exact (pdom_bind (fun (b : bool) => if b then (pdom_bind f) (c x) else pdom_unit x) (b x)).
   Defined.
 
   Lemma pdom_W_monotone {X : Type} (b : X -> pdom bool) (c : X -> pdom X) : pdom_fun_is_monotone (pdom_W b c).
