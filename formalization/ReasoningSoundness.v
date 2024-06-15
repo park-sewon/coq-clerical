@@ -644,14 +644,11 @@ Proof.
   replace (sem_rw_exp Γ Δ (WHILE e DO c END) UNIT (has_type_rw_While _ _ _ _ wb wc') γ δ) with
     (pdom_lift (fun x => (x, tt)) (pdom_while B C δ)) by auto.
   intro p.
-  pose proof
-       (pdom_While_bot B C
-                       (fun d => ϕ (γ, d))
-                       (fun b d => θ ((γ; d), b))
-                       (fun d d' => ψ ((d; γ), d'))
-       )
-    as [f h].
+
+  assert (forall x : sem_ctx Δ,
+             ϕ (γ, x) -> ~ pdom_is_empty (B x) /\ (forall v : flat bool, v ∈ B x -> exists v' : bool, v = total v' /\ θ ((γ; x), v'))) as p1.
   {
+    
     intros x m.
     pose proof (BB (γ; x)).
     simpl in H0.
@@ -659,22 +656,25 @@ Proof.
     pose proof (H0 m).
     auto.
   }
+  
+  assert (forall x : sem_ctx Δ,
+             θ ((γ; x), true) ->
+             ~ pdom_is_empty (C x) /\ (forall v : flat (sem_ctx Δ), v ∈ C x -> exists v' : sem_ctx Δ, v = total v' /\ ϕ (γ, v') /\ ψ ((x; γ), v'))) as p2.
+  {
+    intros x m.
+    pose proof (CC (x; γ) x).
+    simpl in H0.
+    reduce_tedious H0.
+    pose proof (H0 (conj m eq_refl)).
+    destruct H1; split; auto.
+    intro.
+    unfold C in H3.
+    apply pdom_lift_empty_2 in H3.
+    rewrite
+      (sem_rw_exp_auxiliary_ctx _ _ _ _ _ _ wc γ x x) in H3.
+    auto.
 
-  intros x m.
-  pose proof (CC (x; γ) x).
-  simpl in H0.
-  reduce_tedious H0.
-  pose proof (H0 (conj m eq_refl)).
-  destruct H1; split; auto.
-  intro.
-  unfold C in H3.
-  apply pdom_lift_empty_2 in H3.
-  rewrite
-    (sem_rw_exp_auxiliary_ctx _ _ _ _ _ _ wc γ x x) in H3.
-  auto.
-  
-  
-  intros.
+      intros.
   destruct v.
   unfold C in H3.
   apply pdom_lift_bot_2 in H3.
@@ -707,13 +707,19 @@ Proof.
   pose proof (H5 (total (s, tt)) H3) as [h1 [h2 h3]].
   apply total_is_injective in h2.
   rewrite <- h2 in h3; simpl in h3; exact h3. 
-  apply H.
-
+  }
+  
+  pose proof
+       
+       (pdom_While_bot B C
+                       (fun d => ϕ (γ, d))
+                       (fun b d => θ ((γ; d), b))
+                       (fun d d' => ψ ((d; γ), d')) 
+       p1 p2 δ) as [f h]; auto.
   
   apply pdom_lift_bot_2 in p.
   auto.
 
-  
   destruct h.
   pose proof (chainp γ δ H).
   contradict H2.
