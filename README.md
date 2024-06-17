@@ -3,7 +3,7 @@ This repository provides a full formalization of the imperative programming lang
 It includes syntax, type system, denotational semantics, specifications and their proof rules, soundness proofs of the rules, and some examples and their proofs.
 
 ## Installation
-It is checked to compile by `coq_makefile` under the Coq Proof Assistant version 8.16.1 (compiled with OCaml 4.14.1). 
+It is checked to compile by `coq_makefile` under the Coq Proof Assistant version 8.18 and 8.19. 
 To compile the formalization part of this project, run `make` in the `clerical` directory. 
 To compile the examples part of this project, run `make` in the `clerical/examples` directory.
 
